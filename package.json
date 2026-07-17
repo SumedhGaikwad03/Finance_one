@@ -1,13 +1,10 @@
 {
-  "name": "Finance_one",
+  "name": "finance_one",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.13.1"
+    "dev": "echo \"No applications configured yet\"",
+    "build": "echo \"Nothing to build yet\""
+  }
 }
