@@ -17,7 +17,7 @@ export const addUser =(
  res : Response
 ) : void =>{
 
-  const result = createUserSchema.safeParse(req.body);
+  const result = createUserSchema.safeParse(req.body); // result will be an object with success and data or error properties
 
   if(!result.success) {
       res.status(400).json(result.error.issues);

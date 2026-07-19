@@ -1,22 +1,12 @@
-import { users } from "../data/users";
+
+import { CreateUserInput } from "../schemas/user.schema";
+import * as userRepository from "../repositories/user.repository";
 
 export const getAllUsers = () => {
-  return users;
+
+  return userRepository.getAllUsers();
 };
 
-export const createUser = (user : {name:string , email:string}) => {
-    const newUser ={
-        id: users.length+1,
-        name:user.name,
-        email:user.email,
-        
-
-    };
-    users.push(newUser);
-    console.log("New user created:", newUser); // Log the new user for debugging
-
-    return newUser; // retruns the user created to the controller 
-
-    
-
-}
+export const createUser = (user: CreateUserInput) => {
+    return userRepository.addUser(user);
+};
