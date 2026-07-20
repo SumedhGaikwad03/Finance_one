@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getAllUsers } from "../services/user.service";
 import { createUser } from "../services/user.service";
+import { findUserbyId } from "../services/user.service";
 import { createUserSchema } from "../schemas/user.schema";
 
 export const getUsers = (
@@ -29,4 +30,20 @@ export const addUser =(
  res.status(201).json(newUser);
 
 } 
+
+export const finduser =(
+  req :Request ,
+  res :Response 
+
+  
+
+) : void => {
+
+const user_received = findUserbyId(Number(req.params.id));
+
+res.json(user_received);
+
+
+}
+
 

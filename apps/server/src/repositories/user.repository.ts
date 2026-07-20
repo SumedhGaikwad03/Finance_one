@@ -16,3 +16,10 @@ export const addUser = (user: CreateUserInput) => {
 export const getAllUsers = () => {
     return users;
 };
+
+export const findUserbyid = (id : number) => {
+
+  return users.find(users => users.id === id);
+
+  
+};
