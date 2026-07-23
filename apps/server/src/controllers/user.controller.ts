@@ -3,20 +3,23 @@ import { getAllUsers } from "../services/user.service";
 import { createUser } from "../services/user.service";
 import { findUserbyId } from "../services/user.service";
 import { createUserSchema } from "../schemas/user.schema";
+import { NextFunction } from "express";
 
-export const getUsers = (
+export async function getUsers (
   req: Request,
-  res: Response
-): void => {
+  res: Response,
+  next : NextFunction,
+): Promise<void>  {
   const users = getAllUsers();
 
-  res.json(users);
+  res.status(200).json(users);
 };
 
-export const addUser =(
+export async function addUser (
  req : Request,
- res : Response
-) : void =>{
+ res : Response,
+ next : NextFunction,
+) : Promise<void> {
 
   const result = createUserSchema.safeParse(req.body); // result will be an object with success and data or error properties
 
@@ -31,17 +34,16 @@ export const addUser =(
 
 } 
 
-export const finduser =(
+export async function  finduser (
   req :Request ,
-  res :Response 
+  res :Response ,
+  next : NextFunction
 
-  
-
-) : void => {
+) : Promise<void> {
 
 const user_received = findUserbyId(Number(req.params.id));
 
-res.json(user_received);
+res.status(200).json(user_received);
 
 
 }

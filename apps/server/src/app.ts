@@ -23,6 +23,9 @@ app.get("/", (req, res) => {
   });
 });
 
+// This is the staring point for our backend in the system as this is where the backend logic starts and we use index.ts to listen 
+// to the port and then we use app.ts to create the express app .
+//
 
 
 export default app;
