@@ -31,7 +31,8 @@ type AsyncController<
         ResBody,
         Locals
     >,
-    next: NextFunction
+    next: NextFunction // this can be removed as this varivbal eis useless in the flow of the sysytem and defr=eats the purpose 
+    // of the asyncr fun and the still the need to pass next fuunction 
 ) => Promise<void>;
 
 export function asyncHandler<

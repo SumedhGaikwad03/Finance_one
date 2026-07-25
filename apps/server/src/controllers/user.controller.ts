@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { getAllUsers } from "../services/user.service";
+import { getAllUsers, updateUser , deleteUser} from "../services/user.service";
 import { createUser } from "../services/user.service";
 import { findUserbyId } from "../services/user.service";
-import { createUserSchema } from "../schemas/user.schema";
+import { createUserSchema , findUserSchema , updateUserSchema} from "../schemas/user.schema";
 import { NextFunction } from "express";
 
 export async function getUsers (
@@ -21,14 +21,11 @@ export async function addUser (
  next : NextFunction,
 ) : Promise<void> {
 
-  const result = createUserSchema.safeParse(req.body); // result will be an object with success and data or error properties
+  const result = createUserSchema.parse(req.body); // result will be an not be an object with success and data or error properties
 
-  if(!result.success) {
-      res.status(400).json(result.error.issues);
-      return;
-}
+  
 
-   const newUser = createUser(result.data);
+   const newUser = createUser(result);
 
  res.status(201).json(newUser);
 
@@ -41,11 +38,44 @@ export async function  finduser (
 
 ) : Promise<void> {
 
-const user_received = findUserbyId(Number(req.params.id));
+ const {id} = findUserSchema.parse(req.params) // as the {id } take id property form the object returned by the parse 
+ // method of the findUserSchema object which is a zod schema object and then we can use this id to find the user in the 
+ // database or in this case in the users array
 
-res.status(200).json(user_received);
+
+const user  = findUserbyId(id);
+
+res.status(200).json(user);
 
 
 }
+
+export async function updateUserdata (
+  req : Request ,
+  res : Response ,
+  next : NextFunction
+) : Promise<void> { 
+
+  const {id} = findUserSchema.parse(req.params); // checks validation of parameters as id via zod schema
+
+  const updates = updateUserSchema.parse(req.body); 
+
+  const user = await updateUser(id,updates);
+
+  res.status(200).json(user);
+
+
+}
+
+export async function deleteUserData ( 
+req: Request ,
+res : Response,
+next : NextFunction ) :Promise<void> {
+
+const {id} = findUserSchema.parse(req.params);
+
+const user = await deleteUser(id);
+
+res.status(200).json(user)}
 
 

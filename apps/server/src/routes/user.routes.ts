@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { finduser, getUsers } from "../controllers/user.controller";
+import { finduser, getUsers,updateUserdata} from "../controllers/user.controller";
 import { addUser } from "../controllers/user.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 //import { finduser } from "../controllers/user.controller";
@@ -10,7 +10,11 @@ router.get("/", asyncHandler(getUsers)); // this call to controller which will c
 
 router.post("/addUser", asyncHandler(addUser)) ; 
 
-router.get("/:id", asyncHandler(finduser)) ; // this call to controller which will call sevice and then finllly data
+router.get("/:id", asyncHandler(finduser))
+
+router.patch("/:id", asyncHandler(updateUserdata)); 
+
+
 
 
 export default router;
