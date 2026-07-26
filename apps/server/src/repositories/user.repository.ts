@@ -1,6 +1,6 @@
 import { users } from "../data/users";
 import { CreateUserInput , findUserSchema, updateUserInput } from "../schemas/user.schema";
-
+import prisma from "../lib/prisma";
 export const addUser = (user: CreateUserInput) => {
     const newUser = {
         id: users.length + 1,
@@ -14,7 +14,8 @@ export const addUser = (user: CreateUserInput) => {
 };
 
 export const getAllUsers = () => {
-    return users;
+    return prisma.users.findMany();
+
 };
 
 export const findUserbyid = (id : number) => {
