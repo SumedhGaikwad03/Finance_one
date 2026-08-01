@@ -15,8 +15,13 @@ export class NotFoundError extends AppError {
         
 } }
 
-export class ValidationError extends AppError {
+/*export class ValidationError extends AppError {
     constructor(message : string ) {
         super(message, 400); // this init the superclass that is apperror with the message and the status code 400 
-    }
-}
+    } // this plan is now dropped as we are not making another layer insted we leak a liitle zod into the middelware layer 
+}*/ 
+
+export class ConflictError extends AppError {
+    constructor(message : string ) {
+        super(message, 409); // this init the superclass that is apperror with the message and the status code 409 
+    }}

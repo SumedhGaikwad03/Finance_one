@@ -1,8 +1,9 @@
 
 import { CreateUserInput , updateUserInput} from "../schemas/user.schema";
 import * as userRepository from "../repositories/user.repository";
-import { NotFoundError } from "../error/AppError";
-import { isPrismaP2025 } from "../lib/prismaErrors";
+import { ConflictError, NotFoundError } from "../error/AppError";
+import { isPrismaP2025 , isPrismaP2002 } from "../lib/prismaErrors"; // this layer is slighhty coupled 
+// but its woth the tradeoff 
 export const getAllUsers = () => {
 
   return userRepository.getAllUsers();
@@ -44,6 +45,9 @@ export const updateUser =  async (id : number , updates : updateUserInput) => {
     if(isPrismaP2025(err)){
       throw new NotFoundError("user not found");
     }
+    else if (isPrismaP2002(err)){
+      throw new ConflictError("email already exists");
+    }
 
     throw (err); // swalling an error makes it genrealized in the flow of the system that makes it hard to debug later
     // this a good practicce to follow 
@@ -64,7 +68,7 @@ export const deleteUser = async (id: number) => {
     return await userRepository.deleteUser(id);
 }catch(err){
   if(isPrismaP2025(err)){
-      throw new NotFoundError("user not found");
+      throw new ConflictError("user not found");
     }
 throw(err); // here we are chewing and digesting the error 
 
