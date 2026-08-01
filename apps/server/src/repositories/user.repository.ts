@@ -1,7 +1,13 @@
 import { users } from "../data/users";
 import { CreateUserInput , findUserSchema, updateUserInput } from "../schemas/user.schema";
 import prisma from "../lib/prisma";
-export const addUser = (user: CreateUserInput) => {
+
+export type CreateUserData = { // this is an intrnal contract 
+    name: string;
+    email: string;
+    passwordHash: string;
+};
+export const addUser = (user: CreateUserData) => {
     /*const newUser = {
         id: users.length + 1,
         name: user.name,
@@ -15,7 +21,7 @@ export const addUser = (user: CreateUserInput) => {
         name: user.name,
         email: user.email,
     };*/
-    return prisma.user.create({data :{name : user.name , email : user.email }}); // only pass usefull info form our schema to the 
+    return prisma.user.create({data :{name : user.name , email : user.email , passwordHash : user.passwordHash}}); // only pass usefull info form our schema to the 
     // the datanase as we need to loosely couple the prisma schema and zod schema 
 };
 
@@ -47,3 +53,7 @@ export const deleteUser = ( id : number )=> {
 });
 
 }
+
+export const findUserbyEmail=( email : string) => {
+
+return prisma.user.findUnique({where :{email ,},})};
