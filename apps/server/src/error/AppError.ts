@@ -14,3 +14,9 @@ export class NotFoundError extends AppError {
 
         
 } }
+
+export class ValidationError extends AppError {
+    constructor(message : string ) {
+        super(message, 400); // this init the superclass that is apperror with the message and the status code 400 
+    }
+}

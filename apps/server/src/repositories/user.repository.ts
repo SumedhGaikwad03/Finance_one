@@ -42,9 +42,8 @@ export const updateUserdata = (id : number , updates : updateUserInput) => {
 };
 
 export const deleteUser = ( id : number )=> {
-const userIndex = users.findIndex(user => user.id === id );
+    return prisma.user.delete({
+    where: { id },
+});
 
-const deletedUser = users.splice(userIndex,1);
-
-return deletedUser[0];
 }

@@ -10,7 +10,7 @@ export async function getUsers (
   res: Response,
   next : NextFunction,
 ): Promise<void>  {
-  const users = getAllUsers();
+  const users = await getAllUsers();
 
   res.status(200).json(users);
 };
@@ -25,7 +25,7 @@ export async function addUser (
 
   
 
-   const newUser = createUser(result);
+   const newUser = await createUser(result);
 
  res.status(201).json(newUser);
 
@@ -43,7 +43,7 @@ export async function  finduser (
  // database or in this case in the users array
 
 
-const user  = findUserbyId(id);
+const user  = await findUserbyId(id);
 
 res.status(200).json(user);
 
