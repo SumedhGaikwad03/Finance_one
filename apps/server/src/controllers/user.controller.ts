@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getAllUsers, updateUser , deleteUser} from "../services/user.service";
-import { createUser } from "../services/user.service";
+//import { createUser } from "../services/user.service";
 import { findUserbyId } from "../services/user.service";
 import { createUserSchema , findUserSchema , updateUserSchema} from "../schemas/user.schema";
 import { NextFunction } from "express";
@@ -15,7 +15,7 @@ export async function getUsers (
   res.status(200).json(users);
 };
 
-export async function addUser (
+/*export async function addUser (
  req : Request,
  res : Response,
  next : NextFunction,
@@ -28,8 +28,8 @@ export async function addUser (
    const newUser = await createUser(result);
 
  res.status(201).json(newUser);
-
-} 
+ // this is now redundnadn as we use seprate routes for auth and everyoyher things 
+} */
 
 export async function  finduser (
   req :Request ,

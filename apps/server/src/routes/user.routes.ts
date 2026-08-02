@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { finduser, getUsers,updateUserdata} from "../controllers/user.controller";
-import { addUser } from "../controllers/user.controller";
+//import { addUser } from "../controllers/user.controller";
 import { asyncHandler } from "../utils/asyncHandler";
 //import { finduser } from "../controllers/user.controller";
 
@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/", asyncHandler(getUsers)); // this call to controller which will call sevice and then finllly data 
 
-router.post("/addUser", asyncHandler(addUser)) ; 
+//router.post("/addUser", asyncHandler(addUser)) ; this is redunandant now 
 
 router.get("/:id", asyncHandler(finduser))
 

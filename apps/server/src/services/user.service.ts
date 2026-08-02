@@ -3,15 +3,15 @@ import { CreateUserInput , updateUserInput} from "../schemas/user.schema";
 import * as userRepository from "../repositories/user.repository";
 import { ConflictError, NotFoundError } from "../error/AppError";
 import { isPrismaP2025 , isPrismaP2002 } from "../lib/prismaErrors"; // this layer is slighhty coupled 
-// but its woth the tradeoff 
+// but its woth the trade
 export const getAllUsers = () => {
 
   return userRepository.getAllUsers();
 };
 
-export const createUser = (user: CreateUserInput) => {
+/*export const createUser = (user: CreateUserInput) => {
     return userRepository.addUser(user);
-};
+};*/
 
 export const findUserbyId = async (id : number) => {
  const received_user = await userRepository.findUserbyid(id); 
