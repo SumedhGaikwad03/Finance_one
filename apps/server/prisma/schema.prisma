@@ -10,14 +10,54 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
 }
 
+// THESE ARE enums that our user could selste through with the options avaiable 
+
+enum Category {
+  FOOD
+  FUEL
+  SHOPPING
+  BILLS
+  ENTERTAINMENT
+  HEALTH
+  TRAVEL
+  EDUCATION
+  SUBSCRIPTION
+  GIFT
+  OTHER
+}
+
+enum Priority {
+  ESSENTIAL
+  GOOD_TO_HAVE
+  LUXURY
+}
+
+//spacing makes it good 
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
+  id           Int    @id @default(autoincrement())
+  name         String
+  email        String @unique
   passwordHash String
-  email     String   @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-} 
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  amount          Decimal
+  category        Category
+  priority        Priority
+  title           String?
+  notes           String?
+  transactionDate DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+}

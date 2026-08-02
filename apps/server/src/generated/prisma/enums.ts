@@ -9,7 +9,27 @@
 * 🟢 You can import this file directly.
 */
 
+export const Category = {
+  FOOD: 'FOOD',
+  FUEL: 'FUEL',
+  SHOPPING: 'SHOPPING',
+  BILLS: 'BILLS',
+  ENTERTAINMENT: 'ENTERTAINMENT',
+  HEALTH: 'HEALTH',
+  TRAVEL: 'TRAVEL',
+  EDUCATION: 'EDUCATION',
+  SUBSCRIPTION: 'SUBSCRIPTION',
+  GIFT: 'GIFT',
+  OTHER: 'OTHER'
+} as const
+
+export type Category = (typeof Category)[keyof typeof Category]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const Priority = {
+  ESSENTIAL: 'ESSENTIAL',
+  GOOD_TO_HAVE: 'GOOD_TO_HAVE',
+  LUXURY: 'LUXURY'
+} as const
+
+export type Priority = (typeof Priority)[keyof typeof Priority]
