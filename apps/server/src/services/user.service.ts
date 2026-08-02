@@ -77,6 +77,21 @@ throw(err); // here we are chewing and digesting the error
 
 }
 }
+
+export const getCurrentUser = async (userId : number) => {
+
+  const received_user = await userRepository.findUserbyid(userId);
+
+  if(!received_user){
+    throw new NotFoundError("user not found");
+  } 
+
+  return {
+    id: received_user.id,
+    name: received_user.name,
+    email: received_user.email,
+};
+}
   
 
 

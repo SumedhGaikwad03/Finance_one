@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getAllUsers, updateUser , deleteUser} from "../services/user.service";
+import { getAllUsers, updateUser , deleteUser, getCurrentUser} from "../services/user.service";
 //import { createUser } from "../services/user.service";
 import { findUserbyId } from "../services/user.service";
 import { createUserSchema , findUserSchema , updateUserSchema} from "../schemas/user.schema";
@@ -11,6 +11,7 @@ export async function getUsers (
   next : NextFunction,
 ): Promise<void>  {
   const users = await getAllUsers();
+  console.log(req.user);
 
   res.status(200).json(users);
 };
@@ -77,5 +78,16 @@ const {id} = findUserSchema.parse(req.params);
 const user = await deleteUser(id);
 
 res.status(200).json(user)}
+
+export async function me (
+  req : Request ,
+  res : Response ,
+  next : NextFunction
+) : Promise<void> {
+
+  const user = req.user.userId; // this is the user id that we have set in the auth middleware after verifying the token and then we can use this user id to find the user in the database or in this case in the users array
+   const reponseUser = await getCurrentUser(user);
+  res.status(200).json({user: reponseUser});
+}
 
 
