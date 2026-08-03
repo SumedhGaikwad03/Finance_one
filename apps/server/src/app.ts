@@ -2,7 +2,9 @@ import express from "express";
 import healthRouter from "./routes/health.routes";
 import userRouter from "./routes/user.routes";
 import authRouter from "./routes/auth.routes";
+import transactionRouter from "./routes/transation.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
+
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use(healthRouter);
 app.use("/api/users", userRouter);
 app.use("/api/auth",authRouter); 
+app.use("/api/transactions", transactionRouter); // this is the route for the transaction controller which is used for creating 
+// transactions
 // this is the routes for the auth controller which is used for user registration and login
 
 app.use(errorMiddleware); // this is the error middleware which catches erreos when tthey bubble up 
