@@ -30,4 +30,10 @@ export class UnauthorizedError extends AppError {
     constructor(message : string ) {
         super(message , 401); // this init the superclass that is apperror with the message and the status code 401
     }
-}    
+} 
+
+export class TransactionNotFoundError extends AppError {
+    constructor(message : string ) {
+        super(message, 404); // this init the superclass that is apperror with the message and the status code 409 
+    }
+}

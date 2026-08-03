@@ -1,6 +1,6 @@
 import {Request , Response , NextFunction} from "express"; 
 
-import { createTransactionSchema} from "../schemas/transaction.schema";
+import { createTransactionSchema, updateTransactionSchema} from "../schemas/transaction.schema";
 import * as transactionService from "../services/transaction.service";
 
 
@@ -35,4 +35,38 @@ export async function getMyTransactions(
     const transactions = await transactionService.getMyTransactions(userId); // this will call the service function to get the
     // transactions for users 
     res.status(200).json(transactions); // this will return the transactions data to the client with status code 200 
+}
+
+export async function updateTransaction(
+    req : Request ,
+    res : Response ,
+    next : NextFunction
+): Promise<void> { 
+   const userId = req.user.userId;
+   const Id = Number (req.params.id);
+   const input = updateTransactionSchema.parse(req.body);
+
+   const transaction = await transactionService.updateTransaction( Id,
+    userId,
+    input);
+
+   res.status(200).json(transaction);
+
+}
+
+export async function deleteTransaction (
+      req : Request ,
+    res : Response ,
+    next : NextFunction
+): Promise<void> { 
+     const userId = req.user.userId;
+   const Id = Number (req.params.id);
+ 
+
+   await transactionService.deleteTransaction(Id , userId); 
+
+   res.status(204).json(" Transaction delted deleted "); 
+
+    
+    
 }
