@@ -33,3 +33,12 @@ export const Priority = {
 } as const
 
 export type Priority = (typeof Priority)[keyof typeof Priority]
+
+
+export const BudgetPeriod = {
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY'
+} as const
+
+export type BudgetPeriod = (typeof BudgetPeriod)[keyof typeof BudgetPeriod]

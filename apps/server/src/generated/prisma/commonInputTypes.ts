@@ -198,6 +198,36 @@ export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
 }
 
+export type EnumBudgetPeriodFilter<$PrismaModel = never> = {
+  equals?: $Enums.BudgetPeriod | Prisma.EnumBudgetPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel> | $Enums.BudgetPeriod
+}
+
+export type BoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type EnumBudgetPeriodWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BudgetPeriod | Prisma.EnumBudgetPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBudgetPeriodWithAggregatesFilter<$PrismaModel> | $Enums.BudgetPeriod
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel>
+}
+
+export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
 export type NestedIntFilter<$PrismaModel = never> = {
   equals?: number | Prisma.IntFieldRefInput<$PrismaModel>
   in?: number[] | Prisma.ListIntFieldRefInput<$PrismaModel>
@@ -393,6 +423,36 @@ export type NestedIntNullableFilter<$PrismaModel = never> = {
   gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
   gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
   not?: Prisma.NestedIntNullableFilter<$PrismaModel> | number | null
+}
+
+export type NestedEnumBudgetPeriodFilter<$PrismaModel = never> = {
+  equals?: $Enums.BudgetPeriod | Prisma.EnumBudgetPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel> | $Enums.BudgetPeriod
+}
+
+export type NestedBoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type NestedEnumBudgetPeriodWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BudgetPeriod | Prisma.EnumBudgetPeriodFieldRefInput<$PrismaModel>
+  in?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BudgetPeriod[] | Prisma.ListEnumBudgetPeriodFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBudgetPeriodWithAggregatesFilter<$PrismaModel> | $Enums.BudgetPeriod
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBudgetPeriodFilter<$PrismaModel>
+}
+
+export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
 }
 
 

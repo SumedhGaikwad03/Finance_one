@@ -34,6 +34,12 @@ enum Priority {
   LUXURY
 }
 
+enum BudgetPeriod {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+}
+
 //spacing makes it good 
 
 model User {
@@ -46,6 +52,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   transactions Transaction[]
+  budget       Budget[]
 }
 
 model Transaction {
@@ -60,4 +67,17 @@ model Transaction {
   updatedAt       DateTime @updatedAt
   userId          Int
   user            User     @relation(fields: [userId], references: [id])
+}
+
+model Budget {
+  id         Int          @id @default(autoincrement())
+  amount     Decimal
+  periodType BudgetPeriod
+  startDate  DateTime     @default(now())
+  endDate    DateTime
+  isLocked   Boolean      @default(false)
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
