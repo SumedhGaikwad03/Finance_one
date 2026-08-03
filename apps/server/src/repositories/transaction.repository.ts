@@ -15,3 +15,11 @@ export type CreateTransactionData = { // this is an intrnal contract
 export const createTransaction = (transaction : CreateTransactionData) => {
 
     return prisma.transaction.create({data: {...transaction, amount : new Prisma.Decimal(transaction.amount)}}); }
+
+
+    export const getMyTransactions =  async (userId : number) => {
+
+        return prisma.transaction.findMany({where : {userId}, orderBy : {transactionDate : "desc"}}); 
+        // this gives all the tractions for a user 
+
+    }

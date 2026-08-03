@@ -23,3 +23,16 @@ export async function createTransaction(
  res.status(201).json(transaction); // this will return the transaction data to the client with status code 201
 
 }
+
+export async function getMyTransactions(
+    req : Request ,
+    res : Response ,
+    next : NextFunction
+): Promise<void> {
+
+    const userId = req.user.userId; // this is the user id that we have set in the auth middleware after verifying
+
+    const transactions = await transactionService.getMyTransactions(userId); // this will call the service function to get the
+    // transactions for users 
+    res.status(200).json(transactions); // this will return the transactions data to the client with status code 200 
+}

@@ -14,3 +14,10 @@ export const createTransaction = async ( input : CreateTransactionInput , userId
 
     return transaction;
 }   
+
+export const getMyTransactions = async (userId :number )=> {
+
+    const transactions = await transactionRepository.getMyTransactions(userId);
+
+    return transactions;
+}
