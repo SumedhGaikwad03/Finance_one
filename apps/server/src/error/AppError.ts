@@ -43,4 +43,10 @@ export class BudgetNotFoundError extends AppError {
     constructor(message :string) {
         super(message,404);
     }
+} 
+
+export class BudgetLockedError extends AppError {
+    constructor(message :string) {
+        super(message,404);
+    }
 }

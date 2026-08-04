@@ -23,8 +23,27 @@ export const createBudget =( budget : CreateBudgetData ) => {
 
 
 export const findBudgetByUser = ( userId : number ) => {
+    // this is user at more than one instance on our code 
 
     return prisma.budget.findMany({where : {userId}, orderBy : {startDate : "asc"} })
+}
+
+export const updateBudget = ( id : number  , input : budgetSchema.UpdateBudgetInput) => {
+
+    return prisma.budget.update({where : {id : id} , data : input  })
+}
+
+export const findBudgetById = (id: number) => {
+
+    return prisma.budget.findUnique({
+        where: { id }
+    });
+
+}
+
+export const deleteBudget = ( id : number ) => {
+
+    return prisma.budget.delete({where : {id}}); 
 }
 
 

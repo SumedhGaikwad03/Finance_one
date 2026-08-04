@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import * as budgetService from "../services/budget.service";
-import { createBudgetSchema } from "../schemas/budget.schema";
+import { createBudgetSchema, updateBudgetSchema } from "../schemas/budget.schema";
 
 /**
  * Creates a new budget for the authenticated user.
@@ -30,4 +30,54 @@ export const getActiveBudget = async ( req: Request,
  const budget = await budgetService.getActiveBudget(userId);
 
  res.status(200).json(budget); 
+}
+
+
+export const getMyBudgets = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
+
+    const userId  = req.user.userId ;  
+
+    const budgets = await budgetService.getMyBudget(userId); 
+
+    res.status(200).json(budgets);
+
+
+
+
+
+}
+
+export const updateBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
+
+    const id = Number(req.params.id);
+    const userId = req.user.userId; 
+    const input = updateBudgetSchema.parse(req.body);
+
+    const budget = await budgetService.updateBudget(id,userId,input);
+
+    res.status(200).json(budget); 
+
+
+    
+}
+
+export const deleteBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
+
+     const id = Number(req.params.id);
+    const userId = req.user.userId;  
+
+    await budgetService.deleteBudget(id,userId);
+
+    res.status(204);
+}
+
+export const lockBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
+
+    const id = Number(req.params.id);
+    const userId = req.user.userId;  
+
+    const budget = await budgetService.lockBudget(id,userId);
+
+     res.status(200).json(budget); 
+
 }

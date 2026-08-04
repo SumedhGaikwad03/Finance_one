@@ -1,6 +1,7 @@
 import { CreateTransactionInput, UpdateTransactionInput } from "../schemas/transaction.schema";
 import * as transactionRepository from "../repositories/transaction.repository";
 import { TransactionNotFoundError } from "../error/AppError";
+import { Prisma } from "../generated/prisma/client";
 // user id is attaced the traction suppiled by the user 
 
 
@@ -8,6 +9,7 @@ export const createTransaction = async ( input : CreateTransactionInput , userId
 
     const transaction = await transactionRepository.createTransaction({
     ...input,
+     amount: new Prisma.Decimal(input.amount),
     transactionDate: input.transactionDate
         ? new Date(input.transactionDate)
         : new Date(),

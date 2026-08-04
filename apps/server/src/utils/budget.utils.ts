@@ -1,4 +1,5 @@
 import { BudgetPeriod } from "../generated/prisma/enums";
+import { Budget } from "../generated/prisma/client";
 
 /**
  * Returns the last valid day for a given month.
@@ -58,4 +59,45 @@ export const calculateEndDate = (
         default:
             throw new Error("Unsupported budget period.");
     }
+};
+
+/**
+ * Checks whether a budget overlaps with any existing budget.
+ * Returns true if an overlap is found, otherwise false.
+ */
+export const hasBudgetOverlap = (
+    budgets: Budget[],
+    startDate: Date,
+    periodType: BudgetPeriod,
+    excludeBudgetId?: number
+): boolean => {
+
+    // calculate the end date of the new budget
+    const newBudgetEndDate = calculateEndDate(startDate, periodType);
+
+    // compare the new budget with every existing budget
+    for (const budget of budgets) {
+
+        // skip the current budget while updating
+        if (budget.id === excludeBudgetId) {
+            continue;
+        }
+
+        // calculate the end date of the existing budget
+        const existingBudgetEndDate = calculateEndDate(
+            budget.startDate,
+            budget.periodType
+        );
+
+        // check if the two date ranges overlap
+        if (
+            startDate <= existingBudgetEndDate &&
+            newBudgetEndDate >= budget.startDate
+        ) {
+            return true;
+        }
+    }
+
+    // no overlap found
+    return false;
 };

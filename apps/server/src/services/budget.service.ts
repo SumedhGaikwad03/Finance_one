@@ -1,23 +1,13 @@
 import { Prisma } from "../generated/prisma/client";
 import * as budgetRepository from "../repositories/budget.repository";
+import * as budgetschemas from "../schemas/budget.schema";
 import { CreateBudgetInput } from "../schemas/budget.schema";
-import { calculateEndDate } from "../utils/budget.utils";
-import { AppError } from "../error/AppError";
-import { BudgetNotFoundError } from "../error/AppError";
-import { date } from "zod";
-import { error } from "node:console";
-
-/**
- * Checks whether two date ranges overlap.
- */
-const isOverlapping = (
-    startA: Date,
-    endA: Date,
-    startB: Date,
-    endB: Date
-): boolean => {
-    return startA <= endB && startB <= endA;
-};
+import { calculateEndDate, hasBudgetOverlap } from "../utils/budget.utils";
+import {
+    AppError,
+    BudgetLockedError,
+    BudgetNotFoundError
+} from "../error/AppError";
 
 export const createBudget = async (
     input: CreateBudgetInput,
@@ -27,32 +17,18 @@ export const createBudget = async (
     // Fetch all existing budgets for this user.
     const existingBudgets = await budgetRepository.findBudgetByUser(userId);
 
-    const newBudgetEndDate = calculateEndDate(
-        input.startDate,
-        input.periodType
-    );
-
     // Prevent overlapping budget periods.
-    for (const budget of existingBudgets) {
-
-        const existingBudgetEndDate = calculateEndDate(
-            budget.startDate,
-            budget.periodType
+    if (
+        hasBudgetOverlap(
+            existingBudgets,
+            input.startDate,
+            input.periodType
+        )
+    ) {
+        throw new AppError(
+            "Budget overlaps with an existing budget.",
+            409
         );
-
-        if (
-            isOverlapping(
-                input.startDate,
-                newBudgetEndDate,
-                budget.startDate,
-                existingBudgetEndDate
-            )
-        ) {
-            throw new AppError(
-                "Budget overlaps with an existing budget.",
-                409
-            );
-        }
     }
 
     return budgetRepository.createBudget({
@@ -69,11 +45,10 @@ export const getActiveBudget = async (userId: number) => {
     const existingBudgets = await budgetRepository.findBudgetByUser(userId);
 
     // this gives us all the budgets in our system
-
     const todaysDate = new Date();
 
-    // now we have find the bugest that has active right now
-    for (const budget of existingBudgets) { // essentiall a lopp thr all budgets
+    // now we have find the budget that is active right now
+    for (const budget of existingBudgets) {
 
         // a call to the fn to find end date
         const endDate = calculateEndDate(
@@ -93,3 +68,99 @@ export const getActiveBudget = async (userId: number) => {
     throw new BudgetNotFoundError("No active budget found.");
 };
 
+export const getMyBudget = async (userId: number) => {
+
+    return await budgetRepository.findBudgetByUser(userId);
+
+};
+
+export const updateBudget = async (
+    id: number,
+    userId: number,
+    input: budgetschemas.UpdateBudgetInput
+) => {
+
+    const budget = await budgetRepository.findBudgetById(id);
+    const existingBudgets = await budgetRepository.findBudgetByUser(userId);
+
+    // checks for ownership and access
+    if (!budget || budget.userId !== userId) {
+        throw new BudgetNotFoundError(
+            "Budget does not exist or user does not have access."
+        );
+    }
+
+    // locked budgets cannot be updated
+    if (budget.isLocked) {
+        throw new BudgetLockedError(
+            "Budget is locked and cannot be modified."
+        );
+    }
+
+    // create the updated budget using the existing values
+    // and overwrite them with the new values
+    const updatedBudget = {
+        ...budget,
+        ...input
+    };
+
+    // check overlap with all other budgets
+    if (
+        hasBudgetOverlap(
+            existingBudgets,
+            updatedBudget.startDate,
+            updatedBudget.periodType,
+            budget.id
+        )
+    ) {
+        throw new AppError(
+            "Budget overlaps with an existing budget.",
+            409
+        );
+    }
+
+    return await budgetRepository.updateBudget(id, input);
+
+};
+export const deleteBudget = async (id : number , userId : number ) => {
+
+     const budget = await budgetRepository.findBudgetById(id); 
+
+       if (!budget || budget.userId !== userId) {
+        throw new BudgetNotFoundError(
+            "Budget does not exist or user does not have access."
+        );
+    }
+
+    // locked budgets cannot be updated
+    if (budget.isLocked) {
+        throw new BudgetLockedError(
+            "Budget is locked and cannot be modified."
+        );
+    }
+
+    return await budgetRepository.deleteBudget(id); 
+}
+
+export const lockBudget = async ( id:number , userId : number) => {
+
+    const budget = await budgetRepository.findBudgetById(id); 
+
+       if (!budget || budget.userId !== userId) {
+        throw new BudgetNotFoundError(
+            "Budget does not exist or user does not have access."
+        );
+    }
+
+    // locked budgets cannot be updated
+    if (budget.isLocked) {
+        throw new BudgetLockedError(
+            "Budget is locked and cannot be modified."
+        );
+    }
+
+     return await budgetRepository.updateBudget(id , {isLocked : true}); // we change the field to be true 
+
+
+
+}
