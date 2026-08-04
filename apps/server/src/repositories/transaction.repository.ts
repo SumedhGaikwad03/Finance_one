@@ -5,8 +5,9 @@ import { updateUserInput } from "../schemas/user.schema";
 import * as transactionSchemas from  "../schemas/transaction.schema";
 
 
-export type CreateTransactionData = { // this is an intrnal contract
-    amount : number ;
+export type CreateTransactionData = { // this is an intrnal contract ,  this makes the contract in par with the reposity ways of stroring 
+    // things as it should not have knowledge of above layers 
+    amount : Prisma.Decimal ;
     category :  Category;
     priority : Priority;
     title ?: string ;
@@ -17,7 +18,7 @@ export type CreateTransactionData = { // this is an intrnal contract
 
 export const createTransaction = (transaction : CreateTransactionData) => {
 
-    return prisma.transaction.create({data: {...transaction, amount : new Prisma.Decimal(transaction.amount)}}); }
+    return prisma.transaction.create({data: {...transaction,}}); }
 
 
     export const getMyTransactions =  async (userId : number) => {
@@ -63,6 +64,8 @@ export const updateTransaction = async ( id : number , input : transactionSchema
 
 
 }
+
+
 
 export const deleteTransaction = async ( id:number ) => {
 

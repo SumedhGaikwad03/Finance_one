@@ -32,7 +32,7 @@ export async function getUsers (
  // this is now redundnadn as we use seprate routes for auth and everyoyher things 
 } */
 
-export async function  finduser (
+export async function  findUser (
   req :Request ,
   res :Response ,
   next : NextFunction

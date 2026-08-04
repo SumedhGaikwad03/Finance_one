@@ -73,11 +73,11 @@ model Budget {
   id         Int          @id @default(autoincrement())
   amount     Decimal
   periodType BudgetPeriod
-  startDate  DateTime     @default(now())
-  endDate    DateTime
-  isLocked   Boolean      @default(false)
-  userId     Int
-  user       User         @relation(fields: [userId], references: [id])
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  startDate  DateTime
+
+  isLocked  Boolean  @default(false)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

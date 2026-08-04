@@ -43,10 +43,10 @@ export async function updateTransaction(
     next : NextFunction
 ): Promise<void> { 
    const userId = req.user.userId;
-   const Id = Number (req.params.id);
+   const transactionId = Number (req.params.id);
    const input = updateTransactionSchema.parse(req.body);
 
-   const transaction = await transactionService.updateTransaction( Id,
+   const transaction = await transactionService.updateTransaction( transactionId,
     userId,
     input);
 
@@ -65,7 +65,7 @@ export async function deleteTransaction (
 
    await transactionService.deleteTransaction(Id , userId); 
 
-   res.status(204).json(" Transaction delted deleted "); 
+   res.sendStatus(204);
 
     
     

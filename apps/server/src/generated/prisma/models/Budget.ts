@@ -43,7 +43,6 @@ export type BudgetMinAggregateOutputType = {
   amount: runtime.Decimal | null
   periodType: $Enums.BudgetPeriod | null
   startDate: Date | null
-  endDate: Date | null
   isLocked: boolean | null
   userId: number | null
   createdAt: Date | null
@@ -55,7 +54,6 @@ export type BudgetMaxAggregateOutputType = {
   amount: runtime.Decimal | null
   periodType: $Enums.BudgetPeriod | null
   startDate: Date | null
-  endDate: Date | null
   isLocked: boolean | null
   userId: number | null
   createdAt: Date | null
@@ -67,7 +65,6 @@ export type BudgetCountAggregateOutputType = {
   amount: number
   periodType: number
   startDate: number
-  endDate: number
   isLocked: number
   userId: number
   createdAt: number
@@ -93,7 +90,6 @@ export type BudgetMinAggregateInputType = {
   amount?: true
   periodType?: true
   startDate?: true
-  endDate?: true
   isLocked?: true
   userId?: true
   createdAt?: true
@@ -105,7 +101,6 @@ export type BudgetMaxAggregateInputType = {
   amount?: true
   periodType?: true
   startDate?: true
-  endDate?: true
   isLocked?: true
   userId?: true
   createdAt?: true
@@ -117,7 +112,6 @@ export type BudgetCountAggregateInputType = {
   amount?: true
   periodType?: true
   startDate?: true
-  endDate?: true
   isLocked?: true
   userId?: true
   createdAt?: true
@@ -216,7 +210,6 @@ export type BudgetGroupByOutputType = {
   amount: runtime.Decimal
   periodType: $Enums.BudgetPeriod
   startDate: Date
-  endDate: Date
   isLocked: boolean
   userId: number
   createdAt: Date
@@ -251,7 +244,6 @@ export type BudgetWhereInput = {
   amount?: Prisma.DecimalFilter<"Budget"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFilter<"Budget"> | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
-  endDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
   isLocked?: Prisma.BoolFilter<"Budget"> | boolean
   userId?: Prisma.IntFilter<"Budget"> | number
   createdAt?: Prisma.DateTimeFilter<"Budget"> | Date | string
@@ -264,7 +256,6 @@ export type BudgetOrderByWithRelationInput = {
   amount?: Prisma.SortOrder
   periodType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
-  endDate?: Prisma.SortOrder
   isLocked?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -280,7 +271,6 @@ export type BudgetWhereUniqueInput = Prisma.AtLeast<{
   amount?: Prisma.DecimalFilter<"Budget"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFilter<"Budget"> | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
-  endDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
   isLocked?: Prisma.BoolFilter<"Budget"> | boolean
   userId?: Prisma.IntFilter<"Budget"> | number
   createdAt?: Prisma.DateTimeFilter<"Budget"> | Date | string
@@ -293,7 +283,6 @@ export type BudgetOrderByWithAggregationInput = {
   amount?: Prisma.SortOrder
   periodType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
-  endDate?: Prisma.SortOrder
   isLocked?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -313,7 +302,6 @@ export type BudgetScalarWhereWithAggregatesInput = {
   amount?: Prisma.DecimalWithAggregatesFilter<"Budget"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodWithAggregatesFilter<"Budget"> | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeWithAggregatesFilter<"Budget"> | Date | string
-  endDate?: Prisma.DateTimeWithAggregatesFilter<"Budget"> | Date | string
   isLocked?: Prisma.BoolWithAggregatesFilter<"Budget"> | boolean
   userId?: Prisma.IntWithAggregatesFilter<"Budget"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Budget"> | Date | string
@@ -323,8 +311,7 @@ export type BudgetScalarWhereWithAggregatesInput = {
 export type BudgetCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -335,8 +322,7 @@ export type BudgetUncheckedCreateInput = {
   id?: number
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   userId: number
   createdAt?: Date | string
@@ -347,7 +333,6 @@ export type BudgetUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -359,7 +344,6 @@ export type BudgetUncheckedUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -370,8 +354,7 @@ export type BudgetCreateManyInput = {
   id?: number
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   userId: number
   createdAt?: Date | string
@@ -382,7 +365,6 @@ export type BudgetUpdateManyMutationInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -393,7 +375,6 @@ export type BudgetUncheckedUpdateManyInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -415,7 +396,6 @@ export type BudgetCountOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   periodType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
-  endDate?: Prisma.SortOrder
   isLocked?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -433,7 +413,6 @@ export type BudgetMaxOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   periodType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
-  endDate?: Prisma.SortOrder
   isLocked?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -445,7 +424,6 @@ export type BudgetMinOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   periodType?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
-  endDate?: Prisma.SortOrder
   isLocked?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -511,8 +489,7 @@ export type BoolFieldUpdateOperationsInput = {
 export type BudgetCreateWithoutUserInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -522,8 +499,7 @@ export type BudgetUncheckedCreateWithoutUserInput = {
   id?: number
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -563,7 +539,6 @@ export type BudgetScalarWhereInput = {
   amount?: Prisma.DecimalFilter<"Budget"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFilter<"Budget"> | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
-  endDate?: Prisma.DateTimeFilter<"Budget"> | Date | string
   isLocked?: Prisma.BoolFilter<"Budget"> | boolean
   userId?: Prisma.IntFilter<"Budget"> | number
   createdAt?: Prisma.DateTimeFilter<"Budget"> | Date | string
@@ -574,8 +549,7 @@ export type BudgetCreateManyUserInput = {
   id?: number
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType: $Enums.BudgetPeriod
-  startDate?: Date | string
-  endDate: Date | string
+  startDate: Date | string
   isLocked?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -585,7 +559,6 @@ export type BudgetUpdateWithoutUserInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -596,7 +569,6 @@ export type BudgetUncheckedUpdateWithoutUserInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -607,7 +579,6 @@ export type BudgetUncheckedUpdateManyWithoutUserInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   periodType?: Prisma.EnumBudgetPeriodFieldUpdateOperationsInput | $Enums.BudgetPeriod
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -620,7 +591,6 @@ export type BudgetSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   amount?: boolean
   periodType?: boolean
   startDate?: boolean
-  endDate?: boolean
   isLocked?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -633,7 +603,6 @@ export type BudgetSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   amount?: boolean
   periodType?: boolean
   startDate?: boolean
-  endDate?: boolean
   isLocked?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -646,7 +615,6 @@ export type BudgetSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   amount?: boolean
   periodType?: boolean
   startDate?: boolean
-  endDate?: boolean
   isLocked?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -659,14 +627,13 @@ export type BudgetSelectScalar = {
   amount?: boolean
   periodType?: boolean
   startDate?: boolean
-  endDate?: boolean
   isLocked?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type BudgetOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "periodType" | "startDate" | "endDate" | "isLocked" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["budget"]>
+export type BudgetOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "amount" | "periodType" | "startDate" | "isLocked" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["budget"]>
 export type BudgetInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -687,7 +654,6 @@ export type $BudgetPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     amount: runtime.Decimal
     periodType: $Enums.BudgetPeriod
     startDate: Date
-    endDate: Date
     isLocked: boolean
     userId: number
     createdAt: Date
@@ -1120,7 +1086,6 @@ export interface BudgetFieldRefs {
   readonly amount: Prisma.FieldRef<"Budget", 'Decimal'>
   readonly periodType: Prisma.FieldRef<"Budget", 'BudgetPeriod'>
   readonly startDate: Prisma.FieldRef<"Budget", 'DateTime'>
-  readonly endDate: Prisma.FieldRef<"Budget", 'DateTime'>
   readonly isLocked: Prisma.FieldRef<"Budget", 'Boolean'>
   readonly userId: Prisma.FieldRef<"Budget", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Budget", 'DateTime'>

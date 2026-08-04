@@ -37,3 +37,10 @@ export class TransactionNotFoundError extends AppError {
         super(message, 404); // this init the superclass that is apperror with the message and the status code 409 
     }
 }
+
+export class BudgetNotFoundError extends AppError {
+
+    constructor(message :string) {
+        super(message,404);
+    }
+}

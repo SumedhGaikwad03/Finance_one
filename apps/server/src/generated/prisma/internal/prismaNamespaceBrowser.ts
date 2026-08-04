@@ -105,7 +105,6 @@ export const BudgetScalarFieldEnum = {
   amount: 'amount',
   periodType: 'periodType',
   startDate: 'startDate',
-  endDate: 'endDate',
   isLocked: 'isLocked',
   userId: 'userId',
   createdAt: 'createdAt',
