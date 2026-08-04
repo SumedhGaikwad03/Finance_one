@@ -51,22 +51,45 @@ export const calculateBudgetUsage = (
  */
 export const calculateCategoryTotals = (
     transactions: Transaction[]
-): Partial<Record<Category, Prisma.Decimal>> => {
+): Partial<Record<Category, Prisma.Decimal>> => { // the retrun type basicaly is "An object whose keys are K and whose values are V."
 
     return transactions.reduce(
 
-        (categoryTotals, transaction) => {
+        (categoryTotals, transaction) => { // catgory toals is obj of the cat and its total 
 
             // get the current total for this category if it already exists
-            const currentTotal = categoryTotals[transaction.category];
+            const currentTotal = categoryTotals[transaction.category]; // as catgory also revoves then makes the tr as 
 
-            if (currentTotal) {
+            /*Let's substitute the value.
+
+transaction.category
+
+↓
+
+"SHOPPING"
+
+So the line becomes:
+
+const currentTotal = categoryTotals["SHOPPING"];
+
+Now imagine you're opening a dictionary.
+
+categoryTotals
+
+┌───────────┬──────────────┐
+│ FOOD      │ Decimal(700) │
+├───────────┼──────────────┤
+│ SHOPPING  │ Decimal(300) │  ← We look here
+├───────────┼──────────────┤
+│ FUEL      │ Decimal(100) │
+└───────────┴──────────────┘ */
+            if (currentTotal) { // the catgory we added exits yes /no 
 
                 // category already exists so add the new amount
                 categoryTotals[transaction.category] =
                     currentTotal.plus(transaction.amount);
-
-            } else {
+ 
+            } else { // if it does not exits make one 
 
                 // first transaction for this category
                 categoryTotals[transaction.category] =
