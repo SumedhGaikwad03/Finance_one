@@ -6,6 +6,7 @@ import DashboardPage from "../pages/Dashboard/DashboardPage";
 import TransactionsPage from "../pages/Transactions/TransactionsPage";
 import BudgetsPage from "../pages/Budgets/BudgetsPage";
 import NotFoundPage from "../pages/NotFound/NotFoundPage";
+import ProtectedRoute from "../components/common/ProtectedRoute";
 
 export const router = createBrowserRouter([
 
@@ -23,11 +24,20 @@ export const router = createBrowserRouter([
         path: "/register",
         element: <RegisterPage />,
     },
+{
+    path: "/dashboard",
 
-    {
-        path: "/dashboard",
-        element: <DashboardPage />,
-    },
+    element: (
+
+        <ProtectedRoute>
+
+            <DashboardPage />
+
+        </ProtectedRoute>
+
+    ),
+
+}
 
     {
         path: "/transactions",
