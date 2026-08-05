@@ -43,19 +43,20 @@ export const createBudget = async (
 export const getActiveBudget = async (userId: number) => {
 
     const existingBudgets = await budgetRepository.findBudgetByUser(userId);
+    console.log(existingBudgets);
 
     // this gives us all the budgets in our system
     const todaysDate = new Date();
-
+    console.log("Today:", todaysDate);
     // now we have find the budget that is active right now
     for (const budget of existingBudgets) {
-
+  console.log("Budget Start:", budget.startDate);
         // a call to the fn to find end date
         const endDate = calculateEndDate(
             budget.startDate,
             budget.periodType
         );
-
+     console.log("Budget End:", endDate);
         // check is date fall into this range
         if (
             todaysDate >= budget.startDate &&

@@ -5,6 +5,7 @@ import authRouter from "./routes/auth.routes";
 import transactionRouter from "./routes/transation.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import budgetRoutes from "./routes/budget.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use(healthRouter);
 app.use("/api/users", userRouter);
 app.use("/api/auth",authRouter); 
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/budgets", budgetRoutes);
 
 app.use("/api/transactions", transactionRouter); // this is the route for the transaction controller which is used for creating 

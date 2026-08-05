@@ -72,3 +72,24 @@ export const deleteTransaction = async ( id:number ) => {
     return prisma.transaction.delete({where :{ id}  }); 
 
 }
+
+export const findTransactionsBetweenDates = (
+    userId: number,
+    startDate: Date,
+    endDate: Date
+) => {
+return prisma.transaction.findMany({
+    where: {
+        userId,
+        transactionDate: {
+            gte: startDate,
+            lte: endDate,
+        },
+    },
+     orderBy: {
+            transactionDate: "desc",
+        },
+
+        // take : 5 tis comes at a later part of the system 
+});
+} 
