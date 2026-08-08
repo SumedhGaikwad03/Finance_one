@@ -13,7 +13,7 @@ type CategoryChartProps = {
 
 // Displays the spending breakdown by category.
 const CategoryChart = ({
-
+// this is essentialy oir function that is called by our dashboard 
     categoryTotals,
 
 }: CategoryChartProps) => {
