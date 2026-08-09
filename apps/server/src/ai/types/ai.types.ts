@@ -36,3 +36,21 @@ export interface AIAnswer {
     answer: string;
 
 }
+
+// defining what a skill looks like for ai 
+
+export interface AiSkill {
+
+    id : string ;
+
+    name : string ; 
+
+    description : string ; 
+
+    examples : string[]; // these are used for semantic represtation for comparing questions and determining intent 
+
+    requirements : string[]; // the info that the skills need 
+
+
+
+}
