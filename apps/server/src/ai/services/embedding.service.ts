@@ -2,6 +2,7 @@ import type { Transaction } from "../../generated/prisma/client";
 import type { TransactionDocument } from "../types/ai.types";
 import { formatTransactionsDate } from "../utils/date.utils";
 import {openai} from "../config/openai"; // open ai client is imported 
+import { embeddingProvider } from "../config/embedding";
 /**
  * Converts a database transaction into
  * a document that AI models can understand.
@@ -59,20 +60,17 @@ Notes: ${transaction.notes ?? "No Notes"}
 
 
 export const generateEmbedding = async (
-    text : string 
+    text : string, 
+
+  
+    // modulaer 
 ) : Promise<number[]> => { 
 
-    // time to plug in openai 
-
-    const response = await openai.embeddings.create({
-
-        model : "text-embedding-3-small", 
-        input : text , 
-    });//Convert this piece of text into a numerical representation of its meaning.
 
 
-    return response.data[0].embedding;  
-    // here we plug in open ai api for embeddigs 
+    return embeddingProvider.generateEmbedding(text); // simple as we already imported the embedding provider 
+
+    
 
 }
 
