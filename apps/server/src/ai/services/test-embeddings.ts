@@ -1,9 +1,11 @@
 import { OllamaEmbeddingProvider } from "../providers/ollama-embedding.provider";
 import { generateEmbedding } from "../services/embedding.service";
+import { SkillEmbeddingService } from "./skill-embedding.service";
+//import { AiSkills } from "../types/ai.types";
+import { retrivalSkill } from "../skills/retrieval.skill";
 
 
-
-const test = async () => {
+const test1 = async () => {
 
     const embedding = await generateEmbedding(
         "How much did I spend on groceries?",
@@ -16,4 +18,14 @@ const test = async () => {
 
 };
 
-test();
+
+const service = new SkillEmbeddingService();
+
+const test = async () => {
+
+    await service.ingestSkill(retrivalSkill);
+
+    console.log("Skill ingestion complete");
+};
+
+test(); 

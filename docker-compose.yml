@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18 # prdefined image to that has postgres and pg vecotr installed all together 
+    container_name: finance-one-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finance_one
+
+    ports:
+      - "5433:5432" #mapped the database port to the docker continer 
+
+    volumes:
+      - finance_one_pgdata:/var/lib/postgresql
+
+volumes:
+  finance_one_pgdata:

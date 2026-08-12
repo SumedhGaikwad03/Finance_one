@@ -15,3 +15,5 @@ const prisma = new PrismaClient({
 });
 
 export default prisma;
+
+// this is out communaicater for our prisma orm and our system 
