@@ -16,6 +16,13 @@ export type CreateTransactionData = { // this is an intrnal contract ,  this mak
     userId : number ;
 };
 
+export type TransactionFilters = {
+    userId: number;
+    category?: Category;
+    startDate?: Date;
+    endDate?: Date;
+}; // this is used take in the info and struture it for later use 
+
 export const createTransaction = (transaction : CreateTransactionData) => {
 
     return prisma.transaction.create({data: {...transaction,}}); }
@@ -93,3 +100,33 @@ return prisma.transaction.findMany({
         // take : 5 tis comes at a later part of the system 
 });
 } 
+
+export const findTransactionsByFilters = (
+    filters: TransactionFilters
+) => {
+    return prisma.transaction.findMany({
+        where: {
+            userId: filters.userId,
+
+            ...(filters.category && {
+                category: filters.category,
+            }),
+
+            ...((filters.startDate || filters.endDate) && {
+                transactionDate: {
+                    ...(filters.startDate && {
+                        gte: filters.startDate,
+                    }),
+
+                    ...(filters.endDate && {
+                        lte: filters.endDate,
+                    }),
+                },
+            }),
+        },
+
+        orderBy: {
+            transactionDate: "desc",
+        },
+    });
+};

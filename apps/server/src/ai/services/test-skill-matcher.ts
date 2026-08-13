@@ -6,11 +6,10 @@ const matcher = new SkillMatcher();
 const test = async () => {
 
     const result = await matcher.match(
-        "what is the capital of france ?",
-        [retrivalSkill]
+        "what did spend on eating out  ?"
     );
 
-    console.log(result);
+    console.log("Final results " , result);
 
 };
 
