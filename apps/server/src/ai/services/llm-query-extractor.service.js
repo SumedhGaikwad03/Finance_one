@@ -1,19 +1,12 @@
-import { QueryExtractor , LLMProvider } from "../types/query-extractor.types";
-import { AIQuestion} from "../types/ai.types";
-import { TransactionQuery } from "../types/transaction-query.types";
-import {transactionQuerySchema} from "../schemas/question.schema"
+import { transactionQuerySchema } from "../schemas/question.schema";
 import { resolveDateRange } from "../utils/date-range.utils";
-
 /* Turn a user's natural-language question into a structured query intent and eventually an executable TransactionQuery. */
-export class LLMQueryExtractor implements QueryExtractor {
-
-      constructor(
-        private readonly llmProvider: LLMProvider
-    ) {} // right now the llm provider is ollama 
-
-    async extract(question: AIQuestion): Promise<TransactionQuery> {
-
-        
+export class LLMQueryExtractor {
+    llmProvider;
+    constructor(llmProvider) {
+        this.llmProvider = llmProvider;
+    } // right now the llm provider is ollama 
+    async extract(question) {
         // LLM implementation later
         const prompt = `
 You are a transaction query extraction system.
@@ -126,33 +119,19 @@ Do not include fields that are not required.
 User question:
 ${question.question}
 `;
-
-// this is the query tha we send to the llm we be working on 
-const response = await this.llmProvider.generate(prompt);
-
-const parsed = JSON.parse(response);
-
-const validated = transactionQuerySchema.parse(parsed);
-
-   
-        const query: TransactionQuery = {
+        // this is the query tha we send to the llm we be working on 
+        const response = await this.llmProvider.generate(prompt);
+        const parsed = JSON.parse(response);
+        const validated = transactionQuerySchema.parse(parsed);
+        const query = {
             operation: validated.operation,
             category: validated.category,
         };
-
         if (validated.dateRange) {
-
-            const range = resolveDateRange(
-                validated.dateRange
-            );
-
+            const range = resolveDateRange(validated.dateRange);
             query.startDate = range.startDate;
             query.endDate = range.endDate;
         }
-
         return query;
     }
 }
-
-
-

@@ -8,7 +8,10 @@ export const ENDPOINTS = {
 
     DASHBOARD: "/dashboard",
 
-    TRANSACTIONS: "/transactions",
+    TRANSACTIONS: {
+        ROOT: "/transactions",
+        MY: "/transactions/getMyTransactions",
+    },
 
     BUDGETS: {
         ROOT: "/budgets",

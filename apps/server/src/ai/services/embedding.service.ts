@@ -1,6 +1,6 @@
 import type { Transaction } from "../../generated/prisma/client";
 import type { TransactionDocument } from "../types/ai.types";
-import { formatTransactionsDate } from "../utils/date.utils";
+import { formatTransactionsDate } from "../utils/date-range.utils";
 import {openai} from "../config/openai"; // open ai client is imported 
 import { embeddingProvider } from "../config/embedding";
 /**

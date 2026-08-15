@@ -26,7 +26,24 @@ export interface Transaction {
 
     priority: string;
 
-    transactionDate: string;
+    transactionDate: string ;
+
+}
+
+export interface CreateTransactionRequest {
+
+    amount : number;
+
+    category: string;
+
+    priority: string;
+
+    title?: string;
+
+    notes?: string;
+
+    transactionDate?: string;
+
 
 }
 

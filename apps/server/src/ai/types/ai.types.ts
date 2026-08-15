@@ -1,6 +1,6 @@
 // Represents a document that will be stored
 // inside the vector database.
-
+// types define structe of data object 
 export interface TransactionDocument {
 
     content: string;

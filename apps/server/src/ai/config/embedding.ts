@@ -10,6 +10,10 @@ import { OllamaEmbeddingProvider } from "../providers/ollama-embedding.provider"
 
 export const embeddingProvider : EmbeddingProvider = 
   new OllamaEmbeddingProvider(); // intialising the object for ollama embeddings 
+// right now we use ollma but later on we can switch for better alternatives 
+
+
+
 
 
   

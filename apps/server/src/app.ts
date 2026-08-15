@@ -30,6 +30,8 @@ app.use("/api/budgets", budgetRoutes);
 app.use("/api/transactions", transactionRouter); // this is the route for the transaction controller which is used for creating 
 // transactions
 // this is the routes for the auth controller which is used for user registration and login
+// this is the calling point for trnsasctions 
+
 
 app.use(errorMiddleware); // this is the error middleware which catches erreos when tthey bubble up 
 

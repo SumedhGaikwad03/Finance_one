@@ -1,28 +1,17 @@
 import { z } from "zod";
 import { Category } from "../../generated/prisma/enums";
-
 export const aiQuestionSchema = z.object({
     question: z.string().min(1),
 });
-
-export type AIQuestionInput = z.infer<
-    typeof aiQuestionSchema
->;
-
-
 // now we produce date range schema as we dont yet trust llm fully as it might give some weird type so we double check the op of the 
 // system in the flow 
-
 const dateRangeIntentSchema = z.discriminatedUnion("type", [
-
     z.object({
         type: z.literal("RELATIVE"),
-
         amount: z
             .number()
             .int()
             .positive(),
-
         unit: z.enum([
             "DAY",
             "WEEK",
@@ -30,10 +19,8 @@ const dateRangeIntentSchema = z.discriminatedUnion("type", [
             "YEAR",
         ]),
     }),
-
     z.object({
         type: z.literal("CALENDAR_PERIOD"),
-
         period: z.enum([
             "TODAY",
             "YESTERDAY",
@@ -45,20 +32,12 @@ const dateRangeIntentSchema = z.discriminatedUnion("type", [
             "LAST_YEAR",
         ]),
     }),
-
     z.object({
         type: z.literal("ABSOLUTE"),
-
         startDate: z.string().datetime(),
-
         endDate: z.string().datetime(),
     }),
 ]);
-
-export type DateRangeIntent = z.infer<
-    typeof dateRangeIntentSchema
->;
-
 export const transactionQuerySchema = z.object({
     operation: z.enum([
         "SUM",
@@ -67,8 +46,6 @@ export const transactionQuerySchema = z.object({
         "MAX",
         "MIN",
     ]),
-
     category: z.nativeEnum(Category).optional(),
-
-    dateRange : dateRangeIntentSchema.optional(),
+    dateRange: dateRangeIntentSchema.optional(),
 }).strict();

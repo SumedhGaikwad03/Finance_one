@@ -1,6 +1,6 @@
 // this is child class or an extentention of the inteface we just defined and here we defind as 
 
-
+// we provide a number to this file and in turn it gives us a number (vector) to be sfor our embeddings 
 import { EmbeddingProvider } from "./embedding.provider";
 
 export class OllamaEmbeddingProvider implements EmbeddingProvider { // this a class that implements the interface that we
