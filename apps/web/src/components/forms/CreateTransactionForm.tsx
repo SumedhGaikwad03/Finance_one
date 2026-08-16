@@ -9,6 +9,7 @@ import {
 interface CreateTransactionFormProps {
     onSubmit: (data: CreateTransactionFormData) => void;
 }
+// here anyone using the the create trnsactionn propps must use an onsubmit function which will receive vaildated data 
 
 const CreateTransactionForm = ({
     onSubmit,
@@ -18,7 +19,7 @@ const CreateTransactionForm = ({
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<CreateTransactionFormData>({
+    } = useForm<CreateTransactionFormData>({ // our react that what type of data or shape of data we expect here 
         resolver: zodResolver(createTransactionSchema),
     });
 

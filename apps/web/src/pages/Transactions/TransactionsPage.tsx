@@ -18,23 +18,32 @@ const TransactionsPage = () => {
         data: transactions,
         isLoading,
         error,
-    } = useQuery({
-        queryKey: ["transactions"],
-        queryFn: transactionService.getMyTransactions,
+        // by using react query we get abstraction at a very high level as we get data,isloadingand is error and auto caching 
+    } = useQuery({ // use query automatically handels fetching ,caching ans suncronization form api 
+        queryKey: ["transactions"], // uses this key to cache the results and if any other componets call this key then the same data 
+        //will be retruned 
+        queryFn: transactionService.getMyTransactions, // this is in built asyncronous function that does the api calls and returns data and loads 
+        // the page back up when we receive data 
+
+
     });
 
 
     const createTransactionMutation = useMutation({
-
+    // this function mutation is used to modify data on the server , technically use mutate creates a setup plan but the .mutate acts as a
+    // trigger to start execution that is defined here 
         mutationFn:
-            transactionService.createTransaction,
+            transactionService.createTransaction, // give a call to the server with all the data  and chage the data in the sever we have , its technically  an async action 
+            // 
 
-        onSuccess: () => {
+        onSuccess: () => {// this is a life cycle call back  to be execute if the function executes sucess fully and then code is executed 
+
+
 
             queryClient.invalidateQueries({
-                queryKey: ["transactions"],
+                queryKey: ["transactions"], // this checkes the caching happening in our app as with the label as key for trnasactions 
             });
-
+ // on succes it tells our react query to refresh the transaction so it shows new trnasactions 
         },
 
         onError: (error) => {
@@ -53,9 +62,12 @@ const TransactionsPage = () => {
         data: CreateTransactionFormData
     ) => {
 
-        createTransactionMutation.mutate(data);
+        createTransactionMutation.mutate(data); // calls the mutate function for the query as this triggers the mutate function that is further 
+        // defined in the code ahead for execution 
+
 
     };
+    // this is the function that catch 
 
 
     if (isLoading) {
@@ -75,7 +87,8 @@ const TransactionsPage = () => {
 
             <CreateTransactionForm
                 onSubmit={handleCreateTransaction}
-            />
+            /> 
+            {/* while our forms submit this this function gets triggirerd as then the data is submitted to the backend  as we complete the from creation  which was rendered*/}
 
             {createTransactionMutation.isPending && (
                 <p>Creating transaction...</p>

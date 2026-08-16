@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { useNavigate } from "react-router-dom";
+
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import StatsSection from "../../components/dashboard/StatsSection";
 import ChartsSection from "../../components/dashboard/ChartsSection";
@@ -8,6 +10,8 @@ import RecentTransactions from "../../components/dashboard/RecentTransactions";
 import * as dashboardService from "../../services/dashboard.service";
 
 const DashboardPage = () => {
+
+    const navigate = useNavigate();
 
     const {
 
@@ -58,6 +62,13 @@ const DashboardPage = () => {
                 usage={`${data.budgetUsage}%`}
 
             />
+
+            <button
+    type="button"
+    onClick={() => navigate("/transactions")}
+>
+    Add Transaction
+</button>
 
             <ChartsSection
 

@@ -1,4 +1,5 @@
 export const ENDPOINTS = {
+// stores all api path in one location so it helps modulate the api logic and keeping t fileible 
 
     AUTH: {
         LOGIN: "/auth/login",
@@ -18,4 +19,4 @@ export const ENDPOINTS = {
         ACTIVE: "/budgets/active",
     },
 
-} as const;
+} as const; 
