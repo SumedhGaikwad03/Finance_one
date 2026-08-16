@@ -43,6 +43,28 @@ export const createBudget = async ( data : budgetInterface.BudgetCreationRequest
 }
 
 
+// this is the function to update budget 
+
+export const updateBudget = async ( id : number , data : Partial<budgetInterface.BudgetCreationRequest>) : Promise<budgetInterface.Budget>  => {
+
+const response = await api.patch(
+    `${ENDPOINTS.BUDGETS.ROOT}/${id}`,
+    data
+)
+return response.data;
+}
+
+// this is a function to delete the budget 
+
+export const deleteBudget = async ( id: number ) :Promise<void> => {
+
+    await api.delete(
+        `${ENDPOINTS.BUDGETS.ROOT}/${id}`
+    )
+ // now need to returna and save data for this 
+
+}
+
 
 
 

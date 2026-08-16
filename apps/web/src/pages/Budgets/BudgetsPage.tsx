@@ -8,11 +8,13 @@ import * as budgetService from "../../services/budget.service";
 
 import CreateBudgetForm from "../../components/forms/CreateBudgetForm";
 
+import * as BudgetInterface from "../../types/budget.types";
+
 import type {
     CreateBudgetFormData,
 } from "../../utils/budget.schema";
 
-
+import BudgetCard from "../../components/budgets/budgetCard";
 
 const BudgetsPage = () => {
 
@@ -62,6 +64,75 @@ const createBudgetMutation = useMutation({
 
     };
 
+    const handleDelete = (id: number) => {
+
+    const confirmed = window.confirm(
+        "Are you sure you want to delete this budget?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    deleteBudgetMutation.mutate(id);
+};
+
+
+   const updateBudgetMutation = useMutation({
+
+    mutationFn: ({
+        id,
+        data,
+    }: {
+        id: number;
+        data: Partial<BudgetInterface.BudgetCreationRequest>;
+    }) =>
+        budgetService.updateBudget(id, data),
+
+    onSuccess: () => {
+
+        queryClient.invalidateQueries({
+            queryKey: ["budgets"],
+        });
+
+    },
+
+    onError: (error) => {
+
+        console.error(
+            "Failed to update budget:",
+            error
+        );
+
+    },
+
+});
+
+const deleteBudgetMutation = useMutation({
+
+    mutationFn: budgetService.deleteBudget,
+
+    onSuccess: () => {
+
+        queryClient.invalidateQueries({
+            queryKey: ["budgets"],
+        });
+
+    },
+
+    onError: (error) => {
+
+        console.error(
+            "Failed to delete budget:",
+            error
+        );
+
+    },
+
+});
+
+
+
 
     if (isLoading) {
         return <h1>Loading Budgets...</h1>;
@@ -96,32 +167,17 @@ const createBudgetMutation = useMutation({
 
                     budgets?.map((budget) => (
 
-                        <div key={budget.id}>
-
-                            <h3>
-                                ₹{budget.amount}
-                            </h3>
-
-                            <p>
-                                Period: {budget.periodType}
-                            </p>
-
-                            <p>
-                                Start Date:{" "}
-                                {new Date(
-                                    budget.startDate
-                                ).toLocaleDateString()}
-                            </p>
-
-                            <p>
-    Lock Status:{" "}
-    {budget.isLocked
-        ? "Locked"
-        : "Unlocked"}
-</p>
-
-                        </div>
-
+    <BudgetCard
+    key={budget.id}
+    budget={budget}
+    onEdit={(budget) => {
+        console.log("Edit:", budget);
+    }}
+    onLock={(id) => {
+        console.log("Lock:", id);
+    }}
+    onDelete={handleDelete}
+/>
                     ))
 
                 )}
