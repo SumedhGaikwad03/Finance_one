@@ -8,8 +8,9 @@ interface BudgetCardProps {
 }
 
 const BudgetCard = ({
-    budget,
-    onDelete,
+    budget, // this tells what is budget it had recived form the parent 
+    onDelete,// this is an handoff function as when the click appers on the card then this function will be called in the parent 
+    // same goes for the code below 
     onEdit,
     onLock,
 }: BudgetCardProps) => {

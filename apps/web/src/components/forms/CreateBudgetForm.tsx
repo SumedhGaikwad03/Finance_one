@@ -19,7 +19,8 @@ const CreateBudgetForm = ({
 }: CreateBudgetFormProps) => {
 
     const {
-        register,
+        register, // this is used for abstartion of states as rather than react we use broweser native mem to store states and in on swoop react
+        // catches the obj of all the chaged states 
         handleSubmit,
         formState: { errors },
     } = useForm<CreateBudgetFormData>({
@@ -28,7 +29,7 @@ const CreateBudgetForm = ({
             isLocked: false,
         },
     });
-
+// this is just rendering the form  
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
 

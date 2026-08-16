@@ -12,17 +12,18 @@ import {
 
 import type { Budget } from "../../types/budget.types";
 
-interface EditBudgetFormProps {
-    budget: Budget;
-    onSubmit: (data: CreateBudgetFormData) => void;
-    onCancel: () => void;
+interface EditBudgetFormProps { // i feel logic is too dense and coupled in this file i need to make it modular 
+    budget: Budget; // this tell forms what budget and data it is working on as it needs some foot hold on what data is needed 
+    onSubmit: (data: CreateBudgetFormData) => void; // pack all the data into the "data" and hand off the onsubit to parent that is our main 
+    //budget form 
+    onCancel: () => void; // same goes here 
 }
 
 const EditBudgetForm = ({
-    budget,
+    budget,// these are inputs that we consider when  user tries to edit a form 
     onSubmit,
     onCancel,
-}: EditBudgetFormProps) => {
+}: EditBudgetFormProps) => { // o/p is this format 
 
     const {
         register,
@@ -31,7 +32,7 @@ const EditBudgetForm = ({
     } = useForm<CreateBudgetFormData>({
         resolver: zodResolver(createBudgetSchema),
 
-        defaultValues: {
+        defaultValues: { // defalut values for the from 
             amount: Number(budget.amount),
             periodType: budget.periodType,
             startDate: budget.startDate.slice(0, 10),

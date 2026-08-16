@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
 
-    baseURL: import.meta.env.VITE_API_URL, // the is a place holder for backend ui 
+    baseURL: import.meta.env.VITE_API_URL, // points to the backend sever api 
 
     headers: {
         "Content-Type": "application/json",
@@ -10,7 +10,7 @@ const api = axios.create({
 
 });
 
-api.interceptors.request.use( // this essentially translaes to as before every req leaves the browser to the foolwing 
+api.interceptors.request.use( // this essentially translates  to as before every req leaves the browser to the following
 
     (config) => {
 

@@ -12,9 +12,10 @@ const StatCard =({
 
     title , 
     value 
-} : StatCardProps) => { // take this two propeties from statsCardprops as title , value 
+} : StatCardProps) => { // take this two propeties from statsCardprops as title , value from the parent , this file is simple 
  return (
     <div>
+        
         <h3>
             {title} 
         </h3>

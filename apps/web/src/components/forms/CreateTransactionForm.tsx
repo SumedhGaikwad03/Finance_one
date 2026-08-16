@@ -4,26 +4,30 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
     createTransactionSchema,
     type CreateTransactionFormData,
-} from "../../utils/transaction.schema";
+} from "../../utils/transaction.schema"; // we import this as a type as its a compile time import and it helps us catch errors before anything 
+// in the app crashs at runtime 
 
 interface CreateTransactionFormProps {
     onSubmit: (data: CreateTransactionFormData) => void;
 }
-// here anyone using the the create trnsactionn propps must use an onsubmit function which will receive vaildated data 
+// here anyone using the the create transaction  props  must use an onsubmit function which will receive vaildated data 
 
 const CreateTransactionForm = ({
     onSubmit,
 }: CreateTransactionFormProps) => {
 
     const {
-        register,
+        register, // this is an function that bypasses the use of react states as insted of react using its native memory it uses 
+        // the memeory of the browser as the browers remebers what input the user has provided 
         handleSubmit,
         formState: { errors },
     } = useForm<CreateTransactionFormData>({ // our react that what type of data or shape of data we expect here 
-        resolver: zodResolver(createTransactionSchema),
+        resolver: zodResolver(createTransactionSchema),// is used to check if the user has enterd validated data 
     });
-
+ // below is just the frontnd stuff that renders the from 
     return (
+
+        
         <form onSubmit={handleSubmit(onSubmit)}>
 
             <h2>Add Transaction</h2>
@@ -33,9 +37,10 @@ const CreateTransactionForm = ({
 
                 <input
                     type="number"
-                    step="0.01"
-                    {...register("amount", {
-                        valueAsNumber: true,
+                    step="0.01" //this tells browser how to restrict the user input 
+                    {...register("amount", { // the register part crates hidden input event listners manages all the sates and react hook form
+                        //can track the data under name amount 
+                        valueAsNumber: true, // froces the browser to convert every browser to a string 
                     })}
                 />
 

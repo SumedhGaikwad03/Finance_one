@@ -5,7 +5,7 @@ import TransactionRow from "./TransactionRow";
 // We receive all the transactions that need to be displayed.
 type RecentTransactionsProps = {
 
-    transactions: Transaction[];
+    transactions: Transaction[]; // this tells that this child will recieve an array of tranctions from the parent 
 
 };
 
@@ -13,9 +13,9 @@ type RecentTransactionsProps = {
 // the entire transactions table.
 const RecentTransactions = ({
 
-    transactions,
+    transactions, // this is the data received form the parent 
 
-}: RecentTransactionsProps) => {
+}: RecentTransactionsProps) => { // maps tnsactions into  a row 
 
     return (
 

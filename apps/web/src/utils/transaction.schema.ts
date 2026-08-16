@@ -1,6 +1,7 @@
 import {z} from "zod"; 
 // right now dupication is possible but later on we can have a shared file that has all the types that depends on the structure of these notes 
 // that shared file would help the frontend and backend understand structure without logical coupling 
+// this is file that is essentially the zod of the frontend data 
 
 export const createTransactionSchema = z.object({
 

@@ -13,17 +13,17 @@ type ChartsSectionProps = {
 // Responsible only for arranging both charts.
 const ChartsSection = ({
 
-    categoryTotals,
+    categoryTotals, // receives the info from thr parent 
 
     priorityTotals,
 
-}: ChartsSectionProps) => {
+}: ChartsSectionProps) => { // expexts a jsx object in this structure to return 
 
     return (
 
         <section>
 
-            <CategoryChart
+            <CategoryChart // again a sub child 
 
                 categoryTotals={categoryTotals}
 

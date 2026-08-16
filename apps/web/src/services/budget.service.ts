@@ -33,13 +33,13 @@ export const getMyBudgets = async () => {
 
 export const createBudget = async ( data : budgetInterface.BudgetCreationRequest) => {
 
-    const response = api.post( 
+    const response = await api.post( 
         ENDPOINTS.BUDGETS.ROOT,
         data
     ) // we obv need to send data or else the post endpoint would not mean a thing !! 
 
 
-    return (await response).data; 
+    return ( response).data; 
 }
 
 

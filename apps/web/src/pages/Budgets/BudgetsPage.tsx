@@ -22,22 +22,24 @@ import EditBudgetForm from "../../components/forms/EditBudgetForm";
 const BudgetsPage = () => {
 
     const [editingBudget, setEditingBudget] =
-    useState<BudgetInterface.Budget | null>(null);
+    useState<BudgetInterface.Budget | null>(null); // tracks which budget the user is currently editing we need this as react needs to know what 
+    // the form is tracking currently 
+
     const {
         data: budgets,
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["budgets"],
-        queryFn: budgetService.getMyBudgets,
+        queryKey: ["budgets"], // cheks cache mem
+        queryFn: budgetService.getMyBudgets,// then the call for the actual function goes on 
     });
-
+// automatically fetched user budgets 
 
     
 const queryClient = useQueryClient(); 
 
 
-
+// contains the logic for mutate oprations on server for various things 
 const createBudgetMutation = useMutation({
 
     mutationFn: budgetService.createBudget,
@@ -45,7 +47,7 @@ const createBudgetMutation = useMutation({
     onSuccess: () => {
 
         queryClient.invalidateQueries({
-            queryKey: ["budgets"],
+            queryKey: ["budgets"], // tells the browser that the current data is old and forces it to pull data from the server 
         });
 
     },
@@ -61,6 +63,8 @@ const createBudgetMutation = useMutation({
 
 });
 
+
+// these functions handeled the mutations for budget creation for budget 
     const handleCreateBudget = (
         data: CreateBudgetFormData
     ) => {

@@ -31,10 +31,12 @@ const TransactionsPage = () => {
 
     const createTransactionMutation = useMutation({
     // this function mutation is used to modify data on the server , technically use mutate creates a setup plan but the .mutate acts as a
-    // trigger to start execution that is defined here 
+    // trigger to start execution that is defined here in this snippet 
+    // the reason we use muataion to change the data on server is the reason as we use react query abstraction this abstraction helps us 4
+    // easy data propagationa and less to worry about defining the redundan structure 
         mutationFn:
             transactionService.createTransaction, // give a call to the server with all the data  and chage the data in the sever we have , its technically  an async action 
-            // 
+            // this i kinda the api call 
 
         onSuccess: () => {// this is a life cycle call back  to be execute if the function executes sucess fully and then code is executed 
 

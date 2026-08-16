@@ -15,9 +15,9 @@ const DashboardPage = () => {
 
     const {
 
-        data,
+        data, // this the data that is revied via the api call to the backend 
 
-        isLoading,
+        isLoading, // derived form the tan stack query same goes for erroe 
 
         error,
 
@@ -25,7 +25,8 @@ const DashboardPage = () => {
 
         queryKey: ["dashboard"],
 
-        queryFn: dashboardService.getDashboardData,
+        queryFn: dashboardService.getDashboardData, // tan staack query to fetch entire dashboard in a hit  , this runs first then we get data and all
+        // that is defined above 
 
     });
 
@@ -50,9 +51,9 @@ const DashboardPage = () => {
                 username="Sumedh"
 
             />
-
+ 
             <StatsSection
-
+// this is basic layout of data 
                 budget={
                     data.budget
                         ? `₹${data.budget.amount}`
@@ -77,7 +78,7 @@ const DashboardPage = () => {
 
             <button
                 type="button"
-                onClick={() => navigate("/transactions")}
+                onClick={() => navigate("/transactions")} // navigates to new page in data 
             >
                 Add Transaction
             </button>

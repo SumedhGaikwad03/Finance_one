@@ -10,17 +10,17 @@ type StatSectionProps = {
 
 const StatSection = ({
 
-    budget , 
+    budget , // all of these props are received from the parent via the call to this function 
     spent , 
     remaining , 
     usage ,
-}: StatSectionProps) => {
+}: StatSectionProps) => { // the o/p of this function is an jsx element  in this structure 
 
     return (
 
         <section>
 
-            <StatCard
+            <StatCard // here again this is child of stat section 
                 title="Total Budget"
                 value={budget}
             />

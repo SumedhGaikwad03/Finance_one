@@ -7,8 +7,9 @@ import TransactionsPage from "../pages/Transactions/TransactionsPage";
 import BudgetsPage from "../pages/Budgets/BudgetsPage";
 import NotFoundPage from "../pages/NotFound/NotFoundPage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
-
-export const router = createBrowserRouter([
+// this is the global routing configration for react router dom 
+//
+export const router = createBrowserRouter([// this takes an array of routing objects and enables modern routhing features 
 
     {
         path: "/",
