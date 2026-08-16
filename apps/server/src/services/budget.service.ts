@@ -48,15 +48,20 @@ export const getActiveBudget = async (userId: number) => {
     // this gives us all the budgets in our system
     const todaysDate = new Date();
     console.log("Today:", todaysDate);
+
     // now we have find the budget that is active right now
     for (const budget of existingBudgets) {
-  console.log("Budget Start:", budget.startDate);
+
+        console.log("Budget Start:", budget.startDate);
+
         // a call to the fn to find end date
         const endDate = calculateEndDate(
             budget.startDate,
             budget.periodType
         );
-     console.log("Budget End:", endDate);
+
+        console.log("Budget End:", endDate);
+
         // check is date fall into this range
         if (
             todaysDate >= budget.startDate &&
@@ -69,11 +74,46 @@ export const getActiveBudget = async (userId: number) => {
     throw new BudgetNotFoundError("No active budget found.");
 };
 
+
+// This version is used by the dashboard because having
+// no active budget is a valid dashboard state.
+export const getActiveBudgetOrNull = async (userId: number) => {
+
+    const existingBudgets =
+        await budgetRepository.findBudgetByUser(userId);
+
+    // this gives us all the budgets in our system
+    const todaysDate = new Date();
+
+    // now we have find the budget that is active right now
+    for (const budget of existingBudgets) {
+
+        // a call to the fn to find end date
+        const endDate = calculateEndDate(
+            budget.startDate,
+            budget.periodType
+        );
+
+        // check is date fall into this range
+        if (
+            todaysDate >= budget.startDate &&
+            todaysDate <= endDate
+        ) {
+            return budget;
+        }
+    }
+
+    // No active budget is not an error for the dashboard.
+    return null;
+};
+
+
 export const getMyBudget = async (userId: number) => {
 
     return await budgetRepository.findBudgetByUser(userId);
 
 };
+
 
 export const updateBudget = async (
     id: number,
@@ -123,11 +163,34 @@ export const updateBudget = async (
     return await budgetRepository.updateBudget(id, input);
 
 };
-export const deleteBudget = async (id : number , userId : number ) => {
 
-     const budget = await budgetRepository.findBudgetById(id); 
 
-       if (!budget || budget.userId !== userId) {
+export const deleteBudget = async (
+    id: number,
+    userId: number
+) => {
+
+    const budget =
+        await budgetRepository.findBudgetById(id);
+
+    if (!budget || budget.userId !== userId) {
+        throw new BudgetNotFoundError(
+            "Budget does not exist or user does not have access."
+        );
+    }
+
+    return await budgetRepository.deleteBudget(id);
+};
+
+
+export const lockBudget = async (
+    id: number,
+    userId: number
+) => {
+
+    const budget = await budgetRepository.findBudgetById(id);
+
+    if (!budget || budget.userId !== userId) {
         throw new BudgetNotFoundError(
             "Budget does not exist or user does not have access."
         );
@@ -140,28 +203,9 @@ export const deleteBudget = async (id : number , userId : number ) => {
         );
     }
 
-    return await budgetRepository.deleteBudget(id); 
-}
+    return await budgetRepository.updateBudget(
+        id,
+        { isLocked: true }
+    ); // we change the field to be true
 
-export const lockBudget = async ( id:number , userId : number) => {
-
-    const budget = await budgetRepository.findBudgetById(id); 
-
-       if (!budget || budget.userId !== userId) {
-        throw new BudgetNotFoundError(
-            "Budget does not exist or user does not have access."
-        );
-    }
-
-    // locked budgets cannot be updated
-    if (budget.isLocked) {
-        throw new BudgetLockedError(
-            "Budget is locked and cannot be modified."
-        );
-    }
-
-     return await budgetRepository.updateBudget(id , {isLocked : true}); // we change the field to be true 
-
-
-
-}
+};

@@ -68,7 +68,7 @@ export const deleteBudget = async (req : Request , res : Response , next : NextF
 
     await budgetService.deleteBudget(id,userId);
 
-    res.status(204);
+    res.sendStatus(204);
 }
 
 export const lockBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 

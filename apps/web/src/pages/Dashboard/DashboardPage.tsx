@@ -53,22 +53,34 @@ const DashboardPage = () => {
 
             <StatsSection
 
-                budget={`₹${data.budget.amount}`}
+                budget={
+                    data.budget
+                        ? `₹${data.budget.amount}`
+                        : "Nil"
+                }
 
                 spent={`₹${data.totalSpent}`}
 
-                remaining={`₹${data.remainingBudget}`}
+                remaining={
+                    data.remainingBudget !== null
+                        ? `₹${data.remainingBudget}`
+                        : "Nil"
+                }
 
-                usage={`${data.budgetUsage}%`}
+                usage={
+                    data.budgetUsage !== null
+                        ? `${data.budgetUsage}%`
+                        : "Nil"
+                }
 
             />
 
             <button
-    type="button"
-    onClick={() => navigate("/transactions")}
->
-    Add Transaction
-</button>
+                type="button"
+                onClick={() => navigate("/transactions")}
+            >
+                Add Transaction
+            </button>
 
             <ChartsSection
 

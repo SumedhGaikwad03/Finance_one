@@ -8,37 +8,60 @@ export const getDashboardData = async (userId: number) => {
 
 
     // Step 1 : Get the active budget
-    const budget = await budgetService.getActiveBudget(userId);
+    // If there is no active budget, the dashboard should still work.
+    const budget =
+        await budgetService.getActiveBudgetOrNull(userId);
 
-    // Step 2 : Calculate the end date for the active budget
-    const endDate = calculateEndDate(
-        budget.startDate,
-        budget.periodType
-    );
 
-    // Step 3 : Fetch all transactions within this budget period
-    const transactions =
-        await transactionRepository.findTransactionsBetweenDates(
-            userId,
+    let transactions;
+
+    if (budget) {
+
+        // Step 2 : Calculate the end date for the active budget
+        const endDate = calculateEndDate(
             budget.startDate,
-            endDate
+            budget.periodType
         );
+
+        // Step 3 : Fetch all transactions within this budget period
+        transactions =
+            await transactionRepository.findTransactionsBetweenDates(
+                userId,
+                budget.startDate,
+                endDate
+            );
+
+    } else {
+
+        // If there is no active budget, we still want to show
+        // the user's transactions on the dashboard.
+        transactions =
+            await transactionRepository.getMyTransactions(
+                userId
+            );
+
+    }
+
 
     // Step 4 : Calculate analytics
     const totalSpent =
         analyticsService.calculateTotalSpent(transactions);
 
     const remainingBudget =
-        analyticsService.calculateRemainingBudget(
-            budget.amount,
-            totalSpent
-        );
+        budget
+            ? analyticsService.calculateRemainingBudget(
+                budget.amount,
+                totalSpent
+            )
+            : null;
 
     const budgetUsage =
-        analyticsService.calculateBudgetUsage(
-            budget.amount,
-            totalSpent
-        );
+        budget
+            ? analyticsService.calculateBudgetUsage(
+                budget.amount,
+                totalSpent
+            )
+            : null;
 
     const categoryTotals =
         analyticsService.calculateCategoryTotals(
@@ -60,20 +83,22 @@ export const getDashboardData = async (userId: number) => {
             transactions
         );
 
-    const averageDailySpend = 
-       analyticsService.calculateAverageDailySpend(transactions);  
-       
-       const averageTransaction =
-    analyticsService.calculateAverageTransaction(
-        transactions
-    );
+    const averageDailySpend =
+       analyticsService.calculateAverageDailySpend(
+           transactions
+       );
+
+    const averageTransaction =
+        analyticsService.calculateAverageTransaction(
+            transactions
+        );
 
     // Step 5 : Return everything needed by the dashboard
     return {
 
         budget,
 
-       recentTransactions: transactions,
+        recentTransactions: transactions,
 
         totalSpent,
 

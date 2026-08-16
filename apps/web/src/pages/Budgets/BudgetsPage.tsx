@@ -4,6 +4,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 
+import { useState } from "react";
 import * as budgetService from "../../services/budget.service";
 
 import CreateBudgetForm from "../../components/forms/CreateBudgetForm";
@@ -16,8 +17,12 @@ import type {
 
 import BudgetCard from "../../components/budgets/budgetCard";
 
+import EditBudgetForm from "../../components/forms/EditBudgetForm";
+// i think right now the logic is hair balling inside this file but ill make it modular once i get it all sorted and reversed enggerned 
 const BudgetsPage = () => {
 
+    const [editingBudget, setEditingBudget] =
+    useState<BudgetInterface.Budget | null>(null);
     const {
         data: budgets,
         isLoading,
@@ -64,6 +69,21 @@ const createBudgetMutation = useMutation({
 
     };
 
+    const handleUpdateBudget = (
+    data: CreateBudgetFormData
+) => {
+
+    if (!editingBudget) {
+        return;
+    }
+
+    updateBudgetMutation.mutate({
+        id: editingBudget.id,
+        data,
+    });
+
+};
+
     const handleDelete = (id: number) => {
 
     const confirmed = window.confirm(
@@ -76,6 +96,48 @@ const createBudgetMutation = useMutation({
 
     deleteBudgetMutation.mutate(id);
 };
+
+const handleEdit = (budget: BudgetInterface.Budget) => {
+
+    setEditingBudget(budget);
+
+};
+
+const handelLock = (id:number ) => {
+
+    const confirmed = window.confirm(
+        "are you sure you want to lock this budget , u will not be able to undo this "
+    );
+
+    if(!confirmed){
+        return ;
+    }
+
+    lockBudgetMutations.mutate(id);
+}
+
+const lockBudgetMutations = useMutation ({
+
+    mutationFn : budgetService.lockBudget , 
+
+    onSuccess : ()  => {
+
+        queryClient.invalidateQueries({
+            queryKey : ["budgets"],
+        });
+
+
+    }, 
+
+    onError :(error) => {
+
+        console.error("failed to lock the budget :" ,
+            error
+        );
+    }
+
+
+});
 
 
    const updateBudgetMutation = useMutation({
@@ -150,9 +212,23 @@ const deleteBudgetMutation = useMutation({
             <h1>My Budgets</h1>
 
 
-            <CreateBudgetForm
-                onSubmit={handleCreateBudget}
-            />
+           {editingBudget ? (
+
+    <EditBudgetForm
+        budget={editingBudget}
+        onSubmit={handleUpdateBudget}
+        onCancel={() => {
+            setEditingBudget(null);
+        }}
+    />
+
+) : (
+
+    <CreateBudgetForm
+        onSubmit={handleCreateBudget}
+    />
+
+)}
 
 
             <section>
@@ -170,12 +246,9 @@ const deleteBudgetMutation = useMutation({
     <BudgetCard
     key={budget.id}
     budget={budget}
-    onEdit={(budget) => {
-        console.log("Edit:", budget);
-    }}
-    onLock={(id) => {
-        console.log("Lock:", id);
-    }}
+    onEdit={handleEdit}
+    onLock={handelLock} 
+    
     onDelete={handleDelete}
 />
                     ))

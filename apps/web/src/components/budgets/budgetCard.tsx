@@ -10,8 +10,8 @@ interface BudgetCardProps {
 const BudgetCard = ({
     budget,
     onDelete,
-    onEdit, 
-    onLock
+    onEdit,
+    onLock,
 }: BudgetCardProps) => {
 
     return (
@@ -43,34 +43,34 @@ const BudgetCard = ({
 
                 {!budget.isLocked && (
                     <>
-                       <button
-    type="button"
-    onClick={() => onEdit(budget)}
->
-    Edit
-</button>
+                        <button
+                            type="button"
+                            onClick={() => onEdit(budget)}
+                        >
+                            Edit
+                        </button>
 
-<button
-    type="button"
-    onClick={() => onLock(budget.id)}
->
-    Lock
-</button>
-
-<button
-    type="button"
-    onClick={() => onDelete(budget.id)}
->
-    Delete
-</button>
+                        <button
+                            type="button"
+                            onClick={() => onLock(budget.id)}
+                        >
+                            Lock
+                        </button>
                     </>
                 )}
 
-                {budget.isLocked && (
-                    <button type="button">
-                        View
-                    </button>
-                )}
+                <button
+                    type="button"
+                    onClick={() => onDelete(budget.id)}
+                >
+                    Delete
+                </button>
+
+                <button
+                    type="button"
+                >
+                    View
+                </button>
 
             </div>
 

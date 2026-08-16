@@ -64,6 +64,16 @@ export const deleteBudget = async ( id: number ) :Promise<void> => {
  // now need to returna and save data for this 
 
 }
+// the next code snippet is to lock an budget 
+
+export const lockBudget = async ( id : number ) :Promise<budgetInterface.Budget> => {
+
+    const response = await api.patch(
+        `${ENDPOINTS.BUDGETS.ROOT}/${id}/lock`
+    )
+
+    return response.data; 
+}
 
 
 
