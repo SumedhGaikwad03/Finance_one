@@ -1,46 +1,113 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Transaction } from "../../types/dashboard.types";
 
 import {
     createTransactionSchema,
     type CreateTransactionFormData,
-} from "../../utils/transaction.schema"; // we import this as a type as its a compile time import and it helps us catch errors before anything 
-// in the app crashs at runtime 
+} from "../../utils/transaction.schema"; // we import this as a type as its a compile time import and it helps us catch errors before anything
+// in the app crashs at runtime
 
 interface CreateTransactionFormProps {
     onSubmit: (data: CreateTransactionFormData) => void;
+    transaction?: Transaction;
+    onCancel?: () => void; // these two are used to populate the editing the form
 }
-// here anyone using the the create transaction  props  must use an onsubmit function which will receive vaildated data 
+// here anyone using the the create transaction props must use an onsubmit function which will receive vaildated data
+
+
+// this converts the date received from the backend into the format
+// that the datetime-local input expects
+const formatDateTimeLocal = (date: string) => {
+
+    const parsedDate = new Date(date);
+
+    const year = parsedDate.getFullYear();
+
+    const month = String(
+        parsedDate.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+        parsedDate.getDate()
+    ).padStart(2, "0");
+
+    const hours = String(
+        parsedDate.getHours()
+    ).padStart(2, "0");
+
+    const minutes = String(
+        parsedDate.getMinutes()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 
 const CreateTransactionForm = ({
     onSubmit,
+    transaction,
+    onCancel,
 }: CreateTransactionFormProps) => {
 
     const {
-        register, // this is an function that bypasses the use of react states as insted of react using its native memory it uses 
-        // the memeory of the browser as the browers remebers what input the user has provided 
+        register, // this is an function that bypasses the use of react states as insted of react using its native memory it uses
+        // the memeory of the browser as the browers remebers what input the user has provided
         handleSubmit,
+        reset, // this allows us to replace the current form values when the transaction being edited changes
         formState: { errors },
-    } = useForm<CreateTransactionFormData>({ // our react that what type of data or shape of data we expect here 
-        resolver: zodResolver(createTransactionSchema),// is used to check if the user has enterd validated data 
+    } = useForm<CreateTransactionFormData>({ // our react that what type of data or shape of data we expect here
+        resolver: zodResolver(createTransactionSchema), // is used to check if the user has enterd validated data
     });
- // below is just the frontnd stuff that renders the from 
+
+
+    // defaultValues are only used when the form is first created.
+    // reset allows the form to update when a different transaction is selected for editing.
+    useEffect(() => {
+
+        if (transaction) {
+
+            reset({
+                amount: Number(transaction.amount),
+                category: transaction.category,
+                priority: transaction.priority,
+                title: transaction.title ?? "",
+                notes: transaction.notes ?? "",
+                transactionDate: formatDateTimeLocal(
+                    transaction.transactionDate
+                ),
+            });
+
+            return;
+        }
+
+        // when there is no transaction we reset the form back to an empty create state
+        reset();
+
+    }, [transaction, reset]);
+
+
+    // below is just the frontnd stuff that renders the from
     return (
 
-        
         <form onSubmit={handleSubmit(onSubmit)}>
 
-            <h2>Add Transaction</h2>
+            <h2>
+                {transaction
+                    ? "Edit Transaction"
+                    : "Add Transaction"}
+            </h2>
 
             <div>
                 <label>Amount</label>
 
                 <input
                     type="number"
-                    step="0.01" //this tells browser how to restrict the user input 
+                    step="0.01" //this tells browser how to restrict the user input
                     {...register("amount", { // the register part crates hidden input event listners manages all the sates and react hook form
-                        //can track the data under name amount 
-                        valueAsNumber: true, // froces the browser to convert every browser to a string 
+                        //can track the data under name amount
+                        valueAsNumber: true, // froces the browser to convert every browser to a string
                     })}
                 />
 
@@ -136,8 +203,19 @@ const CreateTransactionForm = ({
             </div>
 
             <button type="submit">
-                Add Transaction
+                {transaction
+                    ? "Update Transaction"
+                    : "Add Transaction"}
             </button>
+
+            {transaction && onCancel && (
+                <button
+                    type="button"
+                    onClick={onCancel}
+                >
+                    Cancel
+                </button>
+            )}
 
         </form>
     );

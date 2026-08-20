@@ -45,31 +45,30 @@ export const findTransactionById = ( id : number) =>  {
 
 }
 
-export const updateTransaction = async ( id : number , input : transactionSchemas.UpdateTransactionInput  ) => { 
+export const updateTransaction = async (
+    id: number,
+    input: transactionSchemas.UpdateTransactionInput
+) => {
 
-   const data = {
-    ...input,
+    const data = {
+        ...input,
 
-    ...(input.amount !== undefined && {
-        amount: new Prisma.Decimal(input.amount),
-    }),
-};
+        ...(input.amount !== undefined && {
+            amount: new Prisma.Decimal(input.amount),
+        }),
+
+        ...(input.transactionDate !== undefined && {
+            transactionDate: new Date(input.transactionDate),
+        }),
+    };
 
     return prisma.transaction.update({
-        where : {
+        where: {
+            id: id
+        },
 
-           id : id  
-
-        }, 
-
-        data: input 
-    })
-
-    
-
-
-
-
+        data
+    });
 }
 
 

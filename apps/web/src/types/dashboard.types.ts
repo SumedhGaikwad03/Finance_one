@@ -23,9 +23,11 @@ export interface Transaction {
 
     amount: string;
 
-    category: string;
+    category: TransactionCategory;
 
-    priority: string;
+    priority: TransactionPriority;
+
+    notes : string  | null ; 
 
     transactionDate: string ;
 
@@ -33,11 +35,11 @@ export interface Transaction {
 
 export interface CreateTransactionRequest {
 
-    amount : number;
+    amount: number;
 
-    category: string;
+    category: TransactionCategory;
 
-    priority: string;
+    priority: TransactionPriority;
 
     title?: string;
 
@@ -45,9 +47,7 @@ export interface CreateTransactionRequest {
 
     transactionDate?: string;
 
-
 }
-
 export interface DashboardResponse {
 
     // A user can have transactions without having an active budget.
@@ -71,3 +71,21 @@ export interface DashboardResponse {
     largestTransaction: Transaction | null;
 
 }
+
+export type TransactionCategory =
+    | "FOOD"
+    | "FUEL"
+    | "SHOPPING"
+    | "BILLS"
+    | "ENTERTAINMENT"
+    | "HEALTH"
+    | "TRAVEL"
+    | "EDUCATION"
+    | "SUBSCRIPTION"
+    | "GIFT"
+    | "OTHER";
+
+export type TransactionPriority =
+    | "ESSENTIAL"
+    | "GOOD_TO_HAVE"
+    | "LUXURY";
