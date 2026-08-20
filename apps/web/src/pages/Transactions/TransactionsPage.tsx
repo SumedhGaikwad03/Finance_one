@@ -1,7 +1,7 @@
 import {
     useMutation,
     useQuery,
-    useQueryClient,
+    useQueryClient, // gives data to the central react query  cache manager 
 } from "@tanstack/react-query";
 
 import * as transactionService from "../../services/transaction.service";
@@ -9,6 +9,9 @@ import * as transactionService from "../../services/transaction.service";
 import CreateTransactionForm from "../../components/forms/CreateTransactionForm";
 
 import type { CreateTransactionFormData } from "../../utils/transaction.schema";
+
+import TransactionCard from "../../components/transaction/TransactionCard"; 
+
 
 const TransactionsPage = () => {
 
@@ -19,6 +22,7 @@ const TransactionsPage = () => {
         isLoading,
         error,
         // by using react query we get abstraction at a very high level as we get data,isloadingand is error and auto caching 
+        // without react query we need states and fetch 
     } = useQuery({ // use query automatically handels fetching ,caching ans suncronization form api 
         queryKey: ["transactions"], // uses this key to cache the results and if any other componets call this key then the same data 
         //will be retruned 
@@ -58,6 +62,48 @@ const TransactionsPage = () => {
         },
 
     });
+
+    // now the function for deleted transaction 
+
+
+    const handleDeleteTransaction = (id: number) => {
+
+    const confirmed = window.confirm(
+        "Are you sure you want to delete this transaction?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    deleteTransactionMutation.mutate(id);
+
+};
+
+// this below is the actual function 
+
+    const deleteTransactionMutation = useMutation({
+
+    mutationFn: transactionService.deleteTransaction,
+
+    onSuccess: () => {
+
+        queryClient.invalidateQueries({
+            queryKey: ["transactions"],
+        });
+
+    },
+
+    onError: (error) => {
+
+        console.error(
+            "Failed to delete transaction:",
+            error
+        );
+
+    },
+
+});
 
 
     const handleCreateTransaction = (
@@ -115,30 +161,11 @@ const TransactionsPage = () => {
 
                     transactions?.map((transaction) => (
 
-                        <div key={transaction.id}>
-
-                            <h3>
-                                {transaction.title ??
-                                    "Untitled Transaction"}
-                            </h3>
-
-                            <p>
-                                ₹{transaction.amount}
-                            </p>
-
-                            <p>
-                                {transaction.category}
-                            </p>
-
-                            <p>
-                                {transaction.priority}
-                            </p>
-
-                            <p>
-                                {transaction.transactionDate}
-                            </p>
-
-                        </div>
+                        <TransactionCard
+                      key={transaction.id} // key helps with react internal list traking 
+                      transaction={transaction}
+                      onDelete={handleDeleteTransaction}
+                            />
 
                     ))
 
