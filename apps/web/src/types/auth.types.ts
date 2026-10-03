@@ -1,22 +1,27 @@
-export interface LoginRequest {
+export interface User {
+    id: number;
+    name: string;
+    email: string;
+}
 
-    email : string ;
-    password : string ;
+export interface LoginRequest {
+    email: string;
+    password: string;
 }
 
 export interface LoginResponse {
-
-    token : string ;
+    token: string;
+    user: User;
 }
 
-export interface RegisterRequest{
-    name : string ;
-    email : string ;
-    password : string;
+export interface RegisterRequest {
+    name: string;
+    email: string;
+    password: string;
 }
 
-export interface RegisterResponse{
-
-    message : string ; 
-}
- // these are interfaces qwe use to not define inputs over and over again 
+export interface RegisterResponse {
+    id: number;
+    name: string;
+    email: string;
+}

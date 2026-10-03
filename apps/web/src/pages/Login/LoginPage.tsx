@@ -1,94 +1,194 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
-import {
-    loginSchema,
-    type LoginFormData,
-} from "../../utils/auth.schema";
-
-import * as authService from "../../services/auth.service";
+import { loginSchema, type LoginFormData } from "../../utils/auth.schema";
+import { useAuth } from "../../contexts/AuthContext";
+import AuthBackground from "../../components/auth/AuthBackground";
+import AuthBrand from "../../components/auth/AuthBrand";
+import AuthFeatureCards from "../../components/auth/AuthFeatureCards";
 
 const LoginPage = () => {
-
     const navigate = useNavigate();
+    const { login } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
 
     const {
-// here we are doing object decontructing for using data and validation 
         register,
-
         handleSubmit,
-
-        formState: { errors },  //instted of const errors = form.formState.errors; we can by pass it fully 
-
-        //ts intailes all these values behiend the seane no need to explicitly stating the values for us
-        // as register=from.regieter (in the backend already )
-
+        formState: { errors, isSubmitting },
     } = useForm<LoginFormData>({
-
         resolver: zodResolver(loginSchema),
-
     });
 
-    const onSubmit = async (
-        data: LoginFormData
-    ) => {
-
+    const onSubmit = async (data: LoginFormData) => {
         try {
-
-            const response =
-                await authService.login(data);
-
-            localStorage.setItem(
-                "token",
-                response.token
-            );
-
+            await login(data);
+            toast.success("Logged in successfully!");
             navigate("/dashboard");
-
-        } catch (error) {
-
-            console.error(error);
-
-             console.error("Login Error:", error);
-             alert("Login failed. Check the browser console.");
-
+        } catch (error: any) {
+            console.error("Login Error:", error);
+            const serverMessage =
+                error?.response?.data?.message ||
+                (error?.response?.data?.errors && error.response.data.errors[0]?.message) ||
+                error?.message ||
+                "Login failed. Please check your credentials and try again.";
+            toast.error(serverMessage);
         }
-
     };
 
     return (
+        <main className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-12 bg-[#FAFAFF] overflow-hidden">
+            {/* Dynamic Ambient Background with Reduced Motion Support */}
+            <AuthBackground />
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="relative z-10 w-full max-w-6xl mx-auto py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-16 items-center">
+                    {/* Left Column: Brand Hero & Narrative */}
+                    <div className="lg:col-span-7 flex flex-col justify-center space-y-6 sm:space-y-8 text-left">
+                        {/* Brand Logo Header */}
+                        <AuthBrand />
 
-            <h1>Login</h1>
+                        {/* Eyebrow & Headline */}
+                        <div className="space-y-3 sm:space-y-4">
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50/90 border border-indigo-100 text-indigo-700 text-xs font-bold tracking-wider uppercase">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                                A CLEARER PICTURE OF YOUR MONEY
+                            </div>
 
-            <input
-                type="email"
-                placeholder="Email"
-                {...register("email")}
-            />
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+                                Take control of your{" "}
+                                <span className="text-indigo-600">
+                                    financial story.
+                                </span>
+                            </h1>
 
-            <p>{errors.email?.message}</p>
+                            <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-xl">
+                                Track your spending, set meaningful goals and get insights that actually make sense.
+                            </p>
+                        </div>
 
-            <input
-                type="password"
-                placeholder="Password"
-                {...register("password")}
-            />
+                        {/* Feature Cards: Track, Plan, Grow */}
+                        <AuthFeatureCards />
+                    </div>
 
-            <p>{errors.password?.message}</p>
+                    {/* Right Column: Elevated Authentication Card */}
+                    <div className="lg:col-span-5 w-full max-w-md mx-auto lg:max-w-none">
+                        <div className="w-full bg-white border border-slate-200/80 shadow-[0_16px_48px_rgba(15,23,42,0.06)] rounded-3xl p-7 sm:p-9 text-left">
+                            <div className="mb-6 space-y-1">
+                                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+                                    Welcome back
+                                </h2>
+                                <p className="text-slate-500 text-sm">
+                                    Sign in to continue to Finance One
+                                </p>
+                            </div>
 
-            <button type="submit">
+                            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+                                <div className="flex flex-col gap-1.5">
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-xs font-bold text-slate-700 uppercase tracking-wider px-1"
+                                    >
+                                        Email address
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            placeholder="you@example.com"
+                                            autoComplete="email"
+                                            className={`w-full h-12 bg-slate-50/60 border ${
+                                                errors.email
+                                                    ? "border-rose-400 focus:ring-rose-500/30 focus:border-rose-500"
+                                                    : "border-slate-200 focus:ring-indigo-500/30 focus:border-indigo-600"
+                                            } rounded-xl px-4 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-3 focus:bg-white transition-all duration-200`}
+                                            {...register("email")}
+                                        />
+                                    </div>
+                                    {errors.email?.message && (
+                                        <p className="text-rose-600 text-xs font-medium px-1 mt-0.5">
+                                            {errors.email.message}
+                                        </p>
+                                    )}
+                                </div>
 
-                Login
+                                <div className="flex flex-col gap-1.5">
+                                    <label
+                                        htmlFor="password"
+                                        className="block text-xs font-bold text-slate-700 uppercase tracking-wider px-1"
+                                    >
+                                        Password
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            autoComplete="current-password"
+                                            className={`w-full h-12 bg-slate-50/60 border ${
+                                                errors.password
+                                                    ? "border-rose-400 focus:ring-rose-500/30 focus:border-rose-500"
+                                                    : "border-slate-200 focus:ring-indigo-500/30 focus:border-indigo-600"
+                                            } rounded-xl px-4 pr-12 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-3 focus:bg-white transition-all duration-200`}
+                                            {...register("password")}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-100"
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="w-4 h-4" />
+                                            ) : (
+                                                <Eye className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    {errors.password?.message && (
+                                        <p className="text-rose-600 text-xs font-medium px-1 mt-0.5">
+                                            {errors.password.message}
+                                        </p>
+                                    )}
+                                </div>
 
-            </button>
+                                <button
+                                    type="submit"
+                                    className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-md shadow-indigo-600/20 hover:shadow-lg hover:shadow-indigo-600/30 transition-all duration-200 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 mt-2"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Logging in...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Log in &rarr;</span>
+                                        </>
+                                    )}
+                                </button>
+                            </form>
 
-        </form>
-
+                            <div className="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
+                                <span>Don't have an account?</span>
+                                <Link
+                                    to="/register"
+                                    className="text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
+                                >
+                                    Register
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     );
-
 };
 
 export default LoginPage;

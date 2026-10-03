@@ -2,11 +2,11 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
-type ProtectedRouteProps = {
+type GuestRouteProps = {
     children: React.ReactNode;
 };
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const GuestRoute = ({ children }: GuestRouteProps) => {
     const { isAuthenticated, isLoading } = useAuth();
 
     if (isLoading) {
@@ -17,11 +17,11 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         );
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+    if (isAuthenticated) {
+        return <Navigate to="/dashboard" replace />;
     }
 
     return <>{children}</>;
 };
 
-export default ProtectedRoute;
+export default GuestRoute;
