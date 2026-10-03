@@ -33,7 +33,7 @@ export const QueryFollowUp = ({
     if (currentQuery.category) {
         followUpActions.push({
             id: "all_categories",
-            label: "Explore another category",
+            label: "Explore all categories",
             icon: Layers,
             patch: { category: null, aggregation: "CATEGORY_BREAKDOWN" },
             promptText: "Compare all categories for this period",
@@ -93,7 +93,7 @@ export const QueryFollowUp = ({
     if (!currentQuery.priority) {
         followUpActions.push({
             id: "essential_priority",
-            label: "Essential expenses only",
+            label: "Essential only",
             icon: AlertCircle,
             patch: { priority: "ESSENTIAL" },
             promptText: "Show only essential priority transactions",
@@ -104,7 +104,7 @@ export const QueryFollowUp = ({
     if (currentQuery.visualization === "CHART") {
         followUpActions.push({
             id: "show_table",
-            label: "View detailed transactions",
+            label: "View table list",
             icon: Table,
             patch: { visualization: "TABLE" },
             promptText: "Show detailed transaction list",
@@ -136,12 +136,12 @@ export const QueryFollowUp = ({
                     onClick={onReset}
                     className="text-xs font-bold text-purple-600 hover:text-purple-700 hover:underline transition-all cursor-pointer"
                 >
-                    + New Exploration
+                    + New Query
                 </button>
             </div>
 
             {/* Quick action exploration chips */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {followUpActions.slice(0, 5).map((action) => {
                     const Icon = action.icon;
                     return (
@@ -150,10 +150,10 @@ export const QueryFollowUp = ({
                             type="button"
                             onClick={() => handleActionClick(action)}
                             disabled={isLoading}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-xs font-bold border border-slate-200 hover:border-purple-200 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-[11px] sm:text-xs font-bold border border-slate-200 hover:border-purple-200 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                             <Icon className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-600" />
-                            {action.label}
+                            <span>{action.label}</span>
                         </button>
                     );
                 })}
@@ -164,36 +164,37 @@ export const QueryFollowUp = ({
                 <button
                     type="button"
                     onClick={() => setIsAIExpanded(!isAIExpanded)}
-                    className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-100/70 transition-colors cursor-pointer"
+                    className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between text-left hover:bg-slate-100/70 transition-colors cursor-pointer"
+                    aria-expanded={isAIExpanded}
                 >
-                    <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700">
+                    <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-2">
+                        <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700 shrink-0">
                             <Bot className="w-4 h-4" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-900">
-                                    ✦ Have a specific question?
+                                <span className="text-xs font-bold text-slate-900 truncate">
+                                    ✦ Have a custom question?
                                 </span>
-                                <span className="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[9px] font-extrabold uppercase tracking-wide">
-                                    Beta
+                                <span className="px-1.5 py-0.2 rounded-md bg-purple-100 text-purple-700 text-[9px] font-extrabold uppercase tracking-wide shrink-0">
+                                    AI Beta
                                 </span>
                             </div>
-                            <span className="text-[11px] text-slate-500 font-medium">
-                                Ask questions using natural language.
+                            <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium block truncate">
+                                Ask financial questions using natural language.
                             </span>
                         </div>
                     </div>
 
                     {isAIExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                        <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
                     ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                        <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                     )}
                 </button>
 
                 {isAIExpanded && (
-                    <div className="px-4 pb-3.5 pt-1 border-t border-slate-200/60 space-y-2 animate-in fade-in duration-150">
+                    <div className="px-3.5 sm:px-4 pb-3.5 pt-1 border-t border-slate-200/60 space-y-2 animate-in fade-in duration-150">
                         <form onSubmit={handleSubmit} className="relative flex items-center">
                             <input
                                 type="text"
@@ -201,7 +202,7 @@ export const QueryFollowUp = ({
                                 onChange={(e) => setPromptInput(e.target.value)}
                                 placeholder="E.g., What did I spend on dining out last weekend?..."
                                 disabled={isLoading}
-                                className="w-full pl-3.5 pr-10 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all disabled:opacity-50"
+                                className="w-full pl-3 pr-9 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all disabled:opacity-50"
                             />
                             <button
                                 type="submit"
@@ -213,7 +214,7 @@ export const QueryFollowUp = ({
                             </button>
                         </form>
                         <p className="text-[10px] text-slate-400 italic">
-                            Beta responses are based on Finance One's current intent classification system.
+                            AI Beta responses are structured deterministically into Finance One's query engine.
                         </p>
                     </div>
                 )}

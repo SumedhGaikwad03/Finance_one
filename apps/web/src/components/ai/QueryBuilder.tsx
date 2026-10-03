@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 import type {
     FinanceQuery,
@@ -14,6 +14,7 @@ import { QueryStep } from "./QueryStep";
 import { QueryResult } from "./QueryResult";
 import { QueryFollowUp } from "./QueryFollowUp";
 import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 interface QueryBuilderProps {
     onClose?: () => void;
@@ -30,12 +31,31 @@ const DEFAULT_QUERY: FinanceQuery = {
 };
 
 export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
-    // Default initial step is now directly Category selection ("Where did you spend?")
     const [step, setStep] = useState<QueryBuilderStep>("SELECT_CATEGORY");
     const [query, setQuery] = useState<FinanceQuery>(DEFAULT_QUERY);
     const [isLoading, setIsLoading] = useState(false);
     const [executionResult, setExecutionResult] = useState<QueryExecutionResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    // Section Refs for smooth intelligent scrolling
+    const containerRef = useRef<HTMLDivElement>(null);
+    const categoryRef = useRef<HTMLDivElement>(null);
+    const periodRef = useRef<HTMLDivElement>(null);
+    const resultsRef = useRef<HTMLDivElement>(null);
+
+    const prefersReducedMotion = usePrefersReducedMotion();
+
+    const scrollToRef = (targetRef: React.RefObject<HTMLDivElement | null>) => {
+        if (!targetRef.current || !containerRef.current) return;
+        const behavior = prefersReducedMotion ? "auto" : "smooth";
+        setTimeout(() => {
+            targetRef.current?.scrollIntoView({
+                behavior,
+                block: "start",
+                inline: "nearest",
+            });
+        }, 60);
+    };
 
     // Execution Pipeline
     const runExecution = async (targetQuery: FinanceQuery) => {
@@ -47,6 +67,7 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
             const result = await executeFinanceQuery(targetQuery);
             setExecutionResult(result);
             setStep("RESULTS");
+            scrollToRef(resultsRef);
         } catch (err) {
             console.error("Failed to execute finance query:", err);
             setError("Unable to process this query. Please check your network and try again.");
@@ -54,6 +75,15 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Handle Category selected -> smoothly advance to timeframe
+    const handleCategorySelected = (patch?: Partial<FinanceQuery>) => {
+        if (patch) {
+            setQuery((prev) => ({ ...prev, ...patch }));
+        }
+        setStep("SELECT_PERIOD");
+        scrollToRef(periodRef);
     };
 
     // Handle Timeframe selection and immediate execution
@@ -100,6 +130,20 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
         setExecutionResult(null);
         setError(null);
         setStep("SELECT_CATEGORY");
+        scrollToRef(categoryRef);
+    };
+
+    const handleJumpToStep = (targetStep: QueryBuilderStep) => {
+        if (targetStep === "SELECT_CATEGORY") {
+            setStep("SELECT_CATEGORY");
+            scrollToRef(categoryRef);
+        } else if (targetStep === "SELECT_PERIOD") {
+            setStep("SELECT_PERIOD");
+            scrollToRef(periodRef);
+        } else if (targetStep === "RESULTS" && executionResult) {
+            setStep("RESULTS");
+            scrollToRef(resultsRef);
+        }
     };
 
     const categoryLabel = query.category
@@ -111,13 +155,17 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50">
-            {/* Main Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5">
-                {/* 2-Step Progress Indicator */}
+            {/* Main Scrollable Content Area with bottom navigation safety padding */}
+            <div
+                ref={containerRef}
+                className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-5 pb-32 sm:pb-16"
+            >
+                {/* Sticky Progress Indicator */}
                 <QueryProgress
                     currentStep={step}
                     query={query}
-                    onJumpToStep={(targetStep) => setStep(targetStep)}
+                    hasResults={!!executionResult}
+                    onJumpToStep={handleJumpToStep}
                 />
 
                 {/* Error Banner */}
@@ -129,12 +177,15 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
 
                 {/* STEP 1: CATEGORY SELECTION ("Where did you spend?") */}
                 {(step === "SELECT_CATEGORY" || step === "INITIAL" || step === "SELECT_GOAL") && (
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs animate-in fade-in duration-150">
+                    <div
+                        ref={categoryRef}
+                        className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs animate-in fade-in duration-150"
+                    >
                         <QueryStep
                             step="SELECT_CATEGORY"
                             query={query}
                             onUpdateQuery={(patch) => setQuery((prev) => ({ ...prev, ...patch }))}
-                            onNext={() => setStep("SELECT_PERIOD")}
+                            onNext={handleCategorySelected}
                             onBack={() => {}}
                         />
                     </div>
@@ -142,7 +193,10 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
 
                 {/* STEP 2: TIMEFRAME SELECTION ("When?") */}
                 {step === "SELECT_PERIOD" && (
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs animate-in fade-in duration-150">
+                    <div
+                        ref={periodRef}
+                        className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs animate-in fade-in duration-150"
+                    >
                         <QueryStep
                             step="SELECT_PERIOD"
                             query={query}
@@ -155,7 +209,7 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
 
                 {/* EXECUTING STATE */}
                 {step === "EXECUTING" && (
-                    <div className="py-20 text-center space-y-4 animate-in fade-in duration-150">
+                    <div className="py-16 sm:py-20 text-center space-y-4 animate-in fade-in duration-150">
                         <div className="p-4 bg-purple-100/80 text-purple-600 rounded-3xl w-fit mx-auto animate-pulse">
                             <Loader2 className="w-8 h-8 animate-spin" />
                         </div>
@@ -172,15 +226,18 @@ export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
 
                 {/* RESULTS VIEW */}
                 {step === "RESULTS" && executionResult && (
-                    <div className="space-y-5 animate-in fade-in duration-200">
+                    <div
+                        ref={resultsRef}
+                        className="space-y-4 sm:space-y-5 animate-in fade-in duration-200"
+                    >
                         {/* Results Top Action Bar */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                             <div className="flex items-center gap-2">
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-100/80 text-purple-800 text-xs font-bold">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-100/80 text-purple-800 text-xs font-bold truncate max-w-[160px]">
                                     <span>{categoryIcon}</span>
-                                    <span>{categoryLabel}</span>
+                                    <span className="truncate">{categoryLabel}</span>
                                 </div>
-                                <span className="text-xs font-medium text-slate-500">
+                                <span className="text-xs font-medium text-slate-500 truncate">
                                     • {executionResult.transactionCount} transaction{executionResult.transactionCount === 1 ? "" : "s"}
                                 </span>
                             </div>

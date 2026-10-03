@@ -6,7 +6,7 @@ import type {
 } from "../../types/financeQuery.types";
 import type { TransactionCategory } from "../../types/dashboard.types";
 import { CATEGORY_METADATA } from "../query/CategorySelector";
-import { ArrowLeft, Search, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Search, Check, Sparkles, X } from "lucide-react";
 
 interface QueryStepProps {
     step: QueryBuilderStep;
@@ -108,7 +108,7 @@ export const QueryStep = ({
                         <Sparkles className="w-3 h-3 text-purple-600" />
                         Where did I spend?
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                         Where did you spend?
                     </h2>
                     <p className="text-xs text-slate-500 font-medium">
@@ -118,18 +118,28 @@ export const QueryStep = ({
 
                 {/* Quick Search Input */}
                 <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                         type="text"
                         value={categorySearch}
                         onChange={(e) => setCategorySearch(e.target.value)}
-                        placeholder="Filter categories (e.g., Food, Travel, Shopping)..."
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:bg-white transition-all"
+                        placeholder="Filter categories (e.g. Food, Shopping)..."
+                        className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 focus:bg-white transition-all"
                     />
+                    {categorySearch && (
+                        <button
+                            type="button"
+                            onClick={() => setCategorySearch("")}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-md"
+                            aria-label="Clear search"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Categories Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[380px] overflow-y-auto overscroll-contain pr-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 max-h-[340px] sm:max-h-[380px] overflow-y-auto overscroll-contain pr-1">
                     {filteredCategories.map((cat) => {
                         const isSelected =
                             cat.value === null
@@ -153,14 +163,14 @@ export const QueryStep = ({
                                         itemId
                                     )
                                 }
-                                className={`p-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer relative active:scale-[0.97] min-h-[72px] flex flex-col justify-between ${
+                                className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer relative active:scale-[0.97] min-h-[64px] sm:min-h-[72px] flex flex-col justify-between ${
                                     isJustSelected || (isSelected && transitioningItem === null)
-                                        ? "bg-purple-50/95 border-purple-400 ring-3 ring-purple-500/20 text-purple-950 font-bold shadow-2xs"
+                                        ? "bg-purple-50/95 border-purple-400 ring-2 ring-purple-500/20 text-purple-950 font-bold shadow-2xs"
                                         : "bg-white border-slate-200/90 hover:border-purple-200 hover:bg-slate-50 text-slate-700"
                                 }`}
                             >
                                 <div className="flex items-center justify-between mb-1">
-                                    <span className="text-lg" aria-hidden="true">
+                                    <span className="text-base sm:text-lg" aria-hidden="true">
                                         {cat.icon}
                                     </span>
                                     {(isJustSelected || (isSelected && transitioningItem === null)) && (
@@ -216,7 +226,7 @@ export const QueryStep = ({
                 </div>
 
                 <div className="space-y-1">
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                         When?
                     </h3>
                     <p className="text-xs text-slate-500 font-medium">
@@ -224,7 +234,7 @@ export const QueryStep = ({
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[380px] overflow-y-auto overscroll-contain pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 max-h-[380px] overflow-y-auto overscroll-contain pr-1">
                     {TIMEFRAME_OPTIONS.map((opt) => {
                         const isSelected = query.timePeriod === opt.id;
                         const isJustSelected = transitioningItem === opt.id;
@@ -244,9 +254,9 @@ export const QueryStep = ({
                                         opt.id
                                     )
                                 }
-                                className={`p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between active:scale-[0.98] min-h-[64px] ${
+                                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between active:scale-[0.98] min-h-[58px] sm:min-h-[64px] ${
                                     isJustSelected || (isSelected && transitioningItem === null)
-                                        ? "bg-purple-50/95 border-purple-400 ring-3 ring-purple-500/20 text-purple-950 font-bold shadow-2xs"
+                                        ? "bg-purple-50/95 border-purple-400 ring-2 ring-purple-500/20 text-purple-950 font-bold shadow-2xs"
                                         : "bg-white border-slate-200/90 hover:border-purple-200 hover:bg-slate-50 text-slate-700"
                                 }`}
                             >
@@ -256,12 +266,12 @@ export const QueryStep = ({
                                             {opt.label}
                                         </span>
                                         {opt.badge && (
-                                            <span className="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[9px] font-extrabold uppercase">
+                                             <span className="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[9px] font-extrabold uppercase">
                                                 {opt.badge}
                                             </span>
                                         )}
                                     </div>
-                                    <span className="text-[11px] text-slate-400 block truncate">
+                                    <span className="text-[10px] sm:text-[11px] text-slate-400 block truncate">
                                         {opt.desc}
                                     </span>
                                 </div>

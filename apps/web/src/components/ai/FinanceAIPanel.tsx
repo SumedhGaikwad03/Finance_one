@@ -36,7 +36,7 @@ export const QueryExplorerPanel = ({ isOpen, onClose }: QueryExplorerPanelProps)
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-60 overflow-hidden" role="dialog" aria-modal="true">
             {/* Backdrop Blur Overlay */}
             <div
                 onClick={onClose}
@@ -54,29 +54,29 @@ export const QueryExplorerPanel = ({ isOpen, onClose }: QueryExplorerPanelProps)
                     }`}
                 >
                     {/* Header Bar */}
-                    <div className="px-5 py-4 bg-white border-b border-slate-200/80 flex items-center justify-between shrink-0 shadow-2xs">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20">
-                                <Sparkles className="w-5 h-5" />
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 bg-white border-b border-slate-200/80 flex items-center justify-between shrink-0 shadow-2xs">
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+                                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight truncate">
                                         Query Explorer
                                     </h2>
-                                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-extrabold tracking-wide uppercase">
+                                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-extrabold tracking-wide uppercase shrink-0">
                                         Finance One
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-500 font-medium">
+                                <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">
                                     Explore your money through visual questions
                                 </p>
                             </div>
                         </div>
 
                         {/* Top Action Controls */}
-                        <div className="flex items-center gap-1">
-                            {/* Expand / Minimize Toggle (hidden on small mobile) */}
+                        <div className="flex items-center gap-1 shrink-0">
+                            {/* Expand / Minimize Toggle (hidden on mobile) */}
                             <button
                                 type="button"
                                 onClick={() => setIsExpanded(!isExpanded)}
@@ -96,6 +96,7 @@ export const QueryExplorerPanel = ({ isOpen, onClose }: QueryExplorerPanelProps)
                                 onClick={onClose}
                                 className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                                 title="Close Query Explorer"
+                                aria-label="Close"
                             >
                                 <X className="w-5 h-5" />
                             </button>

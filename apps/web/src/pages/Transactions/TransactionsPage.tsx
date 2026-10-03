@@ -12,7 +12,7 @@ import TransactionModal from "../../components/transaction/TransactionModal";
 import DeleteTransactionDialog from "../../components/transaction/DeleteTransactionDialog";
 import TransactionsSkeleton from "../../components/transaction/TransactionsSkeleton";
 import CreateTransactionForm from "../../components/forms/CreateTransactionForm";
-import TransactionQueryBuilder from "../../components/query/TransactionQueryBuilder";
+import { QueryExplorerPanel } from "../../components/ai/FinanceAIPanel";
 
 import type { Transaction } from "../../types/dashboard.types";
 import type { CreateTransactionFormData } from "../../utils/transaction.schema";
@@ -231,73 +231,48 @@ const TransactionsPage = () => {
                     setEditingTransaction(null);
                     setIsCreateModalOpen(true);
                 }}
-                onToggleExplorer={() => setIsExplorerOpen((prev) => !prev)}
+                onToggleExplorer={() => setIsExplorerOpen(true)}
                 isExplorerOpen={isExplorerOpen}
             />
 
-            {/* 2. Main View: Smart Query Explorer OR Clean Transaction Ledger */}
-            {isExplorerOpen ? (
-                <section className="space-y-4 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between pb-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-purple-700">
-                            Smart Query Explorer Mode
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setIsExplorerOpen(false)}
-                            className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
-                        >
-                            Return to Standard Ledger →
-                        </button>
-                    </div>
-
-                    <TransactionQueryBuilder
-                        onEditTransaction={handleEdit}
-                        onDeleteTransaction={(id) => {
-                            const target = transactions.find((t) => t.id === id);
-                            if (target) {
-                                setDeletingTransaction(target);
-                            }
-                        }}
-                        isDeleting={deleteTransactionMutation.isPending}
-                    />
-                </section>
-            ) : (
-                <>
-                    {/* 3. Filter & Search Toolbar */}
-                    {transactions.length > 0 && (
-                        <TransactionToolbar
-                            searchQuery={searchQuery}
-                            onSearchChange={setSearchQuery}
-                            selectedCategory={selectedCategory}
-                            onCategoryChange={setSelectedCategory}
-                            selectedPriority={selectedPriority}
-                            onPriorityChange={setSelectedPriority}
-                            sortBy={sortBy}
-                            onSortChange={setSortBy}
-                            onClearFilters={handleClearFilters}
-                            filteredCount={filteredTransactions.length}
-                            totalCount={transactions.length}
-                            filteredTotalAmount={filteredTotalAmount}
-                        />
-                    )}
-
-                    {/* 4. Transaction Ledger (Desktop Table + Mobile Cards) */}
-                    <TransactionLedger
-                        transactions={filteredTransactions}
-                        totalCount={transactions.length}
-                        hasActiveFilters={Boolean(searchQuery || selectedCategory || selectedPriority)}
-                        onClearFilters={handleClearFilters}
-                        onAddTransaction={() => {
-                            setEditingTransaction(null);
-                            setIsCreateModalOpen(true);
-                        }}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteClick}
-                        isDeleting={deleteTransactionMutation.isPending}
-                    />
-                </>
+            {/* 2. Filter & Search Toolbar */}
+            {transactions.length > 0 && (
+                <TransactionToolbar
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                    selectedPriority={selectedPriority}
+                    onPriorityChange={setSelectedPriority}
+                    sortBy={sortBy}
+                    onSortChange={setSortBy}
+                    onClearFilters={handleClearFilters}
+                    filteredCount={filteredTransactions.length}
+                    totalCount={transactions.length}
+                    filteredTotalAmount={filteredTotalAmount}
+                />
             )}
+
+            {/* 3. Transaction Ledger (Desktop Table + Mobile Cards) */}
+            <TransactionLedger
+                transactions={filteredTransactions}
+                totalCount={transactions.length}
+                hasActiveFilters={Boolean(searchQuery || selectedCategory || selectedPriority)}
+                onClearFilters={handleClearFilters}
+                onAddTransaction={() => {
+                    setEditingTransaction(null);
+                    setIsCreateModalOpen(true);
+                }}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                isDeleting={deleteTransactionMutation.isPending}
+            />
+
+            {/* 4. Unified Query Explorer Drawer */}
+            <QueryExplorerPanel
+                isOpen={isExplorerOpen}
+                onClose={() => setIsExplorerOpen(false)}
+            />
 
             {/* 5. Create Transaction Modal */}
             <TransactionModal

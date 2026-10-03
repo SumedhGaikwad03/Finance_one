@@ -63,7 +63,7 @@ const TransactionsHeader = ({
                         }`}
                     >
                         <Compass className="w-3.5 h-3.5 text-purple-600" />
-                        {isExplorerOpen ? "Close Explorer" : "Query Explorer"}
+                        <span>Query Explorer</span>
                     </button>
                 )}
 
