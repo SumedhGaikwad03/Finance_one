@@ -33,22 +33,20 @@ export const registerUser = async (user : RegisterInput) => {
 
 export const loginUser = async ( credentials: LoginInput) => {
 
-const user = await userRepository.findUserbyEmail(credentials.email);
+    const user = await userRepository.findUserbyEmail(credentials.email);
 
-console.log("User:", user);
+    if (!user) {
+        throw new UnauthorizedError("Invalid email or password");
+    }
 
-if ( ! user)
-    throw new UnauthorizedError("Invalid email or password"); 
+    const isPasswordValid = await bcrypt.compare(
+        credentials.password,
+        user.passwordHash
+    );
 
-const isPasswordValid = await bcrypt.compare(
- credentials.password,
-  user.passwordHash); 
-
-  console.log("Password Match:", isPasswordValid);
-
-if (!isPasswordValid) {
-    throw new UnauthorizedError("Invalid email or password");
-}
+    if (!isPasswordValid) {
+        throw new UnauthorizedError("Invalid email or password");
+    }
 
 const token = generateToken(user.id); 
 

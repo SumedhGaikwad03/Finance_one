@@ -1,12 +1,32 @@
+import "dotenv/config";
 import app from "./app";
+import prisma from "./lib/prisma";
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Finance One server running on port ${PORT}`);
 });
 
-// this is file the actual execution starts for the backend as this is esentially
-//  //a  listner and it brings more 
-// modularity in the code as we can  now test app.js without launching the server and also we can 
-// use this file to launch the server in production and dev environment with different ports and other configurations 
+const handleShutdown = async (signal: string) => {
+  console.log(`Received ${signal}. Gracefully shutting down...`);
+  server.close(async () => {
+    try {
+      await prisma.$disconnect();
+      console.log("Database connection closed cleanly.");
+      process.exit(0);
+    } catch (err) {
+      console.error("Error during graceful database disconnection:", err);
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown if cleanup takes longer than 10 seconds
+  setTimeout(() => {
+    console.error("Could not close connections in time, forcefully shutting down");
+    process.exit(1);
+  }, 10000);
+};
+
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+process.on("SIGINT", () => handleShutdown("SIGINT"));

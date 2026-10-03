@@ -1,7 +1,19 @@
 import axios from "axios";
 
+// Determine API Base URL safely across development and production
+const getBaseUrl = (): string => {
+    if (import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+    // In production builds without explicit VITE_API_URL, default to relative API root
+    if (import.meta.env.PROD) {
+        return "";
+    }
+    return "http://localhost:3000";
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+    baseURL: getBaseUrl(),
     headers: {
         "Content-Type": "application/json",
     },
@@ -21,10 +33,11 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
-            if (
-                window.location.pathname !== "/login" &&
-                window.location.pathname !== "/register"
-            ) {
+            
+            const currentPath = window.location.pathname;
+            const isPublicPage = currentPath === "/" || currentPath === "/login" || currentPath === "/register";
+            
+            if (!isPublicPage) {
                 window.location.href = "/login";
             }
         }
