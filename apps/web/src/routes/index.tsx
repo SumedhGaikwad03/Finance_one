@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 
+import LandingPage from "../pages/Landing/LandingPage";
 import LoginPage from "../pages/Login/LoginPage";
 import RegisterPage from "../pages/Register/RegisterPage";
 import DashboardPage from "../pages/Dashboard/DashboardPage";
@@ -14,11 +15,7 @@ import AppShell from "../components/layout/AppShell";
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: (
-            <GuestRoute>
-                <LoginPage />
-            </GuestRoute>
-        ),
+        element: <LandingPage />,
     },
     {
         path: "/login",
