@@ -9,7 +9,7 @@ const test = async () => {
         category: "FOOD" as const,
     };
 
-    const result = await service.execute(query);
+    const result = await service.execute(query, 1);
 
     console.log("Query:", query);
     console.log("Results:", result);
