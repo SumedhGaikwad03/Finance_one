@@ -11,3 +11,7 @@ coverage
 .DS_Store
 
 *.log
+
+# Local setup tools
+pgvector_dist/
+install_pgvector.bat

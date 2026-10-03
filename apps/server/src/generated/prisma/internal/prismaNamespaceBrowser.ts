@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Transaction: 'Transaction',
-  Budget: 'Budget'
+  Budget: 'Budget',
+  SkillEmbedding: 'SkillEmbedding'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -112,6 +113,19 @@ export const BudgetScalarFieldEnum = {
 } as const
 
 export type BudgetScalarFieldEnum = (typeof BudgetScalarFieldEnum)[keyof typeof BudgetScalarFieldEnum]
+
+
+export const SkillEmbeddingScalarFieldEnum = {
+  id: 'id',
+  skillId: 'skillId',
+  exampleText: 'exampleText',
+  model: 'model',
+  dimensions: 'dimensions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SkillEmbeddingScalarFieldEnum = (typeof SkillEmbeddingScalarFieldEnum)[keyof typeof SkillEmbeddingScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -12,10 +12,10 @@ import dashboardRoutes from "./routes/dashboard.routes";
 const app = express();
 
 app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
+  cors({
+    origin: process.env.FRONTEND_URL || "*",
+    credentials: true,
+  })
 );
 
 

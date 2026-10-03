@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Transaction: 'Transaction',
-  Budget: 'Budget'
+  Budget: 'Budget',
+  SkillEmbedding: 'SkillEmbedding'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "transaction" | "budget"
+    modelProps: "user" | "transaction" | "budget" | "skillEmbedding"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,64 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SkillEmbedding: {
+      payload: Prisma.$SkillEmbeddingPayload<ExtArgs>
+      fields: Prisma.SkillEmbeddingFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SkillEmbeddingFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SkillEmbeddingFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>
+        }
+        findFirst: {
+          args: Prisma.SkillEmbeddingFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SkillEmbeddingFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>
+        }
+        findMany: {
+          args: Prisma.SkillEmbeddingFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>[]
+        }
+        delete: {
+          args: Prisma.SkillEmbeddingDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>
+        }
+        update: {
+          args: Prisma.SkillEmbeddingUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>
+        }
+        deleteMany: {
+          args: Prisma.SkillEmbeddingDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SkillEmbeddingUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SkillEmbeddingUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SkillEmbeddingPayload>[]
+        }
+        aggregate: {
+          args: Prisma.SkillEmbeddingAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSkillEmbedding>
+        }
+        groupBy: {
+          args: Prisma.SkillEmbeddingGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SkillEmbeddingGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SkillEmbeddingCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SkillEmbeddingCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -720,6 +779,19 @@ export const BudgetScalarFieldEnum = {
 } as const
 
 export type BudgetScalarFieldEnum = (typeof BudgetScalarFieldEnum)[keyof typeof BudgetScalarFieldEnum]
+
+
+export const SkillEmbeddingScalarFieldEnum = {
+  id: 'id',
+  skillId: 'skillId',
+  exampleText: 'exampleText',
+  model: 'model',
+  dimensions: 'dimensions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SkillEmbeddingScalarFieldEnum = (typeof SkillEmbeddingScalarFieldEnum)[keyof typeof SkillEmbeddingScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1024,6 +1096,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   transaction?: Prisma.TransactionOmit
   budget?: Prisma.BudgetOmit
+  skillEmbedding?: Prisma.SkillEmbeddingOmit
 }
 
 /* Types for Logging */

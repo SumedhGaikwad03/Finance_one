@@ -15,7 +15,7 @@ export const errorMiddleware =(
     }
 
     else if (err instanceof ZodError) {
-        return res.status(400).json({message: "Vaildation failed " , errors : err.issues.map(issue => ({
+        return res.status(400).json({message: "Validation failed" , errors : err.issues.map(issue => ({
             field : issue.path.join("."),
             message : issue.message,
         }))});

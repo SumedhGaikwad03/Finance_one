@@ -5,54 +5,64 @@ import RegisterPage from "../pages/Register/RegisterPage";
 import DashboardPage from "../pages/Dashboard/DashboardPage";
 import TransactionsPage from "../pages/Transactions/TransactionsPage";
 import BudgetsPage from "../pages/Budgets/BudgetsPage";
+import SettingsPage from "../pages/Settings/SettingsPage";
 import NotFoundPage from "../pages/NotFound/NotFoundPage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
-// this is the global routing configration for react router dom 
-//
-export const router = createBrowserRouter([// this takes an array of routing objects and enables modern routhing features 
+import GuestRoute from "../components/common/GuestRoute";
+import AppShell from "../components/layout/AppShell";
 
+export const router = createBrowserRouter([
     {
         path: "/",
-        element: <LoginPage />,
+        element: (
+            <GuestRoute>
+                <LoginPage />
+            </GuestRoute>
+        ),
     },
-
     {
         path: "/login",
-        element: <LoginPage />,
+        element: (
+            <GuestRoute>
+                <LoginPage />
+            </GuestRoute>
+        ),
     },
-
     {
         path: "/register",
-        element: <RegisterPage />,
+        element: (
+            <GuestRoute>
+                <RegisterPage />
+            </GuestRoute>
+        ),
     },
-{
-    path: "/dashboard",
-
-    element: (
-
-        <ProtectedRoute>
-
-            <DashboardPage />
-
-        </ProtectedRoute>
-
-    ),
-
-},
-
     {
-        path: "/transactions",
-        element: <TransactionsPage />,
+        element: (
+            <ProtectedRoute>
+                <AppShell />
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                path: "/dashboard",
+                element: <DashboardPage />,
+            },
+            {
+                path: "/transactions",
+                element: <TransactionsPage />,
+            },
+            {
+                path: "/budgets",
+                element: <BudgetsPage />,
+            },
+            {
+                path: "/settings",
+                element: <SettingsPage />,
+            },
+        ],
     },
-
-    {
-        path: "/budgets",
-        element: <BudgetsPage />,
-    },
-
     {
         path: "*",
         element: <NotFoundPage />,
     },
-
 ]);

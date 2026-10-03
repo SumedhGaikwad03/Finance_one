@@ -56,3 +56,8 @@ export type Transaction = Prisma.TransactionModel
  * 
  */
 export type Budget = Prisma.BudgetModel
+/**
+ * Model SkillEmbedding
+ * 
+ */
+export type SkillEmbedding = Prisma.SkillEmbeddingModel

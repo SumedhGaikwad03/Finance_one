@@ -38,15 +38,15 @@ const user = await userRepository.findUserbyEmail(credentials.email);
 console.log("User:", user);
 
 if ( ! user)
-    throw new UnauthorizedError("Invaild email or password"); 
+    throw new UnauthorizedError("Invalid email or password"); 
 
-const isPasswordVaild = await bcrypt.compare(
+const isPasswordValid = await bcrypt.compare(
  credentials.password,
   user.passwordHash); 
 
-  console.log("Password Match:", isPasswordVaild);
+  console.log("Password Match:", isPasswordValid);
 
-if (!isPasswordVaild) {
+if (!isPasswordValid) {
     throw new UnauthorizedError("Invalid email or password");
 }
 

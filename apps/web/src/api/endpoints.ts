@@ -7,11 +7,18 @@ export const ENDPOINTS = {
         PROFILE: "/auth/me",
     },
 
+    USERS: {
+        ME: "/users/me",
+        PASSWORD: "/users/me/password",
+    },
+
     DASHBOARD: "/dashboard",
 
     TRANSACTIONS: {
         ROOT: "/transactions",
         MY: "/transactions/getMyTransactions",
+        PARSE: "/transactions/parse",
+        QUICK: "/transactions/quick",
     },
 
     BUDGETS: {
