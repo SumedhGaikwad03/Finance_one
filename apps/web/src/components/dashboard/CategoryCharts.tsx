@@ -1,3 +1,30 @@
+import {
+    PieChart,
+    Pie,
+    Cell,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from "recharts";
+
+import "./Dashboard.css";
+
+
+const CATEGORY_COLORS = [
+    "#2563eb",
+    "#16a34a",
+    "#f59e0b",
+    "#dc2626",
+    "#9333ea",
+    "#0891b2",
+    "#ea580c",
+    "#4f46e5",
+    "#db2777",
+    "#65a30d",
+    "#64748b",
+];
+
+
 type CategoryChartProps = {
 
     // Object received from the dashboard API.
@@ -11,16 +38,32 @@ type CategoryChartProps = {
 
 };
 
+
 // Displays the spending breakdown by category.
 const CategoryChart = ({
-// this is essentialy oir function that is called by our dashboard 
+
     categoryTotals,
 
 }: CategoryChartProps) => {
 
+    // Recharts expects an array of objects rather than
+    // the object structure returned by our backend.
+    const chartData = Object.entries(categoryTotals).map(
+
+        ([category, amount]) => ({
+
+            name: category,
+
+            value: Number(amount),
+
+        })
+
+    );
+
+
     return (
 
-        <div>
+        <article className="dashboard-chart-card">
 
             <h2>
 
@@ -28,27 +71,58 @@ const CategoryChart = ({
 
             </h2>
 
-            {/* Temporary display.
-                Later this will become a Pie Chart. */}
+            <div className="dashboard-chart">
 
-            {Object.entries(categoryTotals).map(
+                <ResponsiveContainer
+                    width="100%"
+                    height={280}
+                >
 
-                ([category, amount]) => (
+                    <PieChart>
 
-                    <p key={category}>
+                        <Pie
+                            data={chartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={90}
+                        >
 
-                        {category} : ₹{amount}
+                           {chartData.map((entry, index) => (
 
-                    </p>
+    <Cell
+        key={`cell-${entry.name}-${index}`}
+        fill={
+            CATEGORY_COLORS[
+                index % CATEGORY_COLORS.length
+            ]
+        }
+    />
 
-                )
+))}
 
-            )}
+                        </Pie>
 
-        </div>
+                        <Tooltip
+                            formatter={(value) =>
+                                `₹${value}`
+                            }
+                        />
+
+                        <Legend />
+
+                    </PieChart>
+
+                </ResponsiveContainer>
+
+            </div>
+
+        </article>
 
     );
 
 };
+
 
 export default CategoryChart;

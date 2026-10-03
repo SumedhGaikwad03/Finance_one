@@ -1,119 +1,77 @@
+import { Prisma } from "../generated/prisma/client";
 import * as budgetService from "./budget.service";
 import * as transactionRepository from "../repositories/transaction.repository";
 import * as analyticsService from "./analytics.services";
 import { calculateEndDate } from "../utils/budget.utils";
 
 export const getDashboardData = async (userId: number) => {
-// this call to this function alone makes the call all o the data in our dash board 
+    // Step 1: Get the active budget
+    const budget = await budgetService.getActiveBudgetOrNull(userId);
 
-
-    // Step 1 : Get the active budget
-    // If there is no active budget, the dashboard should still work.
-    const budget =
-        await budgetService.getActiveBudgetOrNull(userId);
-
-
-    let transactions;
+    // Step 2: Build the database filter based on budget period or user scope
+    let whereClause: Prisma.TransactionWhereInput;
 
     if (budget) {
-
-        // Step 2 : Calculate the end date for the active budget
         const endDate = calculateEndDate(
             budget.startDate,
             budget.periodType
         );
 
-        // Step 3 : Fetch all transactions within this budget period
-        transactions =
-            await transactionRepository.findTransactionsBetweenDates(
-                userId,
-                budget.startDate,
-                endDate
-            );
-
+        whereClause = {
+            userId,
+            transactionDate: {
+                gte: budget.startDate,
+                lte: endDate
+            }
+        };
     } else {
-
-        // If there is no active budget, we still want to show
-        // the user's transactions on the dashboard.
-        transactions =
-            await transactionRepository.getMyTransactions(
-                userId
-            );
-
+        whereClause = {
+            userId
+        };
     }
 
-
-    // Step 4 : Calculate analytics
-    const totalSpent =
-        analyticsService.calculateTotalSpent(transactions);
-
-    const remainingBudget =
-        budget
-            ? analyticsService.calculateRemainingBudget(
-                budget.amount,
-                totalSpent
-            )
-            : null;
-
-    const budgetUsage =
-        budget
-            ? analyticsService.calculateBudgetUsage(
-                budget.amount,
-                totalSpent
-            )
-            : null;
-
-    const categoryTotals =
-        analyticsService.calculateCategoryTotals(
-            transactions
-        );
-
-    const priorityTotals =
-        analyticsService.calculatePriorityTotals(
-            transactions
-        );
-
-    const transactionCount =
-        analyticsService.calculateTransactionCount(
-            transactions
-        );
-
-    const largestTransaction =
-        analyticsService.calculateLargestTransaction(
-            transactions
-        );
-
-    const averageDailySpend =
-       analyticsService.calculateAverageDailySpend(
-           transactions
-       );
-
-    const averageTransaction =
-        analyticsService.calculateAverageTransaction(
-            transactions
-        );
-
-    // Step 5 : Return everything needed by the dashboard
-    return {
-
-        budget,
-
-        recentTransactions: transactions,
-
+    // Step 3: Run SQL aggregations and fetch recent transactions in parallel via database
+    const [
         totalSpent,
-
-        remainingBudget,
-
-        budgetUsage,
-
         categoryTotals,
-
         priorityTotals,
-
         transactionCount,
+        largestTransaction,
+        recentTransactions
+    ] = await Promise.all([
+        transactionRepository.aggregateTotalSpent(whereClause),
+        transactionRepository.groupCategoryTotals(whereClause),
+        transactionRepository.groupPriorityTotals(whereClause),
+        transactionRepository.countTransactions(whereClause),
+        transactionRepository.findLargestTransaction(whereClause),
+        transactionRepository.findRecentTransactions(whereClause, 5)
+    ]);
 
+    // Step 4: Calculate budget usage using database-aggregated totalSpent
+    const remainingBudget = budget
+        ? analyticsService.calculateRemainingBudget(
+            budget.amount,
+            totalSpent
+        )
+        : null;
+
+    const budgetUsage = budget
+        ? analyticsService.calculateBudgetUsage(
+            budget.amount,
+            totalSpent
+        )
+        : null;
+
+    // Step 5: Return complete dashboard data matching the original contract
+    return {
+        budget,
+        recentTransactions,
+        totalSpent,
+        remainingBudget,
+        budgetUsage,
+        categoryTotals,
+        priorityTotals,
+        transactionCount,
         largestTransaction
-
     };
-
 };

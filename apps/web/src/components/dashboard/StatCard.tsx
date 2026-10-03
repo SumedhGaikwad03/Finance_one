@@ -1,30 +1,44 @@
+import "./Dashboard.css";
 
+type StatCardProps = {
 
-type StatCardProps ={
+    title: string;
 
-    title : string ; 
-    value : string ; 
-    
+    value: string;
+
 };
 
 
-const StatCard =({
+// Displays a single financial statistic on the dashboard.
+const StatCard = ({
 
-    title , 
-    value 
-} : StatCardProps) => { // take this two propeties from statsCardprops as title , value from the parent , this file is simple 
- return (
-    <div>
-        
-        <h3>
-            {title} 
-        </h3>
+    title,
 
-        <p>
-            {value} 
-        </p>
-    </div>
- );
+    value,
+
+}: StatCardProps) => { // takes these two properties from StatsSection as title and value
+
+    return (
+
+        <article className="stat-card">
+
+            <h3>
+
+                {title}
+
+            </h3>
+
+            <p>
+
+                {value}
+
+            </p>
+
+        </article>
+
+    );
+
 };
 
-export default StatCard; 
+
+export default StatCard;

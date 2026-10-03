@@ -1,106 +1,121 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
-import StatsSection from "../../components/dashboard/StatsSection";
-import ChartsSection from "../../components/dashboard/ChartsSection";
+import BudgetHeroCard from "../../components/dashboard/BudgetHeroCard";
+import KPIRow from "../../components/dashboard/KPIRow";
+import CategoryDonutChart from "../../components/dashboard/CategoryDonutChart";
+import PriorityBreakdown from "../../components/dashboard/PriorityBreakdown";
 import RecentTransactions from "../../components/dashboard/RecentTransactions";
+import DashboardSkeleton from "../../components/dashboard/DashboardSkeleton";
+import { QueryExplorerPanel } from "../../components/ai/FinanceAIPanel";
 
 import * as dashboardService from "../../services/dashboard.service";
 
 const DashboardPage = () => {
-
     const navigate = useNavigate();
+    const [isExplorerOpen, setIsExplorerOpen] = useState(false);
 
     const {
-
-        data, // this the data that is revied via the api call to the backend 
-
-        isLoading, // derived form the tan stack query same goes for erroe 
-
+        data,
+        isLoading,
         error,
-
+        refetch,
     } = useQuery({
-
         queryKey: ["dashboard"],
-
-        queryFn: dashboardService.getDashboardData, // tan staack query to fetch entire dashboard in a hit  , this runs first then we get data and all
-        // that is defined above 
-
+        queryFn: dashboardService.getDashboardData,
     });
 
     if (isLoading) {
-
-        return <h1>Loading Dashboard...</h1>;
-
+        return <DashboardSkeleton />;
     }
 
     if (error || !data) {
-
-        return <h1>Failed to load dashboard.</h1>;
-
+        return (
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center space-y-4">
+                <div className="inline-flex p-3 rounded-full bg-rose-50 text-rose-600">
+                    <AlertCircle className="w-8 h-8" />
+                </div>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800">
+                    Failed to load dashboard
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                    We encountered an issue fetching your financial metrics. Please check your connection and try again.
+                </p>
+                <div className="pt-2">
+                    <button
+                        type="button"
+                        onClick={() => refetch()}
+                        className="btn-interactive inline-flex items-center gap-1.5 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Try Again
+                    </button>
+                </div>
+            </main>
+        );
     }
 
     return (
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+            {/* 1. Header */}
+            <DashboardHeader onOpenExplorer={() => setIsExplorerOpen(true)} />
 
-        <main>
-
-            <DashboardHeader
-
-                username="Sumedh"
-
-            />
- 
-            <StatsSection
-// this is basic layout of data 
-                budget={
-                    data.budget
-                        ? `₹${data.budget.amount}`
-                        : "Nil"
-                }
-
-                spent={`₹${data.totalSpent}`}
-
-                remaining={
-                    data.remainingBudget !== null
-                        ? `₹${data.remainingBudget}`
-                        : "Nil"
-                }
-
-                usage={
-                    data.budgetUsage !== null
-                        ? `${data.budgetUsage}%`
-                        : "Nil"
-                }
-
-            />
-
-            <button
-                type="button"
-                onClick={() => navigate("/transactions")} // navigates to new page in data 
+            {/* 2. Primary 70/30 Spending & Budget Overview */}
+            <section
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
+                aria-label="Primary Financial Overview"
             >
-                Add Transaction
-            </button>
+                <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
+                    <BudgetHeroCard
+                        budget={data.budget}
+                        totalSpent={data.totalSpent}
+                        remainingBudget={data.remainingBudget}
+                        budgetUsage={data.budgetUsage}
+                        onAddTransaction={() => navigate("/transactions")}
+                    />
+                </div>
 
-            <ChartsSection
+                <div className="lg:col-span-5 xl:col-span-4 flex flex-col">
+                    <CategoryDonutChart
+                        categoryTotals={data.categoryTotals}
+                        totalSpent={data.totalSpent}
+                    />
+                </div>
+            </section>
 
+            {/* 3. Compact Key Performance Indicators */}
+            <KPIRow
+                transactionCount={data.transactionCount}
+                totalSpent={data.totalSpent}
                 categoryTotals={data.categoryTotals}
-
-                priorityTotals={data.priorityTotals}
-
             />
 
-            <RecentTransactions
+            {/* 4. Secondary Analysis & Recent Activity (2-Column Desktop / Stacked Mobile) */}
+            <section
+                className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
+                aria-label="Secondary Financial Metrics and Activity"
+            >
+                <PriorityBreakdown
+                    priorityTotals={data.priorityTotals}
+                    totalSpent={data.totalSpent}
+                />
 
-                transactions={data.recentTransactions}
+                <RecentTransactions
+                    transactions={data.recentTransactions}
+                    onViewAll={() => navigate("/transactions")}
+                />
+            </section>
 
+            {/* 5. Finance One Query Explorer Drawer */}
+            <QueryExplorerPanel
+                isOpen={isExplorerOpen}
+                onClose={() => setIsExplorerOpen(false)}
             />
-
         </main>
-
     );
-
 };
 
 export default DashboardPage;

@@ -41,6 +41,8 @@ export const findBudgetById = (id: number) => {
 
 }
 
+
+
 export const deleteBudget = ( id : number ) => {
 
     return prisma.budget.delete({where : {id}}); 

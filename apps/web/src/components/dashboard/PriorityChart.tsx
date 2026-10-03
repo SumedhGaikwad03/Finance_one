@@ -1,3 +1,20 @@
+import {
+    PieChart,
+    Pie,
+    Cell,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from "recharts";
+
+import "./Dashboard.css";
+
+const PRIORITY_COLORS = [
+    "#0f766e", // teal
+    "#7c3aed", // purple
+    "#0891b2", // cyan
+];
+
 type PriorityChartProps = {
 
     // Object received from the dashboard API.
@@ -11,6 +28,7 @@ type PriorityChartProps = {
 
 };
 
+
 // Displays the spending breakdown by priority.
 const PriorityChart = ({
 
@@ -18,9 +36,24 @@ const PriorityChart = ({
 
 }: PriorityChartProps) => {
 
+    // Recharts expects an array of objects rather than
+    // the object structure returned by our backend.
+    const chartData = Object.entries(priorityTotals).map(
+
+        ([priority, amount]) => ({
+
+            name: priority,
+
+            value: Number(amount),
+
+        })
+
+    );
+
+
     return (
 
-        <div>
+        <article className="dashboard-chart-card">
 
             <h2>
 
@@ -28,27 +61,59 @@ const PriorityChart = ({
 
             </h2>
 
-            {/* Temporary display.
-                Later this will become a Doughnut Chart. */}
+            <div className="dashboard-chart">
 
-            {Object.entries(priorityTotals).map( // this line converts the given object to an array 
+                <ResponsiveContainer
+                    width="100%"
+                    height={280}
+                >
 
-                ([priority, amount]) => ( // this is the structure of that array 
+                    <PieChart>
 
-                    <p key={priority}>
+                        <Pie
+                            data={chartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={90}
+                        >
 
-                        {priority} : ₹{amount}
+                         {chartData.map((entry, index) => (
 
-                    </p>
+    <Cell
+        key={`cell-${entry.name}-${index}`}
+        fill={
+            PRIORITY_COLORS[
+                index % PRIORITY_COLORS.length
+            ]
+        }
+    />
 
-                )
+))}
 
-            )}
+                        </Pie>
 
-        </div>
+                        <Tooltip
+                            formatter={(value) =>
+                                `₹${value}`
+                            }
+                        />
+
+                        <Legend />
+
+                    </PieChart>
+
+                </ResponsiveContainer>
+
+            </div>
+
+        </article>
 
     );
 
 };
+
 
 export default PriorityChart;

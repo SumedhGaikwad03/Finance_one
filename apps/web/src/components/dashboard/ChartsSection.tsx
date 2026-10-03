@@ -1,44 +1,94 @@
 import CategoryChart from "./CategoryCharts";
 import PriorityChart from "./PriorityChart";
+import BudgetSpendingChart from "./BudgetSpendingChart";
 
-// Props required for displaying both charts.
+import "./Dashboard.css";
+
+
+// Props required for displaying all dashboard charts.
 type ChartsSectionProps = {
 
     categoryTotals: Record<string, string>;
 
     priorityTotals: Record<string, string>;
 
+    budget: string;
+
+    spent: string;
+
+    usage: string;
+
 };
 
-// Responsible only for arranging both charts.
+
+// Responsible only for arranging the dashboard charts.
 const ChartsSection = ({
 
-    categoryTotals, // receives the info from thr parent 
+    categoryTotals, // receives category spending data from the parent
 
-    priorityTotals,
+    priorityTotals, // receives priority spending data from the parent
 
-}: ChartsSectionProps) => { // expexts a jsx object in this structure to return 
+    budget, // receives the total active budget
+
+    spent, // receives the total amount spent
+
+    usage, // receives the percentage of budget used
+
+}: ChartsSectionProps) => {
+
 
     return (
 
-        <section>
+        <section className="dashboard-charts">
 
-            <CategoryChart // again a sub child 
 
-                categoryTotals={categoryTotals}
+            {/* Displays spending grouped by transaction category. */}
+
+            <CategoryChart
+
+                categoryTotals={
+                    categoryTotals
+                }
 
             />
+
+
+            {/* Displays spending grouped by transaction priority. */}
 
             <PriorityChart
 
-                priorityTotals={priorityTotals}
+                priorityTotals={
+                    priorityTotals
+                }
 
             />
+
+
+            {/* Displays how much of the current budget
+                has already been spent. */}
+
+            <BudgetSpendingChart
+
+                budget={
+                    budget
+                }
+
+                spent={
+                    spent
+                }
+
+                usage={
+                    usage
+                }
+
+            />
+
 
         </section>
 
     );
 
 };
+
 
 export default ChartsSection;

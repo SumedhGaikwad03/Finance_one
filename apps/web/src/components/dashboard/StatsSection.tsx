@@ -1,26 +1,38 @@
 import StatCard from "./StatCard";
+import "./Dashboard.css";
 
-type StatSectionProps = {
 
-    budget : string ;
-    spent : string ;
-    remaining :string ; 
-    usage : string ;
+// Props required for the stats section.
+
+
+type StatsSectionProps = {
+
+    budget: string;
+
+    spent: string;
+
+    remaining: string;
+
+    usage: string;
+
 };
 
-const StatSection = ({
 
-    budget , // all of these props are received from the parent via the call to this function 
-    spent , 
-    remaining , 
-    usage ,
-}: StatSectionProps) => { // the o/p of this function is an jsx element  in this structure 
+// Displays the main financial statistics on the dashboard.
+const StatsSection = ({
+
+    budget, // all of these props are received from the parent via the call to this function
+    spent,
+    remaining,
+    usage,
+
+}: StatsSectionProps) => { // the o/p of this function is an jsx element in this structure
 
     return (
 
-        <section>
+        <section className="dashboard-stats">
 
-            <StatCard // here again this is child of stat section 
+            <StatCard // here again this is child of stats section
                 title="Total Budget"
                 value={budget}
             />
@@ -43,7 +55,8 @@ const StatSection = ({
         </section>
 
     );
+
 };
 
-export default StatSection ; 
 
+export default StatsSection;
