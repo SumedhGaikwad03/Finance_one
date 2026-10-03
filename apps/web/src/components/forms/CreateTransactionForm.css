@@ -1,0 +1,227 @@
+.transaction-form {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+}
+
+.transaction-form-header {
+
+    margin-bottom: 4px;
+
+}
+
+.transaction-form-header h2 {
+
+    margin: 0;
+
+    color: #18181b;
+
+    font-size: 20px;
+
+}
+
+.transaction-form-header p {
+
+    margin: 6px 0 0;
+
+    color: #71717a;
+
+    font-size: 14px;
+
+}
+
+.transaction-form-field {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+}
+
+.transaction-form-field label {
+
+    color: #18181b;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+}
+
+.transaction-form-field input,
+
+.transaction-form-field select,
+
+.transaction-form-field textarea {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 9px 10px;
+
+    border: 1px solid #d4d4d8;
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #18181b;
+
+    font: inherit;
+
+}
+
+.transaction-form-field textarea {
+
+    min-height: 90px;
+
+    resize: vertical;
+
+}
+
+.transaction-form-field input:focus,
+
+.transaction-form-field select:focus,
+
+.transaction-form-field textarea:focus {
+
+    outline: none;
+
+    border-color: #18181b;
+
+}
+
+.transaction-form-error {
+
+    min-height: 18px;
+
+    margin: 0;
+
+    color: #dc2626;
+
+    font-size: 13px;
+
+}
+
+.transaction-form-actions {
+
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 4px;
+
+}
+
+.transaction-form-actions button {
+
+    padding: 9px 14px;
+
+    border: 1px solid #18181b;
+
+    border-radius: 6px;
+
+    background: #18181b;
+
+    color: #ffffff;
+
+    font: inherit;
+
+    cursor: pointer;
+
+}
+
+.transaction-form-actions button:hover {
+
+    opacity: 0.9;
+
+}
+
+.transaction-form-actions button[type="button"] {
+
+    border-color: #d4d4d8;
+
+    background: #ffffff;
+
+    color: #18181b;
+
+}
+
+
+/* quick date options for commonly used transaction dates */
+
+.transaction-date-options {
+
+    display: flex;
+
+    gap: 8px;
+
+    align-items: center;
+
+}
+
+.transaction-date-options button {
+
+    padding: 9px 12px;
+
+    border: 1px solid #d4d4d8;
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #18181b;
+
+    font: inherit;
+
+    cursor: pointer;
+
+}
+
+.transaction-date-options button:hover {
+
+    background: #f4f4f5;
+
+}
+
+
+/* wrapper allows us to position the calendar icon inside the date input */
+
+.transaction-date-input {
+
+    position: relative;
+
+    flex: 1;
+
+}
+
+.transaction-date-input input {
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+}
+
+.transaction-calendar-icon {
+
+    position: absolute;
+
+    top: 50%;
+
+    right: 10px;
+
+    transform: translateY(-50%);
+
+    pointer-events: none;
+
+    font-size: 16px;
+
+}

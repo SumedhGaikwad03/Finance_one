@@ -1,247 +1,343 @@
-import {
-    useMutation,
-    useQuery,
-    useQueryClient, // gives data to the central react query cache manager
-} from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 import * as transactionService from "../../services/transaction.service";
-import { useState } from "react";
 
+import TransactionsHeader from "../../components/transaction/TransactionsHeader";
+import TransactionToolbar, { type SortOption } from "../../components/transaction/TransactionToolbar";
+import TransactionLedger from "../../components/transaction/TransactionLedger";
+import TransactionModal from "../../components/transaction/TransactionModal";
+import DeleteTransactionDialog from "../../components/transaction/DeleteTransactionDialog";
+import TransactionsSkeleton from "../../components/transaction/TransactionsSkeleton";
 import CreateTransactionForm from "../../components/forms/CreateTransactionForm";
-import type { Transaction } from "../../types/dashboard.types";
+import TransactionQueryBuilder from "../../components/query/TransactionQueryBuilder";
 
+import type { Transaction } from "../../types/dashboard.types";
 import type { CreateTransactionFormData } from "../../utils/transaction.schema";
 
-import TransactionCard from "../../components/transaction/TransactionCard";
-
-
 const TransactionsPage = () => {
-
     const queryClient = useQueryClient();
 
+    // Modal & Dialog states
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
-    const [editingTransaction, setEditingTransaction] =
-        useState<Transaction | null>(null);
+    // Optional secondary Smart Query Explorer toggle
+    const [isExplorerOpen, setIsExplorerOpen] = useState(false);
 
+    // Filter and Sort states
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("");
+    const [selectedPriority, setSelectedPriority] = useState("");
+    const [sortBy, setSortBy] = useState<SortOption>("date_desc");
+
+    // ============================================================
+    // FETCH TRANSACTIONS QUERY
+    // ============================================================
 
     const {
-        data: transactions,
+        data: transactions = [],
         isLoading,
         error,
-        // by using react query we get abstraction at a very high level as we get data,isloadingand is error and auto caching
-        // without react query we need states and fetch
-    } = useQuery({ // use query automatically handels fetching ,caching ans suncronization form api
-        queryKey: ["transactions"], // uses this key to cache the results and if any other componets call this key then the same data
-        //will be retruned
-        queryFn: transactionService.getMyTransactions, // this is in built asyncronous function that does the api calls and returns data and loads
-        // the page back up when we receive data
+        refetch,
+    } = useQuery({
+        queryKey: ["transactions"],
+        queryFn: transactionService.getMyTransactions,
     });
 
+    // ============================================================
+    // MUTATIONS
+    // ============================================================
 
     const createTransactionMutation = useMutation({
-        // this function mutation is used to modify data on the server , technically use mutate creates a setup plan but the .mutate acts as a
-        // trigger to start execution that is defined here in this snippet
-        // the reason we use muataion to change the data on server is the reason as we use react query abstraction this abstraction helps us 4
-        // easy data propagationa and less to worry about defining the redundan structure
-
-        mutationFn:
-            transactionService.createTransaction, // give a call to the server with all the data  and chage the data in the sever we have , its technically  an async action
-            // this i kinda the api call
-
-        onSuccess: () => {// this is a life cycle call back  to be execute if the function executes sucess fully and then code is executed
-
-            queryClient.invalidateQueries({
-                queryKey: ["transactions"], // this checkes the caching happening in our app as with the label as key for trnasactions
-            });
-
-            // on succes it tells our react query to refresh the transaction so it shows new trnasactions
-        },
-
-        onError: (error) => {
-
-            console.error(
-                "Failed to create transaction:",
-                error
-            );
-
-        },
-
-    });
-
-
-    // now the function for deleted transaction
-
-    const deleteTransactionMutation = useMutation({
-
-        mutationFn: transactionService.deleteTransaction,
-
+        mutationFn: transactionService.createTransaction,
         onSuccess: () => {
-
-            queryClient.invalidateQueries({
-                queryKey: ["transactions"],
-            });
-
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            setIsCreateModalOpen(false);
+            toast.success("Transaction recorded successfully.");
         },
-
-        onError: (error) => {
-
-            console.error(
-                "Failed to delete transaction:",
-                error
-            );
-
+        onError: (err) => {
+            console.error("Failed to create transaction:", err);
+            toast.error("Failed to record transaction.");
         },
-
     });
-
-    // this is for updating mutation 
 
     const updateTransactionMutation = useMutation({
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: CreateTransactionFormData;
+        }) => transactionService.updateTransaction(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            setEditingTransaction(null);
+            toast.success("Transaction updated successfully.");
+        },
+        onError: (err) => {
+            console.error("Failed to update transaction:", err);
+            toast.error("Failed to update transaction.");
+        },
+    });
 
-    mutationFn: ({
-        id,
-        data,
-    }: {
-        id: number;
-        data: CreateTransactionFormData;
-    }) =>
-        transactionService.updateTransaction(id, data),
+    const deleteTransactionMutation = useMutation({
+        mutationFn: transactionService.deleteTransaction,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["transactions"] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            setDeletingTransaction(null);
+            toast.success("Transaction deleted successfully.");
+        },
+        onError: (err) => {
+            console.error("Failed to delete transaction:", err);
+            toast.error("Failed to delete transaction.");
+        },
+    });
 
-    onSuccess: () => {
+    // ============================================================
+    // FILTERING & SORTING LOGIC
+    // ============================================================
 
-        queryClient.invalidateQueries({
-            queryKey: ["transactions"],
-        });
+    const filteredTransactions = useMemo(() => {
+        if (!transactions) return [];
 
-        setEditingTransaction(null);
+        return transactions
+            .filter((tx) => {
+                // Category match
+                if (selectedCategory && tx.category !== selectedCategory) {
+                    return false;
+                }
 
-    },
+                // Priority match
+                if (selectedPriority && tx.priority !== selectedPriority) {
+                    return false;
+                }
 
-    onError: (error) => {
+                // Search query match (title, notes, or amount)
+                if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase().trim();
+                    const titleMatch = (tx.title || "").toLowerCase().includes(q);
+                    const notesMatch = (tx.notes || "").toLowerCase().includes(q);
+                    const amountMatch = String(tx.amount).includes(q);
+                    const categoryMatch = tx.category.toLowerCase().includes(q);
 
-        console.error(
-            "Failed to update transaction:",
-            error
-        );
+                    if (!titleMatch && !notesMatch && !amountMatch && !categoryMatch) {
+                        return false;
+                    }
+                }
 
-    },
+                return true;
+            })
+            .sort((a, b) => {
+                if (sortBy === "date_desc") {
+                    return new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime();
+                }
+                if (sortBy === "date_asc") {
+                    return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
+                }
+                if (sortBy === "amount_desc") {
+                    return Number(b.amount) - Number(a.amount);
+                }
+                if (sortBy === "amount_asc") {
+                    return Number(a.amount) - Number(b.amount);
+                }
+                return 0;
+            });
+    }, [transactions, searchQuery, selectedCategory, selectedPriority, sortBy]);
 
-});
+    const filteredTotalAmount = useMemo(() => {
+        return filteredTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    }, [filteredTransactions]);
 
+    const handleClearFilters = () => {
+        setSearchQuery("");
+        setSelectedCategory("");
+        setSelectedPriority("");
+    };
 
-    // this is the function that handles which transaction the user wants to edit
+    // ============================================================
+    // ACTION HANDLERS
+    // ============================================================
+
+    const handleSubmitTransaction = (data: CreateTransactionFormData) => {
+        if (editingTransaction) {
+            updateTransactionMutation.mutate({
+                id: editingTransaction.id,
+                data,
+            });
+        } else {
+            createTransactionMutation.mutate(data);
+        }
+    };
 
     const handleEdit = (transaction: Transaction) => {
-
+        setIsCreateModalOpen(false);
         setEditingTransaction(transaction);
-
     };
 
+    const handleDeleteClick = (transaction: Transaction) => {
+        setDeletingTransaction(transaction);
+    };
 
-    const handleDeleteTransaction = (id: number) => {
-
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this transaction?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
+    const handleConfirmDelete = (id: number) => {
         deleteTransactionMutation.mutate(id);
-
     };
 
-
-    const handleSubmitTransaction = (
-    data: CreateTransactionFormData
-) => {
-
-    if (editingTransaction) {
-
-        updateTransactionMutation.mutate({
-            id: editingTransaction.id,
-            data,
-        });
-
-        return;
-    }
-
-    createTransactionMutation.mutate(data);
-
-};
-
+    // ============================================================
+    // LOADING & ERROR STATES
+    // ============================================================
 
     if (isLoading) {
-        return <h1>Loading Transactions...</h1>;
+        return <TransactionsSkeleton />;
     }
-
 
     if (error) {
-        return <h1>Failed to load transactions.</h1>;
+        return (
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-12 text-center space-y-4">
+                <div className="inline-flex p-3 rounded-full bg-rose-50 text-rose-600">
+                    <AlertCircle className="w-8 h-8" />
+                </div>
+                <h1 className="text-lg sm:text-xl font-bold text-slate-800">
+                    Failed to load transactions
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                    We encountered an issue fetching your transaction history. Please verify your connection and try again.
+                </p>
+                <div className="pt-2">
+                    <button
+                        type="button"
+                        onClick={() => refetch()}
+                        className="btn-interactive inline-flex items-center gap-1.5 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Try Again
+                    </button>
+                </div>
+            </main>
+        );
     }
 
-
     return (
-        <main>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            {/* 1. Page Header */}
+            <TransactionsHeader
+                onAddTransaction={() => {
+                    setEditingTransaction(null);
+                    setIsCreateModalOpen(true);
+                }}
+                onToggleExplorer={() => setIsExplorerOpen((prev) => !prev)}
+                isExplorerOpen={isExplorerOpen}
+            />
 
-            <h1>Transactions</h1>
+            {/* 2. Main View: Smart Query Explorer OR Clean Transaction Ledger */}
+            {isExplorerOpen ? (
+                <section className="space-y-4 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between pb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-purple-700">
+                            Smart Query Explorer Mode
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setIsExplorerOpen(false)}
+                            className="text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                        >
+                            Return to Standard Ledger →
+                        </button>
+                    </div>
 
-            {editingTransaction ? (
-
-   <CreateTransactionForm
-    transaction={editingTransaction}
-    onSubmit={handleSubmitTransaction}
-    onCancel={() => {
-        setEditingTransaction(null);
-    }}
-/>
-
-) : (
-
-    <CreateTransactionForm
-        onSubmit={handleSubmitTransaction}
-    />
-
-)}
-            {/* while our forms submit this this function gets triggirerd as then the data is submitted to the backend  as we complete the from creation  which was rendered*/}
-
-            {createTransactionMutation.isPending && (
-                <p>Creating transaction...</p>
-            )}
-
-            {createTransactionMutation.isError && (
-                <p>
-                    Failed to create transaction.
-                </p>
-            )}
-
-
-            <section>
-
-                <h2>My Transactions</h2>
-
-                {transactions?.length === 0 ? (
-
-                    <p>No transactions found.</p>
-
-                ) : (
-
-                    transactions?.map((transaction) => (
-
-                        <TransactionCard
-                            key={transaction.id} // key helps with react internal list traking
-                            transaction={transaction}
-                            onEdit={handleEdit}
-                            onDelete={handleDeleteTransaction}
+                    <TransactionQueryBuilder
+                        onEditTransaction={handleEdit}
+                        onDeleteTransaction={(id) => {
+                            const target = transactions.find((t) => t.id === id);
+                            if (target) {
+                                setDeletingTransaction(target);
+                            }
+                        }}
+                        isDeleting={deleteTransactionMutation.isPending}
+                    />
+                </section>
+            ) : (
+                <>
+                    {/* 3. Filter & Search Toolbar */}
+                    {transactions.length > 0 && (
+                        <TransactionToolbar
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            selectedCategory={selectedCategory}
+                            onCategoryChange={setSelectedCategory}
+                            selectedPriority={selectedPriority}
+                            onPriorityChange={setSelectedPriority}
+                            sortBy={sortBy}
+                            onSortChange={setSortBy}
+                            onClearFilters={handleClearFilters}
+                            filteredCount={filteredTransactions.length}
+                            totalCount={transactions.length}
+                            filteredTotalAmount={filteredTotalAmount}
                         />
+                    )}
 
-                    ))
+                    {/* 4. Transaction Ledger (Desktop Table + Mobile Cards) */}
+                    <TransactionLedger
+                        transactions={filteredTransactions}
+                        totalCount={transactions.length}
+                        hasActiveFilters={Boolean(searchQuery || selectedCategory || selectedPriority)}
+                        onClearFilters={handleClearFilters}
+                        onAddTransaction={() => {
+                            setEditingTransaction(null);
+                            setIsCreateModalOpen(true);
+                        }}
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteClick}
+                        isDeleting={deleteTransactionMutation.isPending}
+                    />
+                </>
+            )}
 
+            {/* 5. Create Transaction Modal */}
+            <TransactionModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Add Transaction"
+                description="Enter transaction details to log a new expense or payment."
+            >
+                <CreateTransactionForm
+                    onSubmit={handleSubmitTransaction}
+                    onCancel={() => setIsCreateModalOpen(false)}
+                    isSubmitting={createTransactionMutation.isPending}
+                />
+            </TransactionModal>
+
+            {/* 6. Edit Transaction Modal */}
+            <TransactionModal
+                isOpen={Boolean(editingTransaction)}
+                onClose={() => setEditingTransaction(null)}
+                title="Edit Transaction"
+                description="Update the details or category for this recorded transaction."
+            >
+                {editingTransaction && (
+                    <CreateTransactionForm
+                        transaction={editingTransaction}
+                        onSubmit={handleSubmitTransaction}
+                        onCancel={() => setEditingTransaction(null)}
+                        isSubmitting={updateTransactionMutation.isPending}
+                    />
                 )}
+            </TransactionModal>
 
-            </section>
-
+            {/* 7. Delete Confirmation Dialog */}
+            <DeleteTransactionDialog
+                isOpen={Boolean(deletingTransaction)}
+                transaction={deletingTransaction}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setDeletingTransaction(null)}
+                isDeleting={deleteTransactionMutation.isPending}
+            />
         </main>
     );
 };

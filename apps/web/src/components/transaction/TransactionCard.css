@@ -1,0 +1,251 @@
+.transaction-card {
+
+    display: flex;
+
+    align-items: stretch;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 18px;
+
+    border: 1px solid #e4e4e7;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+
+}
+
+.transaction-card:hover {
+
+    border-color: #d4d4d8;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04);
+
+}
+
+
+.transaction-card-main {
+
+    min-width: 0;
+
+    flex: 1;
+
+}
+
+
+.transaction-card-title {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+}
+
+
+.transaction-card-title h3 {
+
+    margin: 0;
+
+    color: #18181b;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+}
+
+
+.transaction-card-amount {
+
+    flex-shrink: 0;
+
+    margin: 0;
+
+    color: #18181b;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+}
+
+
+.transaction-card-meta {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    margin-top: 8px;
+
+}
+
+
+.transaction-card-meta span {
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    background: #f4f4f5;
+
+    color: #52525b;
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+}
+
+
+.transaction-card-date {
+
+    margin: 12px 0 0;
+
+    color: #71717a;
+
+    font-size: 13px;
+
+}
+
+
+.transaction-card-notes {
+
+    margin: 8px 0 0;
+
+    color: #52525b;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+}
+
+
+.transaction-card-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-shrink: 0;
+
+}
+
+
+.transaction-card-actions button {
+
+    padding: 8px 12px;
+
+    border-radius: 6px;
+
+    font: inherit;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+}
+
+
+.transaction-card-edit {
+
+    border: 1px solid #d4d4d8;
+
+    background: #ffffff;
+
+    color: #18181b;
+
+}
+
+
+.transaction-card-edit:hover {
+
+    background: #f4f4f5;
+
+}
+
+
+.transaction-card-delete {
+
+    border: 1px solid #fecaca;
+
+    background: #ffffff;
+
+    color: #dc2626;
+
+}
+
+
+.transaction-card-delete:hover {
+
+    background: #fef2f2;
+
+}
+
+
+.transaction-card-actions button:disabled {
+
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+}
+
+
+@media (max-width: 600px) {
+
+    .transaction-card {
+
+        flex-direction: column;
+
+        gap: 14px;
+
+    }
+
+
+    .transaction-card-title {
+
+        align-items: flex-start;
+
+    }
+
+
+    .transaction-card-actions {
+
+        width: 100%;
+
+    }
+
+
+    .transaction-card-actions button {
+
+        flex: 1;
+
+    }
+
+}

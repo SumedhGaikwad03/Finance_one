@@ -1,4 +1,4 @@
-import { CreateTransactionInput, UpdateTransactionInput } from "../schemas/transaction.schema";
+import { CreateTransactionInput, UpdateTransactionInput, TransactionQuery } from "../schemas/transaction.schema";
 import * as transactionRepository from "../repositories/transaction.repository";
 import { TransactionNotFoundError } from "../error/AppError";
 import { Prisma } from "../generated/prisma/client";
@@ -18,12 +18,17 @@ export const createTransaction = async ( input : CreateTransactionInput , userId
     return transaction;
 }   
 
+export const queryTransactions = async (userId: number, query: TransactionQuery) => {
+    return transactionRepository.findTransactions(userId, query);
+};
+
 export const getMyTransactions = async (userId :number )=> {
 
     const transactions = await transactionRepository.getMyTransactions(userId);
 
     return transactions;
 }
+
 
 
 export const updateTransaction = async (id : number , userId : number ,  input : UpdateTransactionInput) => { 
