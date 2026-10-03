@@ -2,7 +2,8 @@ import LandingNav from "../../components/landing/LandingNav";
 import HeroSection from "../../components/landing/HeroSection";
 import FeatureGrid from "../../components/landing/FeatureGrid";
 import MVPSection from "../../components/landing/MVPSection";
-import AIDirectionSection from "../../components/landing/AIDirectionSection";
+import AIPrivacySection from "../../components/landing/AIPrivacySection";
+import RoadmapSection from "../../components/landing/RoadmapSection";
 import PhilosophySection from "../../components/landing/PhilosophySection";
 import FinalCTASection from "../../components/landing/FinalCTASection";
 import LandingFooter from "../../components/landing/LandingFooter";
@@ -15,22 +16,25 @@ export const LandingPage = () => {
 
             {/* 2. Main Landing Page Sections */}
             <main className="flex-1">
-                {/* Hero Section */}
+                {/* Hero Section: Early Beta · MVP 1 */}
                 <HeroSection />
 
-                {/* Core Capabilities */}
+                {/* What You Can Do Today: Track, Plan, Understand */}
                 <FeatureGrid />
 
-                {/* MVP 1.0 Milestone & Development Stage */}
+                {/* MVP 1: Getting the fundamentals right */}
                 <MVPSection />
 
-                {/* AI Beta & Exploration Direction */}
-                <AIDirectionSection />
+                {/* AI & Privacy: What we're exploring & The Three Principles */}
+                <AIPrivacySection />
+
+                {/* AI Exploration & Where Finance One is Heading */}
+                <RoadmapSection />
 
                 {/* Product Philosophy */}
                 <PhilosophySection />
 
-                {/* Final Call to Action */}
+                {/* You're Early & Final Call to Action */}
                 <FinalCTASection />
             </main>
 

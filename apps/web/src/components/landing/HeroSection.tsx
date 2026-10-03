@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Sparkles, Compass } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 import ProductShowcase from "./ProductShowcase";
 
 export const HeroSection = () => {
+    const { isAuthenticated } = useAuth();
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {
@@ -16,10 +18,10 @@ export const HeroSection = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
                     {/* Left Column: Hero Content */}
                     <div className="lg:col-span-6 space-y-6 sm:space-y-8 text-center lg:text-left">
-                        {/* Eyebrow */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-200/80 text-purple-800 text-[11px] sm:text-xs font-bold tracking-wide uppercase shadow-2xs">
+                        {/* Prominent Early Beta Badge */}
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 border border-purple-200/90 text-purple-800 text-[11px] sm:text-xs font-black tracking-wider uppercase shadow-2xs">
                             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                            <span>Your Money. A Clearer Tomorrow.</span>
+                            <span>Early Beta · MVP 1</span>
                         </div>
 
                         {/* Main Headline */}
@@ -30,20 +32,35 @@ export const HeroSection = () => {
                             </span>
                         </h1>
 
-                        {/* Supporting Copy */}
-                        <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0">
-                            Finance One is a modern personal finance ledger that helps you track spending, manage budgets, and understand where your money goes.
-                        </p>
+                        {/* Supporting Copy & Early Journey Statement */}
+                        <div className="space-y-3 max-w-xl mx-auto lg:mx-0">
+                            <p className="text-sm sm:text-base text-slate-700 font-medium leading-relaxed">
+                                Finance One is an early-stage personal finance ledger built to make tracking spending, managing budgets, and understanding your money simpler.
+                            </p>
+                            <p className="text-xs sm:text-sm text-slate-500 font-normal leading-relaxed">
+                                You&apos;re seeing Finance One at the beginning of its journey. The core experience is live, while we&apos;re actively exploring what comes next.
+                            </p>
+                        </div>
 
                         {/* Action CTA Buttons */}
                         <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
-                            <Link
-                                to="/register"
-                                className="btn-interactive w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                <span>Get started</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
+                            {isAuthenticated ? (
+                                <Link
+                                    to="/dashboard"
+                                    className="btn-interactive w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    <span>Go to Dashboard</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </Link>
+                            ) : (
+                                <Link
+                                    to="/register"
+                                    className="btn-interactive w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                >
+                                    <span>Get started</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </Link>
+                            )}
 
                             <button
                                 type="button"

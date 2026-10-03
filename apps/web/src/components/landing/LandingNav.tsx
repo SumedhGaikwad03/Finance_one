@@ -25,17 +25,22 @@ export const LandingNav = () => {
                         <Wallet className="w-5 h-5" />
                     </div>
                     <div>
-                        <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight block leading-tight">
-                            Finance One
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 block">
-                            Smart Ledger
+                        <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg font-black text-slate-900 tracking-tight block leading-tight">
+                                Finance One
+                            </span>
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/80">
+                                MVP 1
+                            </span>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                            Early Beta
                         </span>
                     </div>
                 </Link>
 
                 {/* Desktop Nav Links */}
-                <nav className="hidden md:flex items-center gap-8 text-xs sm:text-sm font-semibold text-slate-600">
+                <nav className="hidden md:flex items-center gap-7 text-xs sm:text-sm font-semibold text-slate-600">
                     <button
                         type="button"
                         onClick={() => scrollToSection("features")}
@@ -52,17 +57,24 @@ export const LandingNav = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => scrollToSection("mvp-roadmap")}
+                        onClick={() => scrollToSection("mvp1")}
                         className="hover:text-purple-600 transition-colors cursor-pointer"
                     >
-                        MVP & Roadmap
+                        Why MVP 1?
                     </button>
                     <button
                         type="button"
-                        onClick={() => scrollToSection("philosophy")}
+                        onClick={() => scrollToSection("ai-privacy")}
                         className="hover:text-purple-600 transition-colors cursor-pointer"
                     >
-                        Our approach
+                        AI & Privacy
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => scrollToSection("heading")}
+                        className="hover:text-purple-600 transition-colors cursor-pointer"
+                    >
+                        Direction
                     </button>
                 </nav>
 
@@ -128,17 +140,24 @@ export const LandingNav = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => scrollToSection("mvp-roadmap")}
+                            onClick={() => scrollToSection("mvp1")}
                             className="text-left py-2 px-3 rounded-lg hover:bg-slate-50 hover:text-purple-600 transition-colors"
                         >
-                            MVP & Roadmap
+                            Why MVP 1?
                         </button>
                         <button
                             type="button"
-                            onClick={() => scrollToSection("philosophy")}
+                            onClick={() => scrollToSection("ai-privacy")}
                             className="text-left py-2 px-3 rounded-lg hover:bg-slate-50 hover:text-purple-600 transition-colors"
                         >
-                            Our approach
+                            AI & Privacy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollToSection("heading")}
+                            className="text-left py-2 px-3 rounded-lg hover:bg-slate-50 hover:text-purple-600 transition-colors"
+                        >
+                            Direction
                         </button>
                     </nav>
 

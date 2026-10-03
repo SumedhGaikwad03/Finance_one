@@ -21,8 +21,8 @@ export const LandingFooter = () => {
                         <span className="font-extrabold text-slate-900 text-sm">
                             Finance One
                         </span>
-                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/60">
-                            MVP 1.0
+                        <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/80">
+                            Early Beta · MVP 1
                         </span>
                     </div>
 
@@ -44,10 +44,24 @@ export const LandingFooter = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => scrollToSection("mvp-roadmap")}
+                            onClick={() => scrollToSection("mvp1")}
                             className="hover:text-purple-600 transition-colors cursor-pointer"
                         >
-                            Roadmap
+                            Why MVP 1?
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollToSection("ai-privacy")}
+                            className="hover:text-purple-600 transition-colors cursor-pointer"
+                        >
+                            AI & Privacy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => scrollToSection("heading")}
+                            className="hover:text-purple-600 transition-colors cursor-pointer"
+                        >
+                            Direction
                         </button>
                         <button
                             type="button"
