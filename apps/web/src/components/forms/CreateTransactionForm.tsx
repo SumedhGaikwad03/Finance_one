@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IndianRupee, Tag, ShieldAlert, Calendar, FileText, Type } from "lucide-react";
+import { IndianRupee, ShieldAlert, Calendar, FileText, Type } from "lucide-react";
 import type { Transaction } from "../../types/dashboard.types";
+import CategorySelect from "./CategorySelect";
 
 import {
     createTransactionSchema,
@@ -41,6 +42,7 @@ const CreateTransactionForm = ({
         handleSubmit,
         reset,
         setValue,
+        control,
         formState: { errors },
     } = useForm<CreateTransactionFormData>({
         resolver: zodResolver(createTransactionSchema),
@@ -177,32 +179,20 @@ const CreateTransactionForm = ({
                     >
                         Category *
                     </label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                            <Tag className="w-4 h-4" />
-                        </div>
-                        <select
-                            id="category"
-                            className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 transition-all ${
-                                errors.category
-                                    ? "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500"
-                                    : "border-slate-200 focus:ring-purple-500/20 focus:border-purple-500"
-                            }`}
-                            {...register("category")}
-                        >
-                            <option value="FOOD">Food & Dining</option>
-                            <option value="FUEL">Fuel & Transport</option>
-                            <option value="SHOPPING">Shopping</option>
-                            <option value="BILLS">Bills & Utilities</option>
-                            <option value="ENTERTAINMENT">Entertainment</option>
-                            <option value="HEALTH">Health & Care</option>
-                            <option value="TRAVEL">Travel & Vacations</option>
-                            <option value="EDUCATION">Education</option>
-                            <option value="SUBSCRIPTION">Subscriptions</option>
-                            <option value="GIFT">Gifts & Donations</option>
-                            <option value="OTHER">Other / Misc</option>
-                        </select>
-                    </div>
+                    <Controller
+                        control={control}
+                        name="category"
+                        render={({ field }) => (
+                            <CategorySelect
+                                id="category"
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                error={errors.category?.message}
+                                disabled={isSubmitting}
+                            />
+                        )}
+                    />
                     {errors.category?.message && (
                         <p className="text-xs text-rose-500 font-medium">
                             {errors.category.message}
