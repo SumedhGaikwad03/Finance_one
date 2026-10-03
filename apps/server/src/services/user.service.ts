@@ -1,7 +1,8 @@
 
-import { CreateUserInput , updateUserInput} from "../schemas/user.schema";
+import bcrypt from "bcrypt";
+import { CreateUserInput , updateUserInput, UpdateProfileInput, ChangePasswordInput } from "../schemas/user.schema";
 import * as userRepository from "../repositories/user.repository";
-import { ConflictError, NotFoundError } from "../error/AppError";
+import { ConflictError, NotFoundError, BadRequestError } from "../error/AppError";
 import { isPrismaP2025 , isPrismaP2002 } from "../lib/prismaErrors"; // this layer is slighhty coupled 
 // but its woth the trade
 export const getAllUsers = () => {
@@ -90,8 +91,42 @@ export const getCurrentUser = async (userId : number) => {
     id: received_user.id,
     name: received_user.name,
     email: received_user.email,
+  };
 };
-}
+
+export const updateProfile = async (userId: number, data: UpdateProfileInput) => {
+  const user = await userRepository.findUserbyid(userId);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  const updated = await userRepository.updateUserdata(userId, { name: data.name });
+  return {
+    id: updated.id,
+    name: updated.name,
+    email: updated.email,
+  };
+};
+
+export const changeUserPassword = async (userId: number, input: ChangePasswordInput) => {
+  const user = await userRepository.findUserbyid(userId);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  const isMatch = await bcrypt.compare(input.currentPassword, user.passwordHash);
+  if (!isMatch) {
+    throw new BadRequestError("Incorrect current password");
+  }
+
+  const passwordHash = await bcrypt.hash(input.newPassword, 10);
+  await userRepository.updateUserPassword(userId, passwordHash);
+
+  return {
+    success: true,
+    message: "Password updated successfully",
+  };
+};
   
 
 

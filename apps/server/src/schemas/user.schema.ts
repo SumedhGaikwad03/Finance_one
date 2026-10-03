@@ -27,3 +27,14 @@ export const updateUserSchema = createUserSchema.partial().refine(
 ); // this is a zod schema that is used to validate the data that is 
 // passed to the update user function
 export type updateUserInput = z.infer<typeof updateUserSchema>; // for compile time type checking and validation of the data that is
+
+export const updateProfileSchema = z.object({
+    name: z.string().trim().min(1, "Name is required").max(100, "Name is too long"),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(8, "New password must be at least 8 characters long"),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

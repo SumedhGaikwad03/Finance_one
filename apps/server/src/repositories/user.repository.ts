@@ -47,6 +47,13 @@ export const updateUserdata = (id : number , updates : updateUserInput) => {
 
 };
 
+export const updateUserPassword = (id: number, passwordHash: string) => {
+    return prisma.user.update({
+        where: { id },
+        data: { passwordHash },
+    });
+};
+
 export const deleteUser = ( id : number )=> {
     return prisma.user.delete({
     where: { id },

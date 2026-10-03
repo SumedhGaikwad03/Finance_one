@@ -1,23 +1,25 @@
 import { Router } from "express";
-import { finduser, getUsers,me,updateUserdata} from "../controllers/user.controller";
-//import { addUser } from "../controllers/user.controller";
+import {
+  findUser,
+  getUsers,
+  me,
+  updateCurrentUser,
+  changePassword,
+  updateUserdata,
+} from "../controllers/user.controller";
 import { asyncHandler } from "../utils/asyncHandler";
-//import { finduser } from "../controllers/user.controller";
-
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
 
-router.get("/", authMiddleware, asyncHandler(getUsers)); // this call to controller which will call sevice and then finllly data 
+// Specific authenticated user profile & security endpoints (MUST be defined before /:id)
+router.get("/me", authMiddleware, asyncHandler(me));
+router.patch("/me", authMiddleware, asyncHandler(updateCurrentUser));
+router.patch("/me/password", authMiddleware, asyncHandler(changePassword));
 
-//router.post("/addUser", asyncHandler(addUser)) ; this is redunandant now 
-
-router.get("/:id", authMiddleware, asyncHandler(finduser))
-
-router.patch("/:id", authMiddleware, asyncHandler(updateUserdata)); 
-
-
-
+router.get("/", authMiddleware, asyncHandler(getUsers));
+router.get("/:id", authMiddleware, asyncHandler(findUser));
+router.patch("/:id", authMiddleware, asyncHandler(updateUserdata));
 
 export default router;
 
