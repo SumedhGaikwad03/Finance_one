@@ -66,6 +66,8 @@ export class ClassificationService {
                 sourceType: "USER_EXPLICIT",
                 reasoning: "User-confirmed classification preserved across reimports and updates",
                 classifiedAt,
+                isCategoryUnclassified: false,
+                isPriorityUnclassified: candidate.existingPriority === Priority.UNCLASSIFIED,
             };
         }
 
@@ -125,15 +127,18 @@ export class ClassificationService {
         }
 
         // Level 5: Canonical Fallbacks for unresolved dimensions
+        const isCategoryUnclassified = !resolvedCategory;
+        const isPriorityUnclassified = !resolvedPriority || resolvedPriority === Priority.UNCLASSIFIED;
         const finalCategory = resolvedCategory || Category.OTHER;
         const finalPriority = resolvedPriority || Priority.UNCLASSIFIED;
         const finalTags = Array.from(resolvedTags);
 
-        // A transaction needs review if confidence is low, tier is UNCLASSIFIED, or category is OTHER
+        // A transaction needs review if confidence is low, tier is UNCLASSIFIED, or category was unclassified/unknown.
+        // Explicit Category.OTHER with adequate confidence does NOT trigger review (not conflated with unknown).
         const needsReview =
             highestConfidence < this.minConfidenceThreshold ||
             finalPriority === Priority.UNCLASSIFIED ||
-            finalCategory === Category.OTHER;
+            isCategoryUnclassified;
 
         return {
             category: finalCategory,
@@ -144,8 +149,10 @@ export class ClassificationService {
             userConfirmed: false,
             providerId: selectedProviderId,
             sourceType: selectedSourceType,
-            reasoning: selectedReasoning || "Default fallback classification",
+            reasoning: selectedReasoning || (isCategoryUnclassified ? "Default fallback for unclassified category" : "Resolved classification"),
             classifiedAt,
+            isCategoryUnclassified,
+            isPriorityUnclassified,
         };
     }
 }

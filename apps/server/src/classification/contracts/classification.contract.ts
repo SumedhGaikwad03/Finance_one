@@ -132,6 +132,95 @@ export interface ClassificationMetadata {
     needsReview: boolean;
     classifiedAt: string; // ISO 8601
     tags: string[];
+    isCategoryUnclassified?: boolean;
+    isPriorityUnclassified?: boolean;
+}
+
+/**
+ * Deterministically evaluates financial eligibility and record type.
+ * Decided completely deterministically without any LLM or heuristic classifier.
+ */
+export function determineFinancialEligibility(params: {
+    amount?: number | Prisma.Decimal | null;
+    isCredit?: boolean;
+    isDebit?: boolean;
+    narration?: string | null;
+}): FinancialEligibility {
+    const text = (params.narration || "").trim().toLowerCase();
+
+    // 1. Balance Summary detection
+    const summaryPatterns = [
+        /^(opening|closing|current|available|ledger|clear)\s*balance/i,
+        /^(total|subtotal|summary|brought forward|carried forward|b\/f|c\/f)$/i,
+        /^(statement|account)\s*(summary|period|overview)/i,
+        /^balance\s*(b\/f|c\/f|as on)/i,
+        /^grand\s*total/i,
+    ];
+    if (summaryPatterns.some((p) => p.test(text))) {
+        return {
+            recordType: "BALANCE_SUMMARY",
+            isEligibleExpense: false,
+            reason: "Statement balance or summary header/footer entry",
+        };
+    }
+
+    // 2. Transfer detection
+    const transferPatterns = [
+        /\b(fund\s*transfer|ac\s*trf|account\s*transfer|internal\s*transfer|self\s*transfer|neft\s*trf|imps\s*trf)\b/i,
+        /\btrf\s*to\s*(self|account|savings|current)\b/i,
+    ];
+    if (transferPatterns.some((p) => p.test(text))) {
+        return {
+            recordType: "TRANSFER",
+            isEligibleExpense: false,
+            reason: "Internal account-to-account transfer or rebalancing",
+        };
+    }
+
+    // 3. Validation / Invalid check
+    if (params.amount === null || params.amount === undefined) {
+        return {
+            recordType: "INVALID",
+            isEligibleExpense: false,
+            reason: "Missing monetary amount",
+        };
+    }
+    const numAmount = params.amount instanceof Prisma.Decimal ? params.amount.toNumber() : Number(params.amount);
+    if (!Number.isFinite(numAmount) || numAmount === 0) {
+        return {
+            recordType: "INVALID",
+            isEligibleExpense: false,
+            reason: "Invalid or zero monetary amount",
+        };
+    }
+
+    // 4. Direction Check: Credits vs Debits
+    if (params.isCredit && !params.isDebit) {
+        return {
+            recordType: "INCOME",
+            isEligibleExpense: false,
+            reason: "Incoming credit / deposit / salary entry - excluded from expense ledger",
+        };
+    }
+
+    // Income keywords check
+    const incomeKeywords = [
+        /\b(salary|payroll|dividend|interest\s*credit|refund\s*credited|cashback\s*credited)\b/i,
+    ];
+    if (params.isCredit || incomeKeywords.some((p) => p.test(text))) {
+        return {
+            recordType: "INCOME",
+            isEligibleExpense: false,
+            reason: "Income, salary, or credit deposit entry",
+        };
+    }
+
+    // 5. Eligible Expense
+    return {
+        recordType: "EXPENSE",
+        isEligibleExpense: true,
+        reason: "Valid outgoing expense debit",
+    };
 }
 
 // ----------------------------------------------------------------------------
@@ -183,6 +272,8 @@ export interface ClassificationResult {
     sourceType: ClassificationSourceType;
     reasoning?: string;
     classifiedAt: string;
+    isCategoryUnclassified?: boolean;
+    isPriorityUnclassified?: boolean;
 }
 
 /**

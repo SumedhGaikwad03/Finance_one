@@ -9,6 +9,7 @@ import {
     CATEGORY_DESCRIPTIONS,
     PRIORITY_DESCRIPTIONS,
     ClassificationCandidate,
+    determineFinancialEligibility,
 } from "../classification/contracts/classification.contract";
 import { RuleBasedClassifier } from "../classification/providers/rule-based.classifier";
 import { MerchantRuleClassifier } from "../classification/providers/merchant-rule.classifier";
@@ -353,6 +354,228 @@ describe("FinOne: Formalized Transaction Classification Taxonomy", () => {
             assert.equal(results[1].priority, Priority.ESSENTIAL);
             assert.equal(results[2].category, Category.HEALTH);
             assert.equal(results[2].priority, Priority.ESSENTIAL);
+        });
+    });
+
+    describe("6. Financial Record Types & Deterministic Eligibility Contract", () => {
+        it("correctly identifies EXPENSE records for valid outgoing debits", () => {
+            const eligibility = determineFinancialEligibility({
+                amount: new Prisma.Decimal(450.75),
+                isDebit: true,
+                isCredit: false,
+                narration: "Grocery Supermarket",
+            });
+
+            assert.equal(eligibility.recordType, "EXPENSE");
+            assert.equal(eligibility.isEligibleExpense, true);
+        });
+
+        it("correctly identifies INCOME records for credits, deposits, and salary", () => {
+            const salary = determineFinancialEligibility({
+                amount: 85000,
+                isCredit: true,
+                isDebit: false,
+                narration: "Monthly Salary Credit Oct 2026",
+            });
+            assert.equal(salary.recordType, "INCOME");
+            assert.equal(salary.isEligibleExpense, false);
+
+            const refund = determineFinancialEligibility({
+                amount: 350,
+                isCredit: true,
+                isDebit: false,
+                narration: "Merchant Refund Credited",
+            });
+            assert.equal(refund.recordType, "INCOME");
+            assert.equal(refund.isEligibleExpense, false);
+        });
+
+        it("correctly identifies TRANSFER records for internal account transfers", () => {
+            const transfer = determineFinancialEligibility({
+                amount: 10000,
+                isDebit: true,
+                narration: "Internal Fund Transfer to Savings A/C",
+            });
+            assert.equal(transfer.recordType, "TRANSFER");
+            assert.equal(transfer.isEligibleExpense, false);
+
+            const selfTrf = determineFinancialEligibility({
+                amount: 5000,
+                isDebit: true,
+                narration: "Self Transfer AC TRF 9982",
+            });
+            assert.equal(selfTrf.recordType, "TRANSFER");
+            assert.equal(selfTrf.isEligibleExpense, false);
+        });
+
+        it("correctly identifies BALANCE_SUMMARY records for header/footer balances", () => {
+            const opening = determineFinancialEligibility({
+                amount: 25000,
+                narration: "Opening Balance b/f",
+            });
+            assert.equal(opening.recordType, "BALANCE_SUMMARY");
+            assert.equal(opening.isEligibleExpense, false);
+
+            const closing = determineFinancialEligibility({
+                amount: 32000,
+                narration: "Closing Balance as on 31-Oct-2026",
+            });
+            assert.equal(closing.recordType, "BALANCE_SUMMARY");
+            assert.equal(closing.isEligibleExpense, false);
+
+            const grandTotal = determineFinancialEligibility({
+                amount: 150000,
+                narration: "Grand Total Summary",
+            });
+            assert.equal(grandTotal.recordType, "BALANCE_SUMMARY");
+            assert.equal(grandTotal.isEligibleExpense, false);
+        });
+
+        it("correctly identifies INVALID records for missing or zero amounts", () => {
+            const missingAmt = determineFinancialEligibility({
+                amount: null,
+                narration: "Invalid row without amount",
+            });
+            assert.equal(missingAmt.recordType, "INVALID");
+            assert.equal(missingAmt.isEligibleExpense, false);
+
+            const zeroAmt = determineFinancialEligibility({
+                amount: 0,
+                narration: "Zero amount row",
+            });
+            assert.equal(zeroAmt.recordType, "INVALID");
+            assert.equal(zeroAmt.isEligibleExpense, false);
+        });
+    });
+
+    describe("7. Explicit OTHER vs Unknown Category Separation", () => {
+        it("does not conflate explicit Category.OTHER with unknown/unclassified category", async () => {
+            const service = new ClassificationService();
+
+            // Case A: User explicitly confirms Category.OTHER for an expense (e.g. miscellaneous cash expense)
+            const explicitOtherCandidate: ClassificationCandidate = {
+                amount: new Prisma.Decimal(100),
+                title: "Miscellaneous tipping and loose coins",
+                transactionDate: new Date("2026-03-01T00:00:00.000Z"),
+                source: TransactionSource.MANUAL,
+                existingCategory: Category.OTHER,
+                existingPriority: Priority.GOOD_TO_HAVE,
+                userConfirmed: true,
+            };
+
+            const explicitResult = await service.classifyCandidate(explicitOtherCandidate);
+            assert.equal(explicitResult.category, Category.OTHER);
+            assert.equal(explicitResult.isCategoryUnclassified, false);
+            assert.equal(explicitResult.needsReview, false); // Explicitly confirmed, does not force review!
+            assert.equal(explicitResult.sourceType, "USER_EXPLICIT");
+
+            // Case B: Completely unknown candidate where category could not be resolved
+            const unknownCandidate: ClassificationCandidate = {
+                amount: new Prisma.Decimal(250),
+                title: "XYZ9923847 unidentified merchant code",
+                transactionDate: new Date("2026-03-01T00:00:00.000Z"),
+                source: TransactionSource.CSV_IMPORT,
+            };
+
+            const unknownResult = await service.classifyCandidate(unknownCandidate);
+            assert.equal(unknownResult.category, Category.OTHER); // Fallback enum value
+            assert.equal(unknownResult.isCategoryUnclassified, true); // Explicitly marked as unclassified!
+            assert.equal(unknownResult.needsReview, true); // Unknown MUST require review!
+            assert.equal(unknownResult.sourceType, "FALLBACK_DEFAULT");
+        });
+    });
+
+    describe("8. Missing Spending Tier Ingestion Robustness", () => {
+        it("never rejects an expense solely because its tier is UNCLASSIFIED", () => {
+            const normalized = normalizeTransactionInput({
+                amount: 1500,
+                title: "General store purchase",
+                transactionDate: "2026-04-10",
+                category: Category.SHOPPING,
+                priority: Priority.UNCLASSIFIED,
+            });
+
+            assert.equal(normalized.priority, Priority.UNCLASSIFIED);
+
+            const validation = validateTransactionCandidate(normalized, 42);
+            assert.equal(validation.isValid, true);
+            assert.equal(validation.errors.length, 0);
+            assert.equal(validation.validated?.priority, Priority.UNCLASSIFIED);
+        });
+
+        it("statement row transformer defaults missing priority column to UNCLASSIFIED instead of inventing a tier", () => {
+            const rowWithoutPriority = {
+                Date: "10/04/2026",
+                Narration: "Corner Convenience Store",
+                Debit: "45.00",
+                Credit: "",
+            };
+
+            const mappingWithoutPriority: ColumnMapping = {
+                dateColumn: "Date",
+                descriptionColumn: "Narration",
+                amountMode: "debit_credit",
+                debitColumn: "Debit",
+                creditColumn: "Credit",
+                // Notice: priorityColumn is completely omitted!
+            };
+
+            const transformed = transformRow(rowWithoutPriority, mappingWithoutPriority, {}, 1, "statement.csv");
+
+            assert.equal(transformed.status, "READY");
+            assert.equal(transformed.mapped.priority, Priority.UNCLASSIFIED);
+            assert.equal(transformed.candidateInput?.priority, Priority.UNCLASSIFIED);
+            assert.equal(
+                (transformed.candidateInput?.sourceMetadata as any)?.isPriorityUnclassified,
+                true
+            );
+        });
+
+        it("statement row transformer excludes internal account transfer rows", () => {
+            const transferRow = {
+                Date: "10/04/2026",
+                Narration: "INTERNAL TRANSFER TO SAVINGS AC 5432",
+                Debit: "10,000.00",
+                Credit: "",
+            };
+
+            const mapping: ColumnMapping = {
+                dateColumn: "Date",
+                descriptionColumn: "Narration",
+                amountMode: "debit_credit",
+                debitColumn: "Debit",
+                creditColumn: "Credit",
+            };
+
+            const transformed = transformRow(transferRow, mapping, {}, 1, "statement.csv");
+            assert.equal(transformed.status, "EXCLUDED_NON_EXPENSE");
+            assert.ok(transformed.reasons[0].includes("Internal account transfer"));
+        });
+    });
+
+    describe("9. Missing Metadata & Optional Dimensions Resilience", () => {
+        it("handles completely empty or omitted tags and sourceMetadata safely", () => {
+            const normalized = normalizeTransactionInput({
+                amount: 300,
+                title: "Bookstore",
+                transactionDate: new Date("2026-05-01"),
+                category: Category.EDUCATION,
+                tags: undefined,
+                sourceMetadata: undefined,
+            });
+
+            assert.equal(normalized.tags, undefined);
+            assert.equal(normalized.sourceMetadata, null);
+
+            const validation = validateTransactionCandidate(normalized, 101);
+            assert.equal(validation.isValid, true);
+        });
+
+        it("normalizes and deduplicates tags without throwing on malformed inputs", () => {
+            const raw = ["#Groceries", "  DINING  ", "", null, undefined, "groceries", "supermarket_123"];
+            const cleaned = normalizeTags(raw as any);
+
+            assert.deepEqual(cleaned, ["groceries", "dining", "supermarket_123"]);
         });
     });
 });

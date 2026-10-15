@@ -116,17 +116,18 @@ export function normalizePriority(rawPriority?: Priority | string | null): Prior
 export function normalizeTags(rawTags?: unknown): string[] {
     if (!rawTags) return [];
     if (Array.isArray(rawTags)) {
-        return rawTags
+        const cleaned = rawTags
+            .filter((t) => t !== null && t !== undefined)
             .map((t) => String(t).trim().toLowerCase().replace(/[^a-z0-9_-]/g, ""))
-            .filter((t) => t.length > 0 && t.length <= 30)
-            .slice(0, 10);
+            .filter((t) => t.length > 0 && t.length <= 30);
+        return Array.from(new Set(cleaned)).slice(0, 10);
     }
     if (typeof rawTags === "string") {
-        return rawTags
+        const cleaned = rawTags
             .split(/[,;\s]+/)
             .map((t) => t.trim().toLowerCase().replace(/[^a-z0-9_-]/g, ""))
-            .filter((t) => t.length > 0 && t.length <= 30)
-            .slice(0, 10);
+            .filter((t) => t.length > 0 && t.length <= 30);
+        return Array.from(new Set(cleaned)).slice(0, 10);
     }
     return [];
 }

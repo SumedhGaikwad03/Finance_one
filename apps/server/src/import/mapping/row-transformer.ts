@@ -256,6 +256,20 @@ export function transformRow(
     };
   }
 
+  // Check for internal transfer or liquidity rebalancing row
+  const isTransfer = /\b(internal\s*transfer|fund\s*transfer|ac\s*trf|self\s*transfer|trf\s*to\s*self)\b/i.test(rawTitle);
+  if (isTransfer) {
+    return {
+      status: "EXCLUDED_NON_EXPENSE",
+      reasons: ["Internal account transfer or liquidity rebalancing - excluded from expense ledger"],
+      mapped: {
+        title: rawTitle,
+        amount: detectedAmount,
+        transactionDate: isoDateStr,
+      },
+    };
+  }
+
   // Title validation
   if (!title) {
     reasons.push(`Missing description or title in column '${mapping.descriptionColumn}'`);
@@ -300,7 +314,7 @@ export function transformRow(
 
   const priority = mapping.priorityColumn
     ? normalizePriority(rawRow[mapping.priorityColumn])
-    : Priority.GOOD_TO_HAVE;
+    : Priority.UNCLASSIFIED;
 
   const notes = mapping.notesColumn
     ? normalizeNotes(rawRow[mapping.notesColumn])
@@ -320,6 +334,8 @@ export function transformRow(
       sourceFilename,
       sourceRowIndex: rowIndex,
       rawRow,
+      isCategoryUnclassified: !mapping.categoryColumn,
+      isPriorityUnclassified: !mapping.priorityColumn,
     },
     allowPotentialDuplicate: Boolean(options.allowPotentialDuplicates),
   };
