@@ -8,7 +8,8 @@
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
-    "test": "tsx --test src/tests/*.test.ts"
+    "test": "tsx --test src/tests/*.test.ts",
+    "eval:classification": "tsx src/evaluation/cli.ts"
   },
   "keywords": [],
   "author": "",
