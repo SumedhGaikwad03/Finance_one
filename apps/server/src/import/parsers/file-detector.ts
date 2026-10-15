@@ -9,6 +9,8 @@ export const IMPORT_LIMITS = {
 
 // Standard PK zip header for XLSX
 const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
+// Standard %PDF header for PDF
+const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46]);
 
 /**
  * Validates file format by extension and buffer contents.
@@ -28,6 +30,16 @@ export function detectAndValidateFileType(
   }
 
   const extension = originalFilename.split(".").pop()?.toLowerCase();
+
+  if (extension === "pdf") {
+    // Check magic bytes for PDF (%PDF)
+    if (buffer.length < 4 || !buffer.subarray(0, 4).equals(PDF_MAGIC)) {
+      throw new ValidationError(
+        "Corrupted or invalid PDF file. File content does not match .pdf format."
+      );
+    }
+    return "pdf";
+  }
 
   if (extension === "xlsx") {
     // Check magic bytes for ZIP (XLSX is an OPC/ZIP package)
@@ -53,7 +65,7 @@ export function detectAndValidateFileType(
   }
 
   throw new ValidationError(
-    `Unsupported file format: '${extension || "unknown"}'. Only .csv and .xlsx files are supported.`
+    `Unsupported file format: '${extension || "unknown"}'. Only .csv, .xlsx, and .pdf files are supported.`
   );
 }
 

@@ -51,6 +51,15 @@ export function parseStatementAmount(rawVal: unknown): { value: number | null; i
     str = str.replace(/[-–—]$/, "").trim();
   }
 
+  // Check for Dr / Cr indicators commonly found in bank statements (e.g. 150.00 Dr, 500.00 Cr)
+  if (/\bdr\b/i.test(str)) {
+    isNegative = true;
+    str = str.replace(/\bdr\b/gi, "").trim();
+  } else if (/\bcr\b/i.test(str)) {
+    isNegative = false;
+    str = str.replace(/\bcr\b/gi, "").trim();
+  }
+
   // Strip currency symbols, commas, spaces
   const cleaned = str.replace(/[₹$€£,\s]/g, "");
   if (!cleaned || isNaN(Number(cleaned))) {
@@ -95,7 +104,53 @@ export function parseStatementDate(rawVal: unknown, preferredFormat: string = "A
     }
   }
 
-  // 2. Day-Month-Year vs Month-Day-Year
+  // 2. Textual month formats: e.g. "15-Oct-2026", "15 Oct 2026", "Oct 15, 2026"
+  const MONTH_MAP: Record<string, number> = {
+    jan: 0, january: 0,
+    feb: 1, february: 1,
+    mar: 2, march: 2,
+    apr: 3, april: 3,
+    may: 4,
+    jun: 5, june: 5,
+    jul: 6, july: 6,
+    aug: 7, august: 7,
+    sep: 8, sept: 8, september: 8,
+    oct: 9, october: 9,
+    nov: 10, november: 10,
+    dec: 11, december: 11,
+  };
+
+  const dmyText = str.match(/^(\d{1,2})[-/\s]([A-Za-z]{3,9})[-/\s](\d{2,4})/);
+  if (dmyText) {
+    const mKey = dmyText[2].toLowerCase();
+    if (MONTH_MAP[mKey] !== undefined) {
+      const day = parseInt(dmyText[1], 10);
+      const month = MONTH_MAP[mKey];
+      let year = parseInt(dmyText[3], 10);
+      if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+      const date = new Date(Date.UTC(year, month, day));
+      if (!isNaN(date.getTime()) && date.getUTCDate() === day) {
+        return date;
+      }
+    }
+  }
+
+  const mdyText = str.match(/^([A-Za-z]{3,9})[-/\s](\d{1,2})(?:,)?[-/\s](\d{2,4})/);
+  if (mdyText) {
+    const mKey = mdyText[1].toLowerCase();
+    if (MONTH_MAP[mKey] !== undefined) {
+      const day = parseInt(mdyText[2], 10);
+      const month = MONTH_MAP[mKey];
+      let year = parseInt(mdyText[3], 10);
+      if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+      const date = new Date(Date.UTC(year, month, day));
+      if (!isNaN(date.getTime()) && date.getUTCDate() === day) {
+        return date;
+      }
+    }
+  }
+
+  // 3. Day-Month-Year vs Month-Day-Year
   const partsMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
   if (partsMatch) {
     let p1 = parseInt(partsMatch[1], 10);
@@ -120,15 +175,17 @@ export function parseStatementDate(rawVal: unknown, preferredFormat: string = "A
       month = p2;
     }
 
-    const date = new Date(Date.UTC(year, month - 1, day));
-    if (!isNaN(date.getTime()) && date.getUTCMonth() === month - 1) {
-      return date;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (!isNaN(date.getTime()) && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+        return date;
+      }
     }
   }
 
-  // 3. Textual date: e.g. "15-Oct-2026", "15 Oct 2026", "Oct 15 2026"
+  // 4. Native JS date parse fallback
   const textDate = new Date(str);
-  if (!isNaN(textDate.getTime())) {
+  if (!isNaN(textDate.getTime()) && textDate.getFullYear() >= 2000) {
     return textDate;
   }
 
@@ -204,7 +261,20 @@ export function transformRow(
       isCreditOrIncome = true;
       detectedAmount = creditParsed.value;
     } else if (!hasDebit && !hasCredit) {
-      reasons.push("Row contains no amount in either Debit or Credit columns");
+      const rawDebitClean = String(rawDebit || "").trim();
+      const rawCreditClean = String(rawCredit || "").trim();
+      const isDebitEmpty = !rawDebitClean || /^[-–—]+$/.test(rawDebitClean);
+      const isCreditEmpty = !rawCreditClean || /^[-–—]+$/.test(rawCreditClean);
+
+      if (!isDebitEmpty && debitParsed.value === null) {
+        reasons.push(`Malformed amount in Debit column '${mapping.debitColumn}' (value: '${rawDebit}')`);
+      } else if (!isCreditEmpty && creditParsed.value === null) {
+        reasons.push(`Malformed amount in Credit column '${mapping.creditColumn}' (value: '${rawCredit}')`);
+      } else if (debitParsed.value === 0 && creditParsed.value === 0) {
+        reasons.push("Row contains zero amount in both Debit and Credit columns");
+      } else {
+        reasons.push("Row contains no amount in either Debit or Credit columns");
+      }
     } else {
       // Both debit and credit are populated
       reasons.push("Ambiguous row: both Debit and Credit columns have non-zero amounts");
@@ -217,7 +287,14 @@ export function transformRow(
     if (parsed.value === null || parsed.value === 0) {
       reasons.push(`Missing, zero, or unparseable amount in column '${mapping.amountColumn}' (value: '${rawAmountVal || ""}')`);
     } else {
-      const convention = options.amountConvention || "negative_is_expense";
+      let defaultConvention = "negative_is_expense";
+      if (mapping.amountColumn && /debit|withdrawal|spent|paid\s*out|\bdr\b/i.test(mapping.amountColumn)) {
+        defaultConvention = "positive_is_expense";
+      } else if (mapping.amountColumn && /credit|deposit|paid\s*in|\bcr\b/i.test(mapping.amountColumn)) {
+        defaultConvention = "negative_is_expense";
+      }
+
+      const convention = options.amountConvention || defaultConvention;
 
       if (convention === "negative_is_expense") {
         if (parsed.isNegative) {
