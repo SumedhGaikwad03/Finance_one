@@ -54,8 +54,11 @@ export const updateUserdata = (id : number , updates : updateUserInput) => {
     users[userIndex] = {...users[userIndex],...updates,};
     
     return users[userIndex];*/
-
-    return prisma.user.update({where : {id}, data : updates,});
+    const data = { ...updates };
+    if (data.email) {
+        data.email = data.email.trim().toLowerCase();
+    }
+    return prisma.user.update({where : {id}, data,});
 
 };
 
@@ -74,12 +77,16 @@ export const deleteUser = ( id : number )=> {
 }
 
 export const findUserbyEmail = (email: string) => {
+    const normalized = email.trim().toLowerCase();
     return prisma.user.findFirst({
         where: {
             email: {
-                equals: email.trim(),
+                equals: normalized,
                 mode: "insensitive",
             },
+        },
+        orderBy: {
+            id: "asc",
         },
     });
 };
