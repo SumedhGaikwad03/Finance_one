@@ -370,4 +370,104 @@ Item",12.00`;
       }
     });
   });
+
+  // =========================================================================
+  // 8. Deterministic Section 10 Fixture Reconciliation & Idempotency
+  // =========================================================================
+  describe("8. Section 10 Deterministic Reconciliation Fixture", () => {
+    it("processes Section 10 6-row fixture: 4 debits imported (2729.00), 1 salary credit excluded, 1 opening balance excluded, and re-import yields 0 increase", async () => {
+      const csv = `Date,Narration,Ref,Debit,Credit
+2026-10-01,Fresh Basket groceries,TEST001,850.00,
+2026-10-02,Metro travel,TEST002,200.00,
+2026-10-03,Coffee House,TEST003,180.00,
+2026-10-04,Salary credit,TEST004,,50000.00
+2026-10-05,Opening Balance,,,2500.00
+2026-10-06,Online shopping,TEST005,1499.00,`;
+
+      // 1. Upload & parse
+      const meta = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "reconciliation.csv");
+      assert.equal(meta.totalRows, 6);
+
+      // 2. Mapping
+      const mapping: ColumnMapping = {
+        dateColumn: "Date",
+        descriptionColumn: "Narration",
+        amountMode: "debit_credit",
+        debitColumn: "Debit",
+        creditColumn: "Credit",
+        externalIdColumn: "Ref",
+      };
+
+      // 3. Preview
+      const preview = await importService.generateImportPreview("1", meta.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
+      assert.equal(preview.summary.totalRows, 6);
+      assert.equal(preview.summary.validExpenseCount, 4);
+      assert.equal(preview.summary.excludedNonExpenseCount, 2);
+      assert.equal(preview.summary.expectedToImportCount, 4);
+      const previewTotal = preview.sampleRows
+        .filter((r) => r.status === "READY")
+        .reduce((sum, r) => sum + (r.mapped.amount || 0), 0);
+      assert.equal(previewTotal, 2729.00);
+
+      // Verify specific row exclusions
+      const salaryRow = preview.sampleRows.find((r) => r.mapped.title?.includes("Salary credit"));
+      assert.ok(salaryRow);
+      assert.equal(salaryRow?.status, "EXCLUDED_NON_EXPENSE");
+      assert.equal(salaryRow?.mapped.amount, 50000.00);
+      assert.ok(salaryRow?.reasons[0].includes("Credit / deposit entry"));
+
+      const balanceRow = preview.sampleRows.find((r) => r.mapped.title?.includes("Opening Balance"));
+      assert.ok(balanceRow);
+      assert.equal(balanceRow?.status, "EXCLUDED_NON_EXPENSE");
+      assert.equal(balanceRow?.mapped.amount, 2500.00);
+      assert.ok(balanceRow?.reasons[0].includes("balance"));
+
+      // 4. Confirm & Commit Import
+      const commitResult = await importService.confirmAndCommitImport("1", {
+        fileId: meta.fileId,
+        mapping,
+      });
+
+      assert.equal(commitResult.imported, 4);
+      assert.equal(commitResult.excludedNonExpense, 2);
+      assert.equal(commitResult.importedIds.length, 4);
+
+      // Verify records in DB
+      let ledgerSum = 0;
+      for (const idStr of commitResult.importedIds) {
+        const tx = await transactionRepository.findTransactionById(Number(idStr));
+        assert.ok(tx);
+        assert.equal(tx?.source, TransactionSource.CSV_IMPORT);
+        ledgerSum += Number(tx?.amount);
+      }
+      assert.equal(ledgerSum, 2729.00);
+
+      // 5. Re-import: verify idempotency and zero ledger increase
+      const metaRetry = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "reconciliation_retry.csv");
+      const previewRetry = await importService.generateImportPreview("1", metaRetry.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
+
+      assert.equal(previewRetry.summary.totalRows, 6);
+      assert.equal(previewRetry.summary.validExpenseCount, 0); // All 4 are now duplicates!
+      assert.equal(previewRetry.summary.confirmedDuplicateCount, 4);
+      assert.equal(previewRetry.summary.excludedNonExpenseCount, 2);
+      assert.equal(previewRetry.summary.expectedToImportCount, 0);
+      const retryTotal = previewRetry.sampleRows
+        .filter((r) => r.status === "READY")
+        .reduce((sum, r) => sum + (r.mapped.amount || 0), 0);
+      assert.equal(retryTotal, 0);
+
+      const commitRetry = await importService.confirmAndCommitImport("1", {
+        fileId: metaRetry.fileId,
+        mapping,
+      });
+
+      assert.equal(commitRetry.imported, 0);
+      assert.equal(commitRetry.importedIds.length, 0);
+
+      // Cleanup transactions created for this test
+      for (const idStr of commitResult.importedIds) {
+        await transactionRepository.deleteTransaction(Number(idStr));
+      }
+    });
+  });
 });
