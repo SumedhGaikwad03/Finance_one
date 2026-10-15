@@ -16,6 +16,7 @@ export interface IngestionSourceInput {
     externalId?: string;
     sourceMetadata?: Record<string, unknown>;
     allowPotentialDuplicate?: boolean;
+    tags?: string[];
 }
 
 /**
@@ -32,6 +33,7 @@ export interface NormalizedTransactionCandidate {
     source: TransactionSource;
     externalId: string | null;
     sourceMetadata: Record<string, unknown> | null;
+    tags?: string[];
     fingerprint: string;
     allowPotentialDuplicate: boolean;
 }

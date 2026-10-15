@@ -1,6 +1,6 @@
 import { Category, Priority, TransactionSource } from "../../generated/prisma/enums";
 
-export type SupportedFileType = "csv" | "xlsx";
+export type SupportedFileType = "csv" | "xlsx" | "pdf";
 
 export type AmountMode = "single_amount" | "debit_credit";
 
@@ -85,6 +85,7 @@ export interface ImportPreviewResult {
   mapping: ColumnMapping;
   options: ImportOptions;
   sampleRows: PreviewRowItem[];
+  reconciliation?: import("../reconciliation/statement-reconciler").ReconciliationReport;
 }
 
 export interface ConfirmImportPayload {

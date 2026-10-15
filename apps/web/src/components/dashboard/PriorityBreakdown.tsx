@@ -30,6 +30,12 @@ const PRIORITY_META: Record<
         barColor: "bg-purple-600",
         textColor: "text-purple-900",
     },
+    UNCLASSIFIED: {
+        label: "Unclassified",
+        tag: "Pending Tier",
+        barColor: "bg-amber-500",
+        textColor: "text-amber-900",
+    },
 };
 
 const PriorityBreakdown = ({
@@ -40,7 +46,7 @@ const PriorityBreakdown = ({
     const prefersReducedMotion = usePrefersReducedMotion();
 
     const items = useMemo(() => {
-        const priorities: TransactionPriority[] = ["ESSENTIAL", "GOOD_TO_HAVE", "LUXURY"];
+        const priorities: TransactionPriority[] = ["ESSENTIAL", "GOOD_TO_HAVE", "LUXURY", "UNCLASSIFIED"];
         return priorities.map((pri) => {
             const amount = Number(priorityTotals[pri]) || 0;
             const percentage = totalSpentNumber > 0 ? (amount / totalSpentNumber) * 100 : 0;

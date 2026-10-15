@@ -17,12 +17,12 @@ const upload = multer({
   },
   fileFilter: (_req, file, cb) => {
     const ext = file.originalname.split(".").pop()?.toLowerCase();
-    if (ext === "csv" || ext === "xlsx" || ext === "txt") {
+    if (ext === "csv" || ext === "xlsx" || ext === "txt" || ext === "pdf") {
       cb(null, true);
     } else {
       cb(
         new ValidationError(
-          `Invalid file format: '.${ext}'. Only CSV (.csv) and Excel (.xlsx) files are supported.`
+          `Invalid file format: '.${ext}'. Only CSV (.csv), Excel (.xlsx), and PDF (.pdf) files are supported.`
         )
       );
     }

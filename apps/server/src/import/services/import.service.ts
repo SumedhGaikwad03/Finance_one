@@ -10,10 +10,12 @@ import {
   IngestionSourceInput,
 } from "../../ingestion/types/ingestion.types";
 import { suggestColumnMapping } from "../mapping/column-matcher";
-import { transformRow } from "../mapping/row-transformer";
+import { transformRow, TransformedRowResult } from "../mapping/row-transformer";
+import { reconcileStatement } from "../reconciliation/statement-reconciler";
 import { parseCsvBuffer } from "../parsers/csv.parser";
 import { detectAndValidateFileType } from "../parsers/file-detector";
 import { parseExcelWorksheet } from "../parsers/xlsx.parser";
+import { parsePdfBuffer } from "../parsers/pdf.parser";
 import { importSessionStore } from "../session/import-session.store";
 import {
   ColumnMapping,
@@ -48,6 +50,11 @@ export class ImportService {
       parsedSheet = parseCsvBuffer(buffer);
       worksheets = ["CSV"];
       activeWorksheet = "CSV";
+    } else if (fileType === "pdf") {
+      const pdfResult = await parsePdfBuffer(buffer);
+      parsedSheet = pdfResult.parsedSheet;
+      worksheets = pdfResult.pages;
+      activeWorksheet = pdfResult.pages[0] || "All Pages";
     } else {
       const excelResult = await parseExcelWorksheet(buffer, targetWorksheet);
       parsedSheet = excelResult.parsedSheet;
@@ -147,6 +154,7 @@ export class ImportService {
     const seenContentInFile = new Set<string>();
 
     const sampleRows: PreviewRowItem[] = [];
+    const allTransformedResults: TransformedRowResult[] = [];
 
     let validExpenseCount = 0;
     let confirmedDuplicateCount = 0;
@@ -160,6 +168,7 @@ export class ImportService {
       const rawRow = rows[i];
 
       const result = transformRow(rawRow, mapping, options, rowIndex, session.fileName);
+      allTransformedResults.push(result);
 
       if (result.status === "EXCLUDED_NON_EXPENSE") {
         excludedNonExpenseCount++;
@@ -221,6 +230,13 @@ export class ImportService {
         continue;
       }
       seenContentInFile.add(contentKey);
+
+      // Tag candidate with session source (CSV_IMPORT vs BANK_STATEMENT)
+      const source =
+        session.fileType === "csv"
+          ? TransactionSource.CSV_IMPORT
+          : TransactionSource.BANK_STATEMENT;
+      result.candidateInput.source = source;
 
       // Check against database using Phase 2 duplicate detector
       const normalized = normalizeTransactionInput(result.candidateInput);
@@ -292,6 +308,15 @@ export class ImportService {
       excludedNonExpenseCount,
       expectedToImportCount,
     };
+ 
+    const balanceColumn = session.parsedSheet.headers.find((h) =>
+      /balance|bal\b/i.test(h)
+    );
+    const reconciliation = reconcileStatement(
+      allTransformedResults,
+      rows,
+      balanceColumn
+    );
 
     return {
       fileId,
@@ -299,6 +324,7 @@ export class ImportService {
       mapping,
       options,
       sampleRows,
+      reconciliation,
     };
   }
 
@@ -324,9 +350,9 @@ export class ImportService {
 
     const candidatesToIngest: IngestionSourceInput[] = [];
     const source =
-      session.fileType === "xlsx"
-        ? TransactionSource.BANK_STATEMENT
-        : TransactionSource.CSV_IMPORT;
+      session.fileType === "csv"
+        ? TransactionSource.CSV_IMPORT
+        : TransactionSource.BANK_STATEMENT;
 
     let excludedNonExpense = 0;
     let invalidSkipped = 0;
@@ -379,7 +405,8 @@ export class ImportService {
       }
       seenContentInFile.add(contentKey);
 
-      // Check DB duplicate before queueing
+      // Tag candidate with session source before duplicate detection
+      transformed.candidateInput.source = source;
       const normalized = normalizeTransactionInput(transformed.candidateInput);
       const validation = validateTransactionCandidate(normalized, numericUserId);
 
@@ -402,8 +429,6 @@ export class ImportService {
         transformed.candidateInput.allowPotentialDuplicate = true;
       }
 
-      // Tag with source
-      transformed.candidateInput.source = source;
       candidatesToIngest.push(transformed.candidateInput);
     }
 

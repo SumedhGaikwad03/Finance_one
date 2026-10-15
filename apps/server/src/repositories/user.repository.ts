@@ -21,8 +21,13 @@ export const addUser = (user: CreateUserData) => {
         name: user.name,
         email: user.email,
     };*/
-    return prisma.user.create({data :{name : user.name , email : user.email , passwordHash : user.passwordHash}}); // only pass usefull info form our schema to the 
-    // the datanase as we need to loosely couple the prisma schema and zod schema 
+    return prisma.user.create({
+        data: {
+            name: user.name,
+            email: user.email.trim().toLowerCase(),
+            passwordHash: user.passwordHash,
+        },
+    });
 };
 
 export const getAllUsers = () => {
@@ -49,8 +54,11 @@ export const updateUserdata = (id : number , updates : updateUserInput) => {
     users[userIndex] = {...users[userIndex],...updates,};
     
     return users[userIndex];*/
-
-    return prisma.user.update({where : {id}, data : updates,});
+    const data = { ...updates };
+    if (data.email) {
+        data.email = data.email.trim().toLowerCase();
+    }
+    return prisma.user.update({where : {id}, data,});
 
 };
 
@@ -68,6 +76,17 @@ export const deleteUser = ( id : number )=> {
 
 }
 
-export const findUserbyEmail=( email : string) => {
-
-return prisma.user.findUnique({where :{email ,},})};
+export const findUserbyEmail = (email: string) => {
+    const normalized = email.trim().toLowerCase();
+    return prisma.user.findFirst({
+        where: {
+            email: {
+                equals: normalized,
+                mode: "insensitive",
+            },
+        },
+        orderBy: {
+            id: "asc",
+        },
+    });
+};

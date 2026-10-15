@@ -32,7 +32,7 @@ export interface ImportOptions {
 export interface FileMetadata {
   fileId: string;
   fileName: string;
-  fileType: "csv" | "xlsx";
+  fileType: "csv" | "xlsx" | "pdf";
   fileSize: number;
   worksheets: string[];
   activeWorksheet: string;
@@ -78,12 +78,24 @@ export interface ImportPreviewSummary {
   expectedToImportCount: number;
 }
 
+export interface ReconciliationReport {
+  status: "RECONCILED" | "MISMATCH" | "NOT_AVAILABLE";
+  openingBalance: number | null;
+  closingBalance: number | null;
+  totalDebits: number;
+  totalCredits: number;
+  calculatedClosingBalance: number | null;
+  discrepancy: number | null;
+  message: string;
+}
+
 export interface ImportPreviewResult {
   fileId: string;
   summary: ImportPreviewSummary;
   mapping: ColumnMapping;
   options: ImportOptions;
   sampleRows: PreviewRowItem[];
+  reconciliation?: ReconciliationReport;
 }
 
 export interface ConfirmImportPayload {
