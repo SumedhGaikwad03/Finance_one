@@ -1,14 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowLeft, PiggyBank, Compass } from "lucide-react";
+import { Plus, ArrowLeft, PiggyBank, Compass, UploadCloud } from "lucide-react";
 
 interface TransactionsHeaderProps {
     onAddTransaction: () => void;
+    onImportStatement?: () => void;
     onToggleExplorer?: () => void;
     isExplorerOpen?: boolean;
 }
 
 const TransactionsHeader = ({
     onAddTransaction,
+    onImportStatement,
     onToggleExplorer,
     isExplorerOpen = false,
 }: TransactionsHeaderProps) => {

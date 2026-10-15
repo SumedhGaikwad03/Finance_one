@@ -1,16 +1,15 @@
-import{Request , Response , NextFunction} from "express";
+import { Request, Response, NextFunction } from "express";
 import { AppError } from "../error/AppError";
-import{ZodError} from "zod";
+import { ZodError } from "zod";
+import { isPrismaP2002, isPrismaP2025 } from "../lib/prismaErrors";
 
-export const errorMiddleware =( 
+export const errorMiddleware = ( 
     err : Error ,
     req : Request ,
     res : Response ,
     next : NextFunction 
 ) => { 
-
-
-    if ( err instanceof AppError) {
+    if (err instanceof AppError) {
         return res.status(err.statusCode).json({message: err.message});
     }
 
@@ -19,6 +18,14 @@ export const errorMiddleware =(
             field : issue.path.join("."),
             message : issue.message,
         }))});
+    } 
+
+    else if (isPrismaP2002(err)) {
+        return res.status(409).json({ message: "Resource already exists or unique constraint violated" });
+    }
+
+    else if (isPrismaP2025(err)) {
+        return res.status(404).json({ message: "Resource not found" });
     } 
 
     //all tho we are leaking arch into erroe middle ware which makes the app zod dependent 

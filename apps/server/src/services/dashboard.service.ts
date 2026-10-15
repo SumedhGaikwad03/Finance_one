@@ -21,7 +21,7 @@ export const getDashboardData = async (userId: number) => {
             userId,
             transactionDate: {
                 gte: budget.startDate,
-                lte: endDate
+                lt: endDate
             }
         };
     } else {

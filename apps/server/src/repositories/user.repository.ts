@@ -26,8 +26,15 @@ export const addUser = (user: CreateUserData) => {
 };
 
 export const getAllUsers = () => {
-    return prisma.user.findMany();
-
+    return prisma.user.findMany({
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
 };
 
 export const findUserbyid = (id : number ) => {

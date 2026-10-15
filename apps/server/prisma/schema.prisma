@@ -40,6 +40,14 @@ enum BudgetPeriod {
   QUARTERLY
 }
 
+enum TransactionSource {
+  MANUAL
+  CSV_IMPORT
+  BANK_STATEMENT
+  RECEIPT_OCR
+  SYSTEM
+}
+
 //spacing makes it good 
 
 model User {
@@ -56,17 +64,23 @@ model User {
 }
 
 model Transaction {
-  id              Int      @id @default(autoincrement())
+  id              Int               @id @default(autoincrement())
   amount          Decimal
   category        Category
   priority        Priority
   title           String?
   notes           String?
   transactionDate DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  source          TransactionSource @default(MANUAL)
+  externalId      String?
+  sourceMetadata  Json?
+
+  @@unique([userId, source, externalId])
+  @@index([userId, transactionDate])
 }
 
 model Budget {

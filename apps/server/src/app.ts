@@ -8,6 +8,8 @@ import budgetRoutes from "./routes/budget.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 
+import importRouter from "./import/routes/import.routes";
+
 const app = express();
 
 const rawAllowedOrigins =
@@ -47,6 +49,7 @@ app.use(healthRouter);
 // Domain API Routes
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
+app.use("/api/transactions/import", importRouter);
 app.use("/api/transactions", transactionRouter);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);

@@ -1,20 +1,20 @@
 import { Prisma, Transaction } from "../generated/prisma/client";
 import prisma from "../lib/prisma";
-import {Category , Priority} from "../generated/prisma/enums";
+import { Category, Priority, TransactionSource } from "../generated/prisma/enums";
 import { updateUserInput } from "../schemas/user.schema"; 
 import * as transactionSchemas from  "../schemas/transaction.schema";
 
-
-
-export type CreateTransactionData = { // this is an intrnal contract ,  this makes the contract in par with the reposity ways of stroring 
-    // things as it should not have knowledge of above layers 
-    amount : Prisma.Decimal ;
-    category :  Category;
-    priority : Priority;
-    title ?: string ;
-    notes ? : string ;
-    transactionDate : Date ;
-    userId : number ;
+export type CreateTransactionData = {
+    amount: Prisma.Decimal;
+    category: Category;
+    priority: Priority;
+    title?: string | null;
+    notes?: string | null;
+    transactionDate: Date;
+    userId: number;
+    source?: TransactionSource;
+    externalId?: string | null;
+    sourceMetadata?: Prisma.InputJsonValue | null;
 };
 
 export type TransactionFilters = {
@@ -22,29 +22,70 @@ export type TransactionFilters = {
     category?: Category;
     startDate?: Date;
     endDate?: Date;
-}; // this is used take in the info and struture it for later use 
+};
 
-export const createTransaction = (transaction : CreateTransactionData) => {
+export const createTransaction = (transaction: CreateTransactionData) => {
+    const { sourceMetadata, ...rest } = transaction;
+    return prisma.transaction.create({
+        data: {
+            ...rest,
+            ...(sourceMetadata !== undefined && sourceMetadata !== null
+                ? { sourceMetadata }
+                : {}),
+        },
+    });
+};
 
-    return prisma.transaction.create({data: {...transaction,}}); }
+export const findTransactionByExternalId = (
+    userId: number,
+    source: TransactionSource,
+    externalId: string
+) => {
+    return prisma.transaction.findFirst({
+        where: {
+            userId,
+            source,
+            externalId,
+        },
+    });
+};
 
+export const findPotentialDuplicates = (
+    userId: number,
+    amount: Prisma.Decimal,
+    transactionDate: Date,
+    toleranceDays: number = 1
+) => {
+    const startDate = new Date(transactionDate);
+    startDate.setDate(startDate.getDate() - toleranceDays);
+    startDate.setHours(0, 0, 0, 0);
 
-    export const getMyTransactions =  async (userId : number) => {
+    const endDate = new Date(transactionDate);
+    endDate.setDate(endDate.getDate() + toleranceDays);
+    endDate.setHours(23, 59, 59, 999);
 
-        return prisma.transaction.findMany({where : {userId}, orderBy : {transactionDate : "desc"}}); 
-        // this gives all the tractions for a user 
+    return prisma.transaction.findMany({
+        where: {
+            userId,
+            amount,
+            transactionDate: {
+                gte: startDate,
+                lte: endDate,
+            },
+        },
+        orderBy: {
+            transactionDate: "desc",
+        },
+    });
+};
 
-    }
+export const getMyTransactions = async (userId: number) => {
+    return prisma.transaction.findMany({ where: { userId }, orderBy: { transactionDate: "desc" } });
+};
 
-export const findTransactionById = ( id : number) =>  { 
-
-    return prisma.transaction.findUnique({where :{id} }); 
-
-
-
-
-
-}
+export const findTransactionById = (id: number) => {
+    return prisma.transaction.findUnique({ where: { id } });
+};
 
 export const updateTransaction = async (
     id: number,

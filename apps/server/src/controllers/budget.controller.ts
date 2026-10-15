@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import * as budgetService from "../services/budget.service";
-import { createBudgetSchema, updateBudgetSchema } from "../schemas/budget.schema";
+import { createBudgetSchema, updateBudgetSchema, idParamSchema } from "../schemas/budget.schema";
 
 /**
  * Creates a new budget for the authenticated user.
@@ -49,7 +49,7 @@ export const getMyBudgets = async (req : Request , res : Response , next : NextF
 
 export const updateBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
 
-    const id = Number(req.params.id);
+    const { id } = idParamSchema.parse(req.params);
     const userId = req.user.userId; 
     const input = updateBudgetSchema.parse(req.body);
 
@@ -63,7 +63,7 @@ export const updateBudget = async (req : Request , res : Response , next : NextF
 
 export const deleteBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
 
-     const id = Number(req.params.id);
+    const { id } = idParamSchema.parse(req.params);
     const userId = req.user.userId;  
 
     await budgetService.deleteBudget(id,userId);
@@ -73,7 +73,7 @@ export const deleteBudget = async (req : Request , res : Response , next : NextF
 
 export const lockBudget = async (req : Request , res : Response , next : NextFunction  ): Promise<void> => { 
 
-    const id = Number(req.params.id);
+    const { id } = idParamSchema.parse(req.params);
     const userId = req.user.userId;  
 
     const budget = await budgetService.lockBudget(id,userId);

@@ -7,6 +7,7 @@ import {
     quickTransactionSchema,
     transactionQueryInputSchema,
     toCanonicalTransactionQuery,
+    idParamSchema,
 } from "../schemas/transaction.schema";
 import * as transactionService from "../services/transaction.service";
 import { parseQuickTransaction } from "../utils/transactionParser";
@@ -65,7 +66,7 @@ export async function updateTransaction(
     next : NextFunction
 ): Promise<void> { 
    const userId = req.user.userId;
-   const transactionId = Number (req.params.id);
+   const { id: transactionId } = idParamSchema.parse(req.params);
    const input = updateTransactionSchema.parse(req.body);
 
    const transaction = await transactionService.updateTransaction( transactionId,
@@ -81,9 +82,8 @@ export async function deleteTransaction (
     res : Response ,
     next : NextFunction
 ): Promise<void> { 
-     const userId = req.user.userId;
-   const Id = Number (req.params.id);
- 
+   const userId = req.user.userId;
+   const { id: Id } = idParamSchema.parse(req.params);
 
    await transactionService.deleteTransaction(Id , userId); 
 

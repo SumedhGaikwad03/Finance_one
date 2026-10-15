@@ -52,7 +52,7 @@ export const getActiveBudget = async (userId: number) => {
 
         if (
             todaysDate >= budget.startDate &&
-            todaysDate <= endDate
+            todaysDate < endDate
         ) {
             return budget;
         }
@@ -84,7 +84,7 @@ export const getActiveBudgetOrNull = async (userId: number) => {
         // check is date fall into this range
         if (
             todaysDate >= budget.startDate &&
-            todaysDate <= endDate
+            todaysDate < endDate
         ) {
             return budget;
         }
@@ -163,6 +163,12 @@ export const deleteBudget = async (
     if (!budget || budget.userId !== userId) {
         throw new BudgetNotFoundError(
             "Budget does not exist or user does not have access."
+        );
+    }
+
+    if (budget.isLocked) {
+        throw new BudgetLockedError(
+            "Budget is locked and cannot be deleted."
         );
     }
 

@@ -14,6 +14,7 @@ import {
   updateProfileSchema,
   changePasswordSchema,
 } from "../schemas/user.schema";
+import { ForbiddenError } from "../error/AppError";
 import { NextFunction } from "express";
 
 export async function getUsers (
@@ -21,8 +22,8 @@ export async function getUsers (
   res: Response,
   next : NextFunction,
 ): Promise<void>  {
-  const users = await getAllUsers();
-  res.status(200).json(users);
+  const currentUser = await getCurrentUser(req.user.userId);
+  res.status(200).json([currentUser]);
 };
 
 export async function findUser (
@@ -31,6 +32,9 @@ export async function findUser (
   next : NextFunction
 ) : Promise<void> {
  const {id} = findUserSchema.parse(req.params);
+ if (req.user.userId !== id) {
+   throw new ForbiddenError("Access denied: You cannot view other user profiles");
+ }
  const user  = await findUserbyId(id);
  res.status(200).json(user);
 }
@@ -41,6 +45,9 @@ export async function updateUserdata (
   next : NextFunction
 ) : Promise<void> { 
   const {id} = findUserSchema.parse(req.params);
+  if (req.user.userId !== id) {
+    throw new ForbiddenError("Access denied: You cannot update other user accounts");
+  }
   const updates = updateUserSchema.parse(req.body); 
   const user = await updateUser(id,updates);
   res.status(200).json(user);
@@ -52,6 +59,9 @@ export async function deleteUserData (
   next : NextFunction
 ) :Promise<void> {
   const {id} = findUserSchema.parse(req.params);
+  if (req.user.userId !== id) {
+    throw new ForbiddenError("Access denied: You cannot delete other user accounts");
+  }
   const user = await deleteUser(id);
   res.status(200).json(user);
 }

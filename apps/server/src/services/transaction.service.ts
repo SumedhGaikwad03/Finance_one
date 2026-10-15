@@ -1,22 +1,36 @@
 import { CreateTransactionInput, UpdateTransactionInput, TransactionQuery } from "../schemas/transaction.schema";
 import * as transactionRepository from "../repositories/transaction.repository";
-import { TransactionNotFoundError } from "../error/AppError";
+import { TransactionNotFoundError, BadRequestError, ConflictError } from "../error/AppError";
 import { Prisma } from "../generated/prisma/client";
-// user id is attaced the traction suppiled by the user 
+import { TransactionSource } from "../generated/prisma/enums";
+import { ingestTransaction } from "../ingestion/services/ingestion.service";
 
+export const createTransaction = async (input: CreateTransactionInput, userId: number) => {
+    const result = await ingestTransaction(
+        {
+            ...input,
+            source: TransactionSource.MANUAL,
+        },
+        { userId }
+    );
 
-export const createTransaction = async ( input : CreateTransactionInput , userId : number ) => {
+    if (result.status === "VALIDATION_FAILED") {
+        throw new BadRequestError(result.errors?.[0]?.message || "Validation failed");
+    }
 
-    const transaction = await transactionRepository.createTransaction({
-    ...input,
-     amount: new Prisma.Decimal(input.amount),
-    transactionDate: input.transactionDate
-        ? new Date(input.transactionDate)
-        : new Date(),
-    userId, });
+    if (result.status === "CONFIRMED_DUPLICATE") {
+        return result.transaction!;
+    }
 
-    return transaction;
-}   
+    if (result.status === "POTENTIAL_DUPLICATE") {
+        throw new ConflictError(
+            result.duplicateInfo?.reason ||
+            "A transaction with identical amount and title was just created. Please confirm before submitting again."
+        );
+    }
+
+    return result.transaction!;
+};   
 
 export const queryTransactions = async (userId: number, query: TransactionQuery) => {
     return transactionRepository.findTransactions(userId, query);

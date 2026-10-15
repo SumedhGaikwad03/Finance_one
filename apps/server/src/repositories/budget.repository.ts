@@ -29,8 +29,14 @@ export const findBudgetByUser = ( userId : number ) => {
 }
 
 export const updateBudget = ( id : number  , input : budgetSchema.UpdateBudgetInput) => {
+    const data = {
+        ...input,
+        ...(input.amount !== undefined && {
+            amount: new Prisma.Decimal(input.amount),
+        }),
+    };
 
-    return prisma.budget.update({where : {id : id} , data : input  })
+    return prisma.budget.update({where : {id : id} , data });
 }
 
 export const findBudgetById = (id: number) => {

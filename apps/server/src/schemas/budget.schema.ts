@@ -35,3 +35,8 @@ isLocked : z.boolean().optional()
     }
 )
 export type UpdateBudgetInput = z.infer<typeof updateBudgetSchema>;
+
+export const idParamSchema = z.object({
+    id: z.coerce.number().int().positive("ID must be a positive integer"),
+});
+export type IdParamInput = z.infer<typeof idParamSchema>;

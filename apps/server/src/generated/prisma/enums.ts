@@ -42,3 +42,14 @@ export const BudgetPeriod = {
 } as const
 
 export type BudgetPeriod = (typeof BudgetPeriod)[keyof typeof BudgetPeriod]
+
+
+export const TransactionSource = {
+  MANUAL: 'MANUAL',
+  CSV_IMPORT: 'CSV_IMPORT',
+  BANK_STATEMENT: 'BANK_STATEMENT',
+  RECEIPT_OCR: 'RECEIPT_OCR',
+  SYSTEM: 'SYSTEM'
+} as const
+
+export type TransactionSource = (typeof TransactionSource)[keyof typeof TransactionSource]

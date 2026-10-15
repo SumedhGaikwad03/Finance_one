@@ -26,4 +26,11 @@ export const ENDPOINTS = {
         ACTIVE: "/budgets/active",
     },
 
+    IMPORT: {
+        UPLOAD: "/transactions/import/upload",
+        SWITCH_WORKSHEET: "/transactions/import/change-worksheet",
+        PREVIEW: "/transactions/import/preview",
+        CONFIRM: "/transactions/import/confirm",
+    },
+
 } as const; 

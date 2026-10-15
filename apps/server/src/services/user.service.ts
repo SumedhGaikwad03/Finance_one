@@ -24,7 +24,8 @@ export const findUserbyId = async (id : number) => {
 }
 // no try catch block here cuz repo will reteun null here as its simply a absence of data not failure of operation 
 
-return received_user;
+ const { passwordHash, ...sanitized } = received_user;
+ return sanitized;
 
 };
 
@@ -38,8 +39,9 @@ export const updateUser =  async (id : number , updates : updateUserInput) => {
 
   try {
 
-  return await userRepository.updateUserdata(id, updates); // this is essintally passing a promise to the controller 
-  // and the controller will handle the promise and return the response to the client
+  const updated = await userRepository.updateUserdata(id, updates);
+  const { passwordHash, ...sanitized } = updated;
+  return sanitized;
 
    }
   catch(err){

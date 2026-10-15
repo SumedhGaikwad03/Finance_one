@@ -133,6 +133,19 @@ export const transactionQueryInputSchema = z
 
 export type TransactionQueryInput = z.infer<typeof transactionQueryInputSchema>;
 
+export const idParamSchema = z.object({
+    id: z.coerce.number().int().positive("ID must be a positive integer"),
+});
+export type IdParamInput = z.infer<typeof idParamSchema>;
+
+const normalizeDateBoundary = (dateStr: string, isEnd: boolean): Date => {
+    // If given as YYYY-MM-DD date without time, cover the full day boundary
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return new Date(`${dateStr}T${isEnd ? "23:59:59.999" : "00:00:00.000"}Z`);
+    }
+    return new Date(dateStr);
+};
+
 export function toCanonicalTransactionQuery(input: TransactionQueryInput): TransactionQuery {
     const categories = input.categories ?? input.category;
     const priorities = input.priorities ?? input.priority;
@@ -140,8 +153,8 @@ export function toCanonicalTransactionQuery(input: TransactionQueryInput): Trans
     return {
         ...(categories && categories.length > 0 && { categories }),
         ...(priorities && priorities.length > 0 && { priorities }),
-        ...(input.startDate && { startDate: new Date(input.startDate) }),
-        ...(input.endDate && { endDate: new Date(input.endDate) }),
+        ...(input.startDate && { startDate: normalizeDateBoundary(input.startDate, false) }),
+        ...(input.endDate && { endDate: normalizeDateBoundary(input.endDate, true) }),
         ...(input.minAmount !== undefined && { minAmount: input.minAmount }),
         ...(input.maxAmount !== undefined && { maxAmount: input.maxAmount }),
         ...(input.search && { search: input.search }),

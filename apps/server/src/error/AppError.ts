@@ -21,11 +21,11 @@ export class BadRequestError extends AppError {
     }
 }
 
-/*export class ValidationError extends AppError {
-    constructor(message : string ) {
-        super(message, 400); // this init the superclass that is apperror with the message and the status code 400 
-    } // this plan is now dropped as we are not making another layer insted we leak a liitle zod into the middelware layer 
-}*/ 
+export class ValidationError extends AppError {
+    constructor(message: string) {
+        super(message, 400);
+    }
+} 
 
 export class ConflictError extends AppError {
     constructor(message : string ) {
@@ -51,8 +51,14 @@ export class BudgetNotFoundError extends AppError {
     }
 } 
 
+export class ForbiddenError extends AppError {
+    constructor(message : string = "Forbidden") {
+        super(message, 403);
+    }
+}
+
 export class BudgetLockedError extends AppError {
-    constructor(message :string) {
-        super(message,404);
+    constructor(message :string = "Budget is locked and cannot be modified.") {
+        super(message, 400);
     }
 }

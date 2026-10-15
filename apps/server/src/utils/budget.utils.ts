@@ -89,10 +89,11 @@ export const hasBudgetOverlap = (
             budget.periodType
         );
 
-        // check if the two date ranges overlap
+        // Two half-open intervals [A_start, A_end) and [B_start, B_end) overlap iff
+        // A_start < B_end && B_start < A_end
         if (
-            startDate <= existingBudgetEndDate &&
-            newBudgetEndDate >= budget.startDate
+            startDate < existingBudgetEndDate &&
+            newBudgetEndDate > budget.startDate
         ) {
             return true;
         }
