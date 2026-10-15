@@ -687,6 +687,28 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                       ))}
                     </select>
                   </div>
+
+                  {/* Optional Spending Tier / Priority */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                      <span>Spending Tier / Priority</span>
+                      <span className="text-[10px] text-slate-400 font-normal">Optional</span>
+                    </label>
+                    <select
+                      value={mapping.priorityColumn || ""}
+                      onChange={(e) =>
+                        setMapping({ ...mapping, priorityColumn: e.target.value })
+                      }
+                      className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+                    >
+                      <option value="">-- None (Default: UNCLASSIFIED) --</option>
+                      {metadata.headers.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -802,6 +824,50 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                 </div>
               )}
 
+              {/* Mathematical Reconciliation Banner */}
+              {previewResult.reconciliation && previewResult.reconciliation.status !== "NOT_AVAILABLE" && (
+                <div
+                  className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-xs ${
+                    previewResult.reconciliation.status === "RECONCILED"
+                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-950"
+                      : "bg-amber-50/80 border-amber-200 text-amber-950"
+                  }`}
+                >
+                  {previewResult.reconciliation.status === "RECONCILED" ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 font-bold">
+                      <span className="flex items-center gap-1.5">
+                        Statement Balance Reconciliation:
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            previewResult.reconciliation.status === "RECONCILED"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {previewResult.reconciliation.status === "RECONCILED"
+                            ? "Reconciled"
+                            : "Discrepancy Detected"}
+                        </span>
+                      </span>
+                      {previewResult.reconciliation.discrepancy !== null &&
+                        previewResult.reconciliation.discrepancy !== undefined && (
+                          <span className="font-mono text-[11px] text-slate-700">
+                            Discrepancy: ₹{Math.abs(previewResult.reconciliation.discrepancy).toFixed(2)}
+                          </span>
+                        )}
+                    </div>
+                    <p className="text-[11px] mt-0.5 opacity-90 leading-relaxed">
+                      {previewResult.reconciliation.message}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5 text-xs">
                 <span className="text-slate-500 font-semibold mr-1">Filter:</span>
@@ -846,6 +912,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                       <th className="px-3 py-2.5">Status</th>
                       <th className="px-3 py-2.5">Date</th>
                       <th className="px-3 py-2.5">Description</th>
+                      <th className="px-3 py-2.5">Tier</th>
                       <th className="px-3 py-2.5 text-right">Amount</th>
                       <th className="px-3 py-2.5">Notes / Reasons</th>
                     </tr>
@@ -877,15 +944,32 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                               ? row.mapped.transactionDate.slice(0, 10)
                               : "-"}
                           </td>
-                          <td className="px-3 py-2.5 font-medium text-slate-900 truncate max-w-[200px]">
+                          <td className="px-3 py-2.5 font-medium text-slate-900 truncate max-w-[180px]">
                             {row.mapped.title || "-"}
+                          </td>
+                          <td className="px-3 py-2.5 whitespace-nowrap">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                (row.mapped.priority || "UNCLASSIFIED") === "ESSENTIAL"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : (row.mapped.priority || "UNCLASSIFIED") === "GOOD_TO_HAVE"
+                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                  : (row.mapped.priority || "UNCLASSIFIED") === "LUXURY"
+                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                              }`}
+                            >
+                              {(row.mapped.priority || "UNCLASSIFIED") === "UNCLASSIFIED"
+                                ? "Unclassified"
+                                : row.mapped.priority}
+                            </span>
                           </td>
                           <td className="px-3 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">
                             {row.mapped.amount !== null
                               ? `₹${row.mapped.amount.toFixed(2)}`
                               : "-"}
                           </td>
-                          <td className="px-3 py-2.5 text-[11px] text-slate-500 truncate max-w-[200px]">
+                          <td className="px-3 py-2.5 text-[11px] text-slate-500 truncate max-w-[180px]">
                             {row.reasons.length > 0 ? row.reasons.join("; ") : "Valid expense candidate"}
                           </td>
                         </tr>

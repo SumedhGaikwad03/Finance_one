@@ -22,16 +22,18 @@ interface ColumnDef {
  */
 function normalizeHeaderName(raw: string): string {
   const clean = raw.toLowerCase().trim();
-  if (/^date/i.test(clean) || /date$/i.test(clean)) return "Date";
+  if (/^val(?:ue)?\s*(?:date|dt\b)/i.test(clean)) return "Value Date";
+  if (/^(?:transaction|txn|trans|booking|posting|entry)?\s*date$/i.test(clean) || /^date$/i.test(clean)) return "Date";
   if (/^narration/i.test(clean)) return "Narration";
   if (/^description/i.test(clean)) return "Description";
   if (/^particulars/i.test(clean)) return "Particulars";
   if (/details|memo|remarks/i.test(clean)) return "Narration";
-  if (/^chq|ref|reference|utr|txn\s*id/i.test(clean)) return "Ref";
-  if (/^withdrawal|debit|dr\b|spent|paid\s*out/i.test(clean)) return "Debit";
-  if (/^deposit|credit|cr\b|received|paid\s*in/i.test(clean)) return "Credit";
-  if (/balance|bal\b/i.test(clean)) return "Balance";
-  if (/amount|total/i.test(clean)) return "Amount";
+  if (/^(?:chq|cheque|ref|reference|utr|txn\s*id)/i.test(clean)) return "Ref";
+  if (/^(?:withdrawal|debit|dr\.?\b|spent|paid\s*out|outgoing)/i.test(clean)) return "Debit";
+  if (/^(?:deposit|credit|cr\.?\b|received|paid\s*in|incoming)/i.test(clean)) return "Credit";
+  if (/balance|bal\b|^closing\b/i.test(clean)) return "Balance";
+  if (/^opening\b/i.test(clean)) return "Opening Balance";
+  if (/amount|total|\bamt\.?\b/i.test(clean)) return "Amount";
   return raw.trim();
 }
 
@@ -44,9 +46,129 @@ function isDateToken(str: string): boolean {
   return (
     /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(trimmed) ||
     /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(trimmed) ||
-    /^\d{1,2}\s+[A-Za-z]{3,9}\s+\d{2,4}/.test(trimmed) ||
-    /^[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{2,4}/.test(trimmed)
+    /^\d{1,2}[-/\s]+[A-Za-z]{3,9}[-/\s]+\d{2,4}/.test(trimmed) ||
+    /^[A-Za-z]{3,9}[-/\s]+\d{1,2},?[-/\s]+\d{2,4}/.test(trimmed)
   );
+}
+
+interface HeaderCluster {
+  str: string;
+  minX: number;
+  maxX: number;
+}
+
+function isKnownHeaderBoundary(word: string): boolean {
+  return /^(?:date|value|narration|description|particulars|details|ref|chq|cheque|withdrawal|debit|deposit|credit|balance|closing|opening|amount|amt)$/i.test(
+    word.replace(/[^a-z]/gi, "")
+  );
+}
+
+/**
+ * Merges horizontally adjacent header text items that form a multi-word column header.
+ */
+function clusterHeaderItems(items: any[]): HeaderCluster[] {
+  if (items.length === 0) return [];
+  const clusters: HeaderCluster[] = [];
+  let current: { words: string[]; minX: number; maxX: number } | null = null;
+
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const text = (it.str || "").trim();
+    if (!text) continue;
+    const x = it.transform[4];
+    const w = typeof it.width === "number" && it.width > 0 ? it.width : text.length * 6;
+    const right = x + w;
+
+    if (!current) {
+      current = { words: [text], minX: x, maxX: right };
+      continue;
+    }
+
+    const gap = x - current.maxX;
+    const combined = `${current.words.join(" ")} ${text}`.toLowerCase();
+    const isMultiWord = /^(?:value\s*(?:date|dt)|val\s*(?:date|dt)|txn\s*date|transaction\s*date|trans\s*date|booking\s*date|posting\s*date|chq[\/\s._-]*ref[\/\s._-]*no|ref\s*no|reference\s*no|chq\s*no|cheque\s*no|paid\s*out|paid\s*in|withdrawal\s*(?:amt\.?|amount|\(?dr\.?\)?)?|debit\s*(?:amt\.?|amount|\(?dr\.?\)?)?|deposit\s*(?:amt\.?|amount|\(?cr\.?\)?)?|credit\s*(?:amt\.?|amount|\(?cr\.?\)?)?|closing\s*(?:bal|balance)|opening\s*(?:bal|balance)|available\s*(?:bal|balance)|running\s*(?:bal|balance)|statement\s*(?:bal|balance))$/i.test(
+      combined
+    );
+
+    // Merge if explicitly matching a multi-word column header OR very tight spacing not crossing a known header boundary
+    const shouldMerge = isMultiWord || (gap <= 6 && !isKnownHeaderBoundary(text));
+
+    if (shouldMerge) {
+      current.words.push(text);
+      current.maxX = Math.max(current.maxX, right);
+    } else {
+      clusters.push({
+        str: current.words.join(" "),
+        minX: current.minX,
+        maxX: current.maxX,
+      });
+      current = { words: [text], minX: x, maxX: right };
+    }
+  }
+
+  if (current) {
+    clusters.push({
+      str: current.words.join(" "),
+      minX: current.minX,
+      maxX: current.maxX,
+    });
+  }
+
+  return clusters;
+}
+
+/**
+ * Associates a text item with its best-matching column definition.
+ */
+function matchItemToColumn(item: any, columns: ColumnDef[]): ColumnDef {
+  const x = item.transform[4];
+  const w = typeof item.width === "number" && item.width > 0 ? item.width : (item.str?.length || 1) * 5;
+  const center = x + w / 2;
+  const right = x + w;
+  const str = (item.str || "").trim();
+
+  // If this item looks like a monetary amount, prioritize numeric columns
+  const isNumericAmount = /^-?[₹$€£]?\s*[\d,]+(?:\.\d+)?(?:\s*(?:dr|cr))?$/i.test(str);
+
+  if (isNumericAmount) {
+    // 1. Right-edge match for right-aligned numeric columns (Debit, Credit, Balance, Amount)
+    for (const col of columns) {
+      if (/Debit|Credit|Balance|Amount/i.test(col.name)) {
+        if (right >= col.minX + 5 && right <= col.maxX + 15 && center >= col.minX - 15) {
+          return col;
+        }
+      }
+    }
+  }
+
+  // 2. Direct match by center within column bounds
+  for (const col of columns) {
+    if (center >= col.minX && center < col.maxX) {
+      return col;
+    }
+  }
+
+  // 3. Right-edge match for right-aligned numeric columns (Debit, Credit, Balance, Amount) fallback
+  for (const col of columns) {
+    if (/Debit|Credit|Balance|Amount/i.test(col.name)) {
+      if (right >= col.minX && right <= col.maxX + 15) {
+        return col;
+      }
+    }
+  }
+
+  // 4. Fallback: closest column by distance to center
+  let bestCol = columns[0];
+  let minDistance = Infinity;
+  for (const col of columns) {
+    const colMid = (col.minX + Math.min(col.maxX, 800)) / 2;
+    const dist = Math.abs(center - colMid);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestCol = col;
+    }
+  }
+  return bestCol;
 }
 
 /**
@@ -151,6 +273,7 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
       const sortedY = Array.from(linesMap.keys()).sort((a, b) => b - a);
 
       for (const y of sortedY) {
+        if (!linesMap.has(y)) continue;
         // Sort items left-to-right (ascending X)
         const items = linesMap.get(y)!.sort((a, b) => a.transform[4] - b.transform[4]);
         const lineText = items.map((it) => it.str.trim()).join(" ");
@@ -163,21 +286,62 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
           );
 
           if (hasDate && hasAmountOrDesc) {
-            // Found table header row
-            for (let i = 0; i < items.length; i++) {
-              const it = items[i];
-              const name = normalizeHeaderName(it.str);
-              if (name === "Narration" || name === "Description" || name === "Particulars") {
-                descColName = name;
+            // Check for multi-line table headers (e.g. Line 1: Withdrawal, Line 2: Amt.)
+            const yIndex = sortedY.indexOf(y);
+            const nextY = yIndex >= 0 && yIndex < sortedY.length - 1 ? sortedY[yIndex + 1] : null;
+            let headerItems = items.map((it) => ({ ...it, str: it.str }));
+            let consumedNextY = false;
+
+            if (nextY !== null && y - nextY <= 18) {
+              const nextLineItems = linesMap.get(nextY)!;
+              const hasDateInNext = nextLineItems.some((it) => isDateToken(it.str));
+              const hasContinuationWord = nextLineItems.some((it) =>
+                /^(?:amt\.?|amount|dt\.?|balance|bal\.?|no\.?|cr\.?|dr\.?)$/i.test(it.str.trim())
+              );
+
+              if (!hasDateInNext && hasContinuationWord) {
+                for (const subItem of nextLineItems) {
+                  const subX = subItem.transform[4];
+                  let closest: any = null;
+                  let minD = Infinity;
+                  for (const hItem of headerItems) {
+                    const hX = hItem.transform[4];
+                    const d = Math.abs(subX - hX);
+                    if (d < minD && d < 60) {
+                      minD = d;
+                      closest = hItem;
+                    }
+                  }
+                  if (closest) {
+                    closest.str = `${closest.str} ${subItem.str}`.trim();
+                  } else {
+                    headerItems.push({ ...subItem, str: subItem.str });
+                  }
+                }
+                headerItems.sort((a, b) => a.transform[4] - b.transform[4]);
+                consumedNextY = true;
               }
-              const x = it.transform[4];
-              const prevX = i > 0 ? items[i - 1].transform[4] : 0;
-              const nextX = i < items.length - 1 ? items[i + 1].transform[4] : 9999;
-              const minX = (prevX + x) / 2;
-              const maxX = (x + nextX) / 2;
-              columns.push({ name, minX, maxX });
             }
-            continue;
+
+            const clusters = clusterHeaderItems(headerItems);
+            if (clusters.length >= 2) {
+              for (let i = 0; i < clusters.length; i++) {
+                const c = clusters[i];
+                const name = normalizeHeaderName(c.str);
+                if (name === "Narration" || name === "Description" || name === "Particulars") {
+                  descColName = name;
+                }
+                const prevRight = i > 0 ? clusters[i - 1].maxX : 0;
+                const nextLeft = i < clusters.length - 1 ? clusters[i + 1].minX : 9999;
+                const minX = i === 0 ? 0 : (prevRight + c.minX) / 2;
+                const maxX = i === clusters.length - 1 ? 9999 : (c.maxX + nextLeft) / 2;
+                columns.push({ name, minX, maxX });
+              }
+              if (consumedNextY) {
+                linesMap.delete(nextY!);
+              }
+              continue;
+            }
           }
         }
 
@@ -209,11 +373,7 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
           }
 
           for (const item of items) {
-            const itemX = item.transform[4];
-            let matchedCol = columns.find((c) => itemX >= c.minX && itemX < c.maxX);
-            if (!matchedCol) {
-              matchedCol = columns[columns.length - 1];
-            }
+            const matchedCol = matchItemToColumn(item, columns);
             const cleanVal = sanitizeCellValue(item.str);
             if (rowData[matchedCol.name]) {
               rowData[matchedCol.name] += " " + cleanVal;
@@ -222,7 +382,11 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
             }
           }
 
-          const dateVal = rowData["Date"] || "";
+          const dateVal =
+            rowData["Date"] ||
+            rowData["Value Date"] ||
+            Object.entries(rowData).find(([k]) => /date/i.test(k))?.[1] ||
+            "";
           const hasDate = isDateToken(dateVal);
 
           if (hasDate) {
@@ -230,9 +394,9 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
             candidateRows.push(rowData);
           } else if (candidateRows.length > 0) {
             // Check for wrapped multi-line description or summary balance rows
-            const hasDebit = Boolean(rowData["Debit"]);
-            const hasCredit = Boolean(rowData["Credit"]);
-            const hasAmount = Boolean(rowData["Amount"]);
+            const hasDebit = Boolean(rowData["Debit"] && rowData["Debit"] !== "-");
+            const hasCredit = Boolean(rowData["Credit"] && rowData["Credit"] !== "-");
+            const hasAmount = Boolean(rowData["Amount"] && rowData["Amount"] !== "-");
             const hasRef = Boolean(rowData["Ref"]);
 
             // If line matches opening or closing balance keywords, preserve as separate row
@@ -240,7 +404,11 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
               candidateRows.push(rowData);
             } else if (!hasDebit && !hasCredit && !hasAmount && !hasRef && lineText.trim()) {
               // Wrapped narration continuation line: append to previous row's narration
-              candidateRows[candidateRows.length - 1][descColName] += " " + lineText.trim();
+              const appendText = rowData[descColName] || lineText.trim();
+              if (appendText) {
+                candidateRows[candidateRows.length - 1][descColName] =
+                  (candidateRows[candidateRows.length - 1][descColName] + " " + appendText).trim();
+              }
             }
           }
         }

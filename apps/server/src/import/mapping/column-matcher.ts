@@ -11,6 +11,7 @@ function cleanHeader(header: string): string {
  * Matches a list of candidates against header strings.
  */
 function findBestMatch(headers: string[], patterns: (string | RegExp)[]): string | undefined {
+  // 1. Exact and regex matches
   for (const pattern of patterns) {
     if (typeof pattern === "string") {
       const target = cleanHeader(pattern);
@@ -22,12 +23,14 @@ function findBestMatch(headers: string[], patterns: (string | RegExp)[]): string
     }
   }
 
-  // Substring match fallback
+  // 2. Substring match fallback (require minimum target length of 4 chars to avoid false positives)
   for (const pattern of patterns) {
     if (typeof pattern === "string") {
       const target = cleanHeader(pattern);
-      const match = headers.find((h) => cleanHeader(h).includes(target));
-      if (match) return match;
+      if (target.length >= 4) {
+        const match = headers.find((h) => cleanHeader(h).includes(target));
+        if (match) return match;
+      }
     }
   }
 
@@ -38,27 +41,27 @@ function findBestMatch(headers: string[], patterns: (string | RegExp)[]): string
  * Suggests an initial ColumnMapping based on detected headers.
  */
 export function suggestColumnMapping(headers: string[]): ColumnMapping {
-  // Date patterns
+  // Date patterns: Transaction / Posting Date MUST take strict priority over Value Date
   const dateCol = findBestMatch(headers, [
-    /^transaction\s*date$/i,
-    /^txn\s*date$/i,
-    /^posting\s*date$/i,
-    /^value\s*date$/i,
+    /^(?:transaction|txn|trans)\s*date$/i,
     /^date$/i,
-    /date/i,
-    /time/i,
-  ]) || headers[0] || "";
+    /^(?:booking|posting|entry)\s*date$/i,
+    /^timestamp$/i,
+    /^value\s*date$/i,
+  ]) || headers.find((h) => !/balance/i.test(h)) || headers[0] || "";
 
   // Description / Narration patterns
   const descCol = findBestMatch(headers, [
-    /^description$/i,
     /^narration$/i,
+    /^description$/i,
     /^particulars$/i,
-    /^transaction\s*details$/i,
-    /^merchant$/i,
-    /^payee$/i,
+    /^transaction\s*(?:details|description|particulars|info|text)$/i,
+    /^merchant(?:\s*name)?$/i,
+    /^payee(?:\s*name)?$/i,
+    /^beneficiary(?:\s*name)?$/i,
     /^details$/i,
     /^remarks$/i,
+    /^memo$/i,
     /description/i,
     /narration/i,
     /particulars/i,
@@ -67,55 +70,63 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
 
   // Check for separate Debit / Credit columns
   const debitCol = findBestMatch(headers, [
-    /^withdrawal\s*\(?dr\)?/i,
-    /^debit\s*amount$/i,
-    /^debit$/i,
-    /^withdrawal$/i,
-    /^dr$/i,
+    /^(?:withdrawal|debit|dr\.?)\s*(?:amt\.?|amount|\(?dr\.?\)?)?$/i,
+    /^withdrawals?$/i,
+    /^debits?$/i,
+    /^dr\.?$/i,
     /^paid\s*out$/i,
     /^spent$/i,
+    /^outgoing$/i,
+    /withdrawal/i,
+    /debit/i,
+    /\bdr\b/i,
   ]);
 
   const creditCol = findBestMatch(headers, [
-    /^deposit\s*\(?cr\)?/i,
-    /^credit\s*amount$/i,
-    /^credit$/i,
-    /^deposit$/i,
-    /^cr$/i,
+    /^(?:deposit|credit|cr\.?)\s*(?:amt\.?|amount|\(?cr\.?\)?)?$/i,
+    /^deposits?$/i,
+    /^credits?$/i,
+    /^cr\.?$/i,
     /^paid\s*in$/i,
+    /^incoming$/i,
+    /^received$/i,
+    /deposit/i,
+    /credit/i,
+    /\bcr\b/i,
   ]);
 
-  // Check for generic Amount column (explicitly exclude balance columns)
-  const nonBalanceHeaders = headers.filter((h) => !/balance|bal\b/i.test(h));
+  // Check for generic Amount column (strictly exclude balance headers)
+  const nonBalanceHeaders = headers.filter((h) => !/balance|bal\b|^closing|^opening/i.test(h));
   const amountCol = findBestMatch(nonBalanceHeaders, [
-    /^amount$/i,
-    /^net\s*amount$/i,
-    /^transaction\s*amount$/i,
+    /^(?:transaction|txn|net|bill|statement)?\s*(?:amount|amt\.?)$/i,
+    /^(?:amount|amt\.?)$/i,
     /^total$/i,
     /amount/i,
+    /\bamt\b/i,
   ]);
 
   // Reference / External ID patterns
   const externalIdCol = findBestMatch(headers, [
-    /^chq[\/\s_-]*ref[\/\s_-]*no/i,
-    /^transaction\s*id$/i,
-    /^txn\s*id$/i,
-    /^reference\s*no$/i,
-    /^reference\s*id$/i,
-    /^ref\s*no$/i,
-    /^ref\s*id$/i,
-    /^cheque\s*no$/i,
-    /^utr$/i,
-    /^order\s*id$/i,
+    /^chq[\/\s._-]*ref[\/\s._-]*no/i,
+    /^(?:transaction|txn|reference|ref|cheque|chq|order)\s*(?:id|no|num|number)?$/i,
+    /^utr(?:\s*no)?$/i,
+    /^receipt\s*(?:id|no)?$/i,
     /reference/i,
   ]);
 
   // Category patterns
   const categoryCol = findBestMatch(headers, [
+    /^(?:expense\s*)?category(?:\s*name)?$/i,
     /^category$/i,
-    /^category\s*name$/i,
-    /^expense\s*category$/i,
     /^tag$/i,
+  ]);
+
+  // Priority / Spending Tier patterns
+  const priorityCol = findBestMatch(headers, [
+    /^(?:spending\s*)?tier$/i,
+    /^priority$/i,
+    /^necessity$/i,
+    /^urgency$/i,
   ]);
 
   // Decide amount mode: if both debit & credit are found, prefer debit_credit mode
@@ -128,6 +139,7 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
       dateColumn: dateCol,
       externalIdColumn: externalIdCol,
       categoryColumn: categoryCol,
+      priorityColumn: priorityCol,
     };
   }
 
@@ -138,5 +150,6 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     dateColumn: dateCol,
     externalIdColumn: externalIdCol,
     categoryColumn: categoryCol,
+    priorityColumn: priorityCol,
   };
 }

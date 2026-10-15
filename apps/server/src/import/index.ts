@@ -5,6 +5,7 @@ export * from "./parsers/xlsx.parser";
 export * from "./parsers/pdf.parser";
 export * from "./mapping/column-matcher";
 export * from "./mapping/row-transformer";
+export * from "./reconciliation/statement-reconciler";
 export * from "./session/import-session.store";
 export * from "./services/import.service";
 export { default as importRouter } from "./routes/import.routes";
