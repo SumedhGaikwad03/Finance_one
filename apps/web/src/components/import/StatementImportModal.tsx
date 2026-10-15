@@ -42,7 +42,6 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
   const [currentStep, setCurrentStep] = useState<Step>("upload");
 
   // State
-  const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
@@ -66,7 +65,6 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
 
   const resetState = () => {
     setCurrentStep("upload");
-    setFile(null);
     setMetadata(null);
     setMapping(null);
     setPreviewResult(null);
@@ -98,7 +96,6 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
       return;
     }
 
-    setFile(selectedFile);
     setErrorMessage(null);
     setIsUploading(true);
 

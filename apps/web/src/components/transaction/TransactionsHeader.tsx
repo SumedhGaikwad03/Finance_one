@@ -69,6 +69,17 @@ const TransactionsHeader = ({
                     </button>
                 )}
 
+                {onImportStatement && (
+                    <button
+                        type="button"
+                        onClick={onImportStatement}
+                        className="btn-interactive inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl cursor-pointer shadow-xs transition-colors"
+                    >
+                        <UploadCloud className="w-3.5 h-3.5 text-purple-600" />
+                        <span>Import Statement</span>
+                    </button>
+                )}
+
                 <button
                     type="button"
                     onClick={onAddTransaction}

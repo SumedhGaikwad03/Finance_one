@@ -13,6 +13,7 @@ import DeleteTransactionDialog from "../../components/transaction/DeleteTransact
 import TransactionsSkeleton from "../../components/transaction/TransactionsSkeleton";
 import CreateTransactionForm from "../../components/forms/CreateTransactionForm";
 import { QueryExplorerPanel } from "../../components/ai/FinanceAIPanel";
+import StatementImportModal from "../../components/import/StatementImportModal";
 
 import type { Transaction } from "../../types/dashboard.types";
 import type { CreateTransactionFormData } from "../../utils/transaction.schema";
@@ -22,6 +23,7 @@ const TransactionsPage = () => {
 
     // Modal & Dialog states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
@@ -231,6 +233,7 @@ const TransactionsPage = () => {
                     setEditingTransaction(null);
                     setIsCreateModalOpen(true);
                 }}
+                onImportStatement={() => setIsImportModalOpen(true)}
                 onToggleExplorer={() => setIsExplorerOpen(true)}
                 isExplorerOpen={isExplorerOpen}
             />
@@ -312,6 +315,12 @@ const TransactionsPage = () => {
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setDeletingTransaction(null)}
                 isDeleting={deleteTransactionMutation.isPending}
+            />
+
+            {/* 8. Bank Statement CSV / XLSX Import Modal */}
+            <StatementImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
             />
         </main>
     );
