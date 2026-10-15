@@ -43,11 +43,10 @@ To support multiple autonomous agents and human engineers working in parallel wi
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | **00** | `chore/00-git-workflow-stabilization` | Repository audit, numbered branch rules, PR policy, and workstream recovery plan. | `main` | None | **Active** |
 | **01** | `feature/01-classification-taxonomy` | Formal taxonomy enums (`Category`, `Priority`), tags dimension, provider contract, and tests. | `main` | `00` | **Implemented (Pending Commit)** |
-| **02** | `feature/02-modular-llm-classification-providers` | Local Ollama and external LLM provider integrations adhering to `TransactionClassificationProvider`. | `main` | `01` | **Planned** |
-| **03** | `feature/03-classification-evaluation` | Automated benchmark suite for deterministic vs LLM classification accuracy and latency. | `main` | `01`, `02` | **Planned** |
-| **04** | `feature/04-pdf-classification-acceptance` | End-to-end acceptance testing for PDF bank statements with automated classification. | `main` | `01`, `05` | **Planned** |
-| **05** | `fix/05-pdf-amount-extraction` | Multi-line header boundary detection, right-aligned amount mapping, and debit/credit splitting. | `main` | None | **Implemented (Pending Commit)** |
-| **06** | `fix/06-auth-normalization` | Lowercase email trimming in auth schemas and user repository to prevent login 401s. | `main` | None | **Implemented (Pending Commit)** |
+| **02** | `fix/02-pdf-ingestion-reliability` | Multi-line header boundary detection, right-aligned amount mapping, reconciliation, and PDF tests. | `feature/phase-4-pdf-import` / `main` | `01` | **Implemented (Pending Commit)** |
+| **03** | `fix/03-auth-email-normalization` | Lowercase email trimming in auth schemas and user repository to prevent login 401s. | `main` | None | **Implemented (Pending Commit)** |
+| **04** | `feature/04-classification-evaluation` | Automated benchmark suite for deterministic vs LLM classification accuracy and latency. | `main` | `01` | **Planned** |
+| **05** | `feature/05-pdf-classification-acceptance` | End-to-end acceptance testing for PDF bank statements with automated classification. | `main` | `01`, `02` | **Planned** |
 
 ---
 
@@ -56,20 +55,18 @@ To support multiple autonomous agents and human engineers working in parallel wi
 ```mermaid
 flowchart TD
     Main[Canonical main Branch] --> B00[chore/00-git-workflow-stabilization]
-    Main --> B05[fix/05-pdf-amount-extraction]
-    Main --> B06[fix/06-auth-normalization]
+    Main --> B03[fix/03-auth-email-normalization]
     Main --> B01[feature/01-classification-taxonomy]
     
-    B01 --> B02[feature/02-modular-llm-classification-providers]
-    B01 --> B03[feature/03-classification-evaluation]
-    B02 --> B03
-    B01 --> B04[feature/04-pdf-classification-acceptance]
-    B05 --> B04
+    B01 --> B02[fix/02-pdf-ingestion-reliability]
+    B01 --> B04[feature/04-classification-evaluation]
+    B01 --> B05[feature/05-pdf-classification-acceptance]
+    B02 --> B05
 
     B00 -- PR + Review --> Main
-    B05 -- PR + Review --> Main
-    B06 -- PR + Review --> Main
+    B03 -- PR + Review --> Main
     B01 -- PR + Review --> Main
+    B02 -- PR + Review --> Main
 ```
 
 ### Core Collaboration Principles
@@ -115,25 +112,27 @@ An audit of the current working tree on `feature/phase-4-pdf-import` identified 
 
 ### Inventory by Workstream
 
-#### Workstream A: Authentication Case Normalization (`fix/06-auth-normalization`)
+#### Workstream A: Authentication Case Normalization (`fix/03-auth-email-normalization`)
 - **Files**:
   - `apps/server/src/schemas/auth.schema.ts`
   - `apps/server/src/repositories/user.repository.ts`
   - `apps/web/src/utils/auth.schema.ts`
 - **Scope**: Trims and lowercases user email during login and lookup. Safe to merge independently.
 
-#### Workstream B: Phase 4 PDF Parser & Amount Extraction (`fix/05-pdf-amount-extraction`)
+#### Workstream B: Phase 4 PDF Parser & Amount Extraction (`fix/02-pdf-ingestion-reliability`)
 - **Files**:
   - `apps/server/src/import/parsers/pdf.parser.ts`
   - `apps/server/src/import/mapping/column-matcher.ts`
   - `apps/server/src/import/mapping/row-transformer.ts`
   - `apps/server/src/import/services/import.service.ts`
+  - `apps/server/src/import/types/import.types.ts`
+  - `apps/server/src/import/index.ts`
   - `apps/server/src/import/reconciliation/`
   - `apps/server/src/tests/pdf-import.test.ts`
   - `apps/server/src/tests/reconciliation-and-parsing.test.ts`
   - `apps/web/src/components/import/StatementImportModal.tsx`
   - `apps/web/src/services/import.service.ts`
-- **Scope**: Multi-line header continuation, right-aligned amount mapping, reconciliation.
+- **Scope**: Multi-line header continuation, right-aligned amount mapping, reconciliation. Base: `feature/phase-4-pdf-import` (or `main` with `01` dependency).
 
 #### Workstream C: Classification Taxonomy & Contract (`feature/01-classification-taxonomy`)
 - **Files**:
