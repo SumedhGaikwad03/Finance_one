@@ -15,6 +15,7 @@ export type CreateTransactionData = {
     source?: TransactionSource;
     externalId?: string | null;
     sourceMetadata?: Prisma.InputJsonValue | null;
+    tags?: string[];
 };
 
 export type TransactionFilters = {
@@ -25,12 +26,17 @@ export type TransactionFilters = {
 };
 
 export const createTransaction = (transaction: CreateTransactionData) => {
-    const { sourceMetadata, ...rest } = transaction;
+    const { sourceMetadata, tags, ...rest } = transaction;
+    const metadata = {
+        ...((sourceMetadata as Record<string, unknown> | null) || {}),
+        ...(tags && tags.length > 0 ? { tags } : {}),
+    };
+
     return prisma.transaction.create({
         data: {
             ...rest,
-            ...(sourceMetadata !== undefined && sourceMetadata !== null
-                ? { sourceMetadata }
+            ...(Object.keys(metadata).length > 0
+                ? { sourceMetadata: metadata as Prisma.InputJsonValue }
                 : {}),
         },
     });
@@ -91,27 +97,45 @@ export const updateTransaction = async (
     id: number,
     input: transactionSchemas.UpdateTransactionInput
 ) => {
+    const { tags, ...rest } = input;
 
-    const data = {
-        ...input,
+    // Fetch existing transaction to preserve existing sourceMetadata
+    const existing = await findTransactionById(id);
+    const existingMetadata =
+        existing?.sourceMetadata && typeof existing.sourceMetadata === "object"
+            ? (existing.sourceMetadata as Record<string, unknown>)
+            : {};
 
+    const isClassificationEdit = input.category !== undefined || input.priority !== undefined;
+
+    const updatedMetadata = {
+        ...existingMetadata,
+        ...(tags !== undefined ? { tags } : {}),
+        ...(isClassificationEdit
+            ? {
+                  userConfirmed: true,
+                  classificationSource: "USER_EDIT",
+                  classifiedAt: new Date().toISOString(),
+              }
+            : {}),
+    };
+
+    const data: Prisma.TransactionUpdateInput = {
+        ...rest,
         ...(input.amount !== undefined && {
             amount: new Prisma.Decimal(input.amount),
         }),
-
         ...(input.transactionDate !== undefined && {
             transactionDate: new Date(input.transactionDate),
         }),
+        sourceMetadata: updatedMetadata as Prisma.InputJsonValue,
     };
 
     return prisma.transaction.update({
-        where: {
-            id: id
-        },
-
-        data
+        where: { id },
+        data,
     });
-}
+};
 
 
 

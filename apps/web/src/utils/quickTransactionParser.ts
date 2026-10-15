@@ -70,6 +70,9 @@ const PRIORITY_KEYWORDS: Record<TransactionPriority, string[]> = {
         "grocery", "food", "lunch", "dinner", "breakfast", "fuel", "petrol",
         "medicine", "doctor", "health", "hospital", "education", "fee",
         "metro", "bus", "train", "work"
+    ],
+    UNCLASSIFIED: [
+        "unclassified", "unassigned", "uncategorized", "unknown", "none"
     ]
 };
 
@@ -80,7 +83,7 @@ export function clientParseQuickTransaction(input: string): ParsedTransactionRes
             amount: null,
             title: "Expense",
             category: "OTHER",
-            priority: "ESSENTIAL",
+            priority: "UNCLASSIFIED",
             transactionDate: new Date().toISOString(),
             rawText: "",
             confidence: 0,
@@ -143,7 +146,7 @@ export function clientParseQuickTransaction(input: string): ParsedTransactionRes
         if (categoryDetected) break;
     }
 
-    let detectedPriority: TransactionPriority = "ESSENTIAL";
+    let detectedPriority: TransactionPriority = "UNCLASSIFIED";
     let priorityDetected = false;
 
     for (const [pri, keywords] of Object.entries(PRIORITY_KEYWORDS) as [TransactionPriority, string[]][]) {

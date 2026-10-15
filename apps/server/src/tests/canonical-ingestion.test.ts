@@ -87,8 +87,8 @@ describe("Phase 2: Canonical Ingestion Foundation Test Suite", () => {
 
             assert.equal(normalizePriority("essential"), Priority.ESSENTIAL);
             assert.equal(normalizePriority("LUXURY"), Priority.LUXURY);
-            assert.equal(normalizePriority("UNRECOGNIZED_PRIO"), Priority.GOOD_TO_HAVE);
-            assert.equal(normalizePriority(null), Priority.GOOD_TO_HAVE);
+            assert.equal(normalizePriority("UNRECOGNIZED_PRIO"), Priority.UNCLASSIFIED);
+            assert.equal(normalizePriority(null), Priority.UNCLASSIFIED);
         });
 
         it("computes deterministic SHA-256 fingerprints across identical normalized fields", () => {

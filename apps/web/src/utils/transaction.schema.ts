@@ -26,6 +26,7 @@ export const createTransactionSchema = z.object({
         "ESSENTIAL",
         "GOOD_TO_HAVE",
         "LUXURY",
+        "UNCLASSIFIED",
     ]),
 
     title: z
@@ -50,6 +51,10 @@ export const createTransactionSchema = z.object({
         )
         .optional(),
 
+    tags: z
+        .array(z.string().trim().max(30))
+        .max(10)
+        .optional(),
 });
 export type CreateTransactionFormData = z.infer<
     typeof createTransactionSchema

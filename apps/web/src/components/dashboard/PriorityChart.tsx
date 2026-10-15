@@ -10,9 +10,10 @@ import {
 import "./Dashboard.css";
 
 const PRIORITY_COLORS = [
-    "#0f766e", // teal
-    "#7c3aed", // purple
-    "#0891b2", // cyan
+    "#0f766e", // teal - essential
+    "#7c3aed", // purple - luxury
+    "#0891b2", // cyan - good to have
+    "#f59e0b", // amber - unclassified
 ];
 
 type PriorityChartProps = {
