@@ -44,9 +44,10 @@ describe("Phase 3: CSV & XLSX Expense Import Test Suite", () => {
       const sheet = workbook.addWorksheet("Expenses");
       sheet.addRow(["Date", "Description", "Amount"]);
       sheet.addRow(["2026-10-01", "Coffee", 4.50]);
-      const buffer = (await workbook.xlsx.writeBuffer()) as Buffer;
+      const rawBuffer = await workbook.xlsx.writeBuffer();
+      const buffer = Buffer.from(rawBuffer as any);
 
-      const fileType = detectAndValidateFileType(Buffer.from(buffer), "statement.xlsx");
+      const fileType = detectAndValidateFileType(buffer, "statement.xlsx");
       assert.equal(fileType, "xlsx");
     });
 
@@ -145,7 +146,7 @@ Item",12.00`;
       const switched = await importService.switchWorksheet("1", meta.fileId, "November");
       assert.equal(switched.activeWorksheet, "November");
       assert.equal(switched.headers.includes("Narration"), true);
-      assert.equal(switched.rows ? (switched as any).rows.length : 1, 1);
+      assert.equal(switched.totalRows, 1);
     });
 
     it("neutralizes spreadsheet formulas without executing them", async () => {
@@ -222,7 +223,7 @@ Item",12.00`;
       assert.equal(result.mapped.title, "SUPERMARKET STORE");
       assert.equal(result.mapped.externalId, "TXN1001");
       assert.ok(result.candidateInput);
-      assert.equal(result.candidateInput!.amount.toNumber(), 1250.50);
+      assert.equal(Number(result.candidateInput!.amount), 1250.50);
     });
 
     it("excludes credit / salary deposit rows as non-expenses", () => {
@@ -365,7 +366,7 @@ Item",12.00`;
 
       // Cleanup created transactions
       for (const id of result.importedIds) {
-        await transactionRepository.deleteTransaction(Number(id), 1);
+        await transactionRepository.deleteTransaction(Number(id));
       }
     });
   });
