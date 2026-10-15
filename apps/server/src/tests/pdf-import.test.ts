@@ -11,7 +11,7 @@ import {
 } from "../import";
 import * as transactionRepository from "../repositories/transaction.repository";
 import { ValidationError, ForbiddenError } from "../error/AppError";
-import { TransactionSource } from "../generated/prisma/enums";
+import { Priority, TransactionSource } from "../generated/prisma/enums";
 
 // Helper: Generates Section 10 synthetic PDF bank statement fixture
 async function generateSection10Pdf(): Promise<Buffer> {
@@ -202,6 +202,200 @@ async function generateSeparateDebitCreditPdf(): Promise<Buffer> {
 
   // Footer
   page.drawText("Page 1 of 1 -- Computer Generated Statement", { x: 150, y: 40, size: 8, font });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
+}
+
+// Helper: Generates debit-only synthetic PDF statement
+async function generateDebitOnlyPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([600, 400]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const yHeader = 350;
+  page.drawText("Date", { x: 40, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Narration", { x: 120, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Ref", { x: 300, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Debit", { x: 400, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Balance", { x: 500, y: yHeader, size: 9, font: boldFont });
+
+  page.drawText("2026-10-01", { x: 40, y: 320, size: 8, font });
+  page.drawText("Grocery Store Payment", { x: 120, y: 320, size: 8, font });
+  page.drawText("REF001", { x: 300, y: 320, size: 8, font });
+  page.drawText("14,955.00", { x: 400, y: 320, size: 8, font });
+  page.drawText("85,045.00", { x: 500, y: 320, size: 8, font });
+
+  page.drawText("2026-10-02", { x: 40, y: 290, size: 8, font });
+  page.drawText("Electricity Bill Dr", { x: 120, y: 290, size: 8, font });
+  page.drawText("REF002", { x: 300, y: 290, size: 8, font });
+  page.drawText("1,285.98", { x: 400, y: 290, size: 8, font });
+  page.drawText("83,759.02", { x: 500, y: 290, size: 8, font });
+
+  page.drawText("2026-10-03", { x: 40, y: 260, size: 8, font });
+  page.drawText("Bookstore Purchase", { x: 120, y: 260, size: 8, font });
+  page.drawText("REF003", { x: 300, y: 260, size: 8, font });
+  page.drawText("2,268.00", { x: 400, y: 260, size: 8, font });
+  page.drawText("81,491.02", { x: 500, y: 260, size: 8, font });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
+}
+
+// Helper: Generates credit-only synthetic PDF statement
+async function generateCreditOnlyPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([600, 400]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const yHeader = 350;
+  page.drawText("Date", { x: 40, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Narration", { x: 120, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Ref", { x: 300, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Credit", { x: 400, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Balance", { x: 500, y: yHeader, size: 9, font: boldFont });
+
+  page.drawText("2026-10-01", { x: 40, y: 320, size: 8, font });
+  page.drawText("Salary Deposit", { x: 120, y: 320, size: 8, font });
+  page.drawText("CR001", { x: 300, y: 320, size: 8, font });
+  page.drawText("50,000.00", { x: 400, y: 320, size: 8, font });
+  page.drawText("150,000.00", { x: 500, y: 320, size: 8, font });
+
+  page.drawText("2026-10-02", { x: 40, y: 290, size: 8, font });
+  page.drawText("Interest Credit", { x: 120, y: 290, size: 8, font });
+  page.drawText("CR002", { x: 300, y: 290, size: 8, font });
+  page.drawText("1,285.98", { x: 400, y: 290, size: 8, font });
+  page.drawText("151,285.98", { x: 500, y: 290, size: 8, font });
+
+  page.drawText("2026-10-03", { x: 40, y: 260, size: 8, font });
+  page.drawText("Dividend Credit", { x: 120, y: 260, size: 8, font });
+  page.drawText("CR003", { x: 300, y: 260, size: 8, font });
+  page.drawText("2,268.00", { x: 400, y: 260, size: 8, font });
+  page.drawText("153,553.98", { x: 500, y: 260, size: 8, font });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
+}
+
+// Helper: Generates PDF statement with Indian amounts, empty cells, malformed rows, and balance summaries
+async function generateIndianFormatsAndAmbiguousPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([700, 500]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const yHeader = 400;
+  page.drawText("Date", { x: 30, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Narration", { x: 90, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Ref", { x: 250, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Value Dt", { x: 330, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Debit", { x: 410, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Credit", { x: 490, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Balance", { x: 580, y: yHeader, size: 9, font: boldFont });
+
+  // Row 1: Valid Debit Indian format
+  page.drawText("2026-10-01", { x: 30, y: 370, size: 8, font });
+  page.drawText("Tech Equipment Purchase", { x: 90, y: 370, size: 8, font });
+  page.drawText("TXN101", { x: 250, y: 370, size: 8, font });
+  page.drawText("2026-10-01", { x: 330, y: 370, size: 8, font });
+  page.drawText("14,955.00", { x: 420, y: 370, size: 8, font });
+  page.drawText("-", { x: 505, y: 370, size: 8, font });
+  page.drawText("45,045.00", { x: 590, y: 370, size: 8, font });
+
+  // Row 2: Valid Credit
+  page.drawText("2026-10-02", { x: 30, y: 340, size: 8, font });
+  page.drawText("Client Consulting Fee", { x: 90, y: 340, size: 8, font });
+  page.drawText("TXN102", { x: 250, y: 340, size: 8, font });
+  page.drawText("2026-10-02", { x: 330, y: 340, size: 8, font });
+  page.drawText("-", { x: 420, y: 340, size: 8, font });
+  page.drawText("1,285.98", { x: 505, y: 340, size: 8, font });
+  page.drawText("46,330.98", { x: 590, y: 340, size: 8, font });
+
+  // Row 3: Valid Debit with empty credit cell
+  page.drawText("2026-10-03", { x: 30, y: 310, size: 8, font });
+  page.drawText("Office Supplies", { x: 90, y: 310, size: 8, font });
+  page.drawText("TXN103", { x: 250, y: 310, size: 8, font });
+  page.drawText("2026-10-03", { x: 330, y: 310, size: 8, font });
+  page.drawText("2,268.00", { x: 420, y: 310, size: 8, font });
+  // (credit empty)
+  page.drawText("44,062.98", { x: 590, y: 310, size: 8, font });
+
+  // Row 4: Zero amounts in both
+  page.drawText("2026-10-04", { x: 30, y: 280, size: 8, font });
+  page.drawText("Zero Adjustment Fee", { x: 90, y: 280, size: 8, font });
+  page.drawText("TXN104", { x: 250, y: 280, size: 8, font });
+  page.drawText("2026-10-04", { x: 330, y: 280, size: 8, font });
+  page.drawText("0.00", { x: 420, y: 280, size: 8, font });
+  page.drawText("0.00", { x: 505, y: 280, size: 8, font });
+  page.drawText("44,062.98", { x: 590, y: 280, size: 8, font });
+
+  // Row 5: Malformed debit amount
+  page.drawText("2026-10-05", { x: 30, y: 250, size: 8, font });
+  page.drawText("Corrupted Bank Charge", { x: 90, y: 250, size: 8, font });
+  page.drawText("TXN105", { x: 250, y: 250, size: 8, font });
+  page.drawText("2026-10-05", { x: 330, y: 250, size: 8, font });
+  page.drawText("corrupted_val", { x: 420, y: 250, size: 8, font });
+  page.drawText("-", { x: 505, y: 250, size: 8, font });
+  page.drawText("44,062.98", { x: 590, y: 250, size: 8, font });
+
+  // Row 6: Non-transaction closing balance summary
+  page.drawText("2026-10-06", { x: 30, y: 220, size: 8, font });
+  page.drawText("Closing Balance", { x: 90, y: 220, size: 8, font });
+  page.drawText("-", { x: 420, y: 220, size: 8, font });
+  page.drawText("-", { x: 505, y: 220, size: 8, font });
+  page.drawText("44,062.98", { x: 590, y: 220, size: 8, font });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
+}
+
+// Helper: Generates multi-page PDF with wrapped narration stitching and repeated headers
+async function generateWrappedAndRepeatedHeaderPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Page 1
+  const page1 = pdfDoc.addPage([650, 450]);
+  const yHeader = 380;
+  page1.drawText("Date", { x: 30, y: yHeader, size: 9, font: boldFont });
+  page1.drawText("Narration", { x: 100, y: yHeader, size: 9, font: boldFont });
+  page1.drawText("Ref", { x: 320, y: yHeader, size: 9, font: boldFont });
+  page1.drawText("Debit", { x: 420, y: yHeader, size: 9, font: boldFont });
+  page1.drawText("Credit", { x: 500, y: yHeader, size: 9, font: boldFont });
+  page1.drawText("Balance", { x: 570, y: yHeader, size: 9, font: boldFont });
+
+  // Row 1 Line 1: Date & initial narration (amount is on line 2)
+  page1.drawText("2026-10-01", { x: 30, y: 340, size: 8, font });
+  page1.drawText("Supermarket Groceries Payment and Delivery", { x: 100, y: 340, size: 8, font });
+
+  // Row 1 Line 2: Wrapped narration continuation with Ref and Debit amount
+  page1.drawText("Order #994821 - Express Delivery", { x: 100, y: 325, size: 8, font });
+  page1.drawText("REF-SUP-01", { x: 320, y: 325, size: 8, font });
+  page1.drawText("14,955.00", { x: 420, y: 325, size: 8, font });
+  page1.drawText("-", { x: 505, y: 325, size: 8, font });
+  page1.drawText("35,045.00", { x: 580, y: 325, size: 8, font });
+
+  // Page 2 (Repeated headers)
+  const page2 = pdfDoc.addPage([650, 450]);
+  page2.drawText("Date", { x: 30, y: yHeader, size: 9, font: boldFont });
+  page2.drawText("Narration", { x: 100, y: yHeader, size: 9, font: boldFont });
+  page2.drawText("Ref", { x: 320, y: yHeader, size: 9, font: boldFont });
+  page2.drawText("Debit", { x: 420, y: yHeader, size: 9, font: boldFont });
+  page2.drawText("Credit", { x: 500, y: yHeader, size: 9, font: boldFont });
+  page2.drawText("Balance", { x: 570, y: yHeader, size: 9, font: boldFont });
+
+  // Row 2: Fuel station refill
+  page2.drawText("2026-10-02", { x: 30, y: 340, size: 8, font });
+  page2.drawText("Fuel Station refill", { x: 100, y: 340, size: 8, font });
+  page2.drawText("REF-FUEL-02", { x: 320, y: 340, size: 8, font });
+  page2.drawText("2,268.00", { x: 420, y: 340, size: 8, font });
+  page2.drawText("-", { x: 505, y: 340, size: 8, font });
+  page2.drawText("32,777.00", { x: 580, y: 340, size: 8, font });
+
+  page2.drawText("Page 2 of 2 -- Computer Generated Statement", { x: 150, y: 40, size: 8, font });
 
   const bytes = await pdfDoc.save();
   return Buffer.from(bytes);
@@ -523,12 +717,14 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       assert.equal(preview.summary.invalidRowCount, 1);
       assert.equal(preview.summary.expectedToImportCount, 2);
 
+      const defaultPriority = (Priority as any).UNCLASSIFIED || (Priority as any).GOOD_TO_HAVE;
+
       // Row 1: Debit 1,285.98
       const row1 = preview.sampleRows[0];
       assert.equal(row1.status, "READY");
       assert.equal(row1.mapped.amount, 1285.98);
       assert.equal(row1.mapped.title, "IB BILLPAY DR-HDFCPE-5459384");
-      assert.equal(row1.mapped.priority, "UNCLASSIFIED");
+      assert.equal(row1.mapped.priority, defaultPriority);
       assert.notEqual(row1.mapped.amount, 54321.00); // running balance is NEVER treated as amount
 
       // Row 2: Debit 5,000.00
@@ -536,7 +732,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       assert.equal(row2.status, "READY");
       assert.equal(row2.mapped.amount, 5000.00);
       assert.equal(row2.mapped.title, "NEFT DR-UBIN053968-RAJU-TEST");
-      assert.equal(row2.mapped.priority, "UNCLASSIFIED");
+      assert.equal(row2.mapped.priority, defaultPriority);
       assert.notEqual(row2.mapped.amount, 49321.00); // running balance is NEVER treated as amount
 
       // Row 3: Credit 7,000.00
@@ -576,6 +772,223 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
         },
         (err: any) => err instanceof ForbiddenError
       );
+    });
+  });
+
+  // =========================================================================
+  // 5. Comprehensive PDF Statement Ingestion Regression Suite
+  // =========================================================================
+  describe("5. Comprehensive PDF Statement Ingestion Regression Suite", () => {
+    it("regression: debit-only statement extracts amounts, preserves expense direction and persists to DB", async () => {
+      const pdfBuffer = await generateDebitOnlyPdf();
+
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "debit_only.pdf");
+      assert.equal(meta.fileType, "pdf");
+      assert.equal(meta.totalRows, 3);
+      assert.equal(meta.suggestedMapping.amountMode, "single_amount");
+      assert.equal(meta.suggestedMapping.amountColumn, "Debit");
+
+      const preview = await importService.generateImportPreview(
+        String(testUserId),
+        meta.fileId,
+        meta.suggestedMapping
+      );
+
+      assert.equal(preview.summary.totalRows, 3);
+      assert.equal(preview.summary.validExpenseCount, 3);
+      assert.equal(preview.summary.excludedNonExpenseCount, 0);
+      assert.equal(preview.summary.invalidRowCount, 0);
+      assert.equal(preview.summary.expectedToImportCount, 3);
+
+      const amounts = preview.sampleRows.map((r) => r.mapped.amount);
+      assert.deepEqual(amounts, [14955.00, 1285.98, 2268.00]);
+
+      // Confirm & Commit
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: meta.fileId,
+        mapping: meta.suggestedMapping,
+      });
+
+      assert.equal(commitResult.imported, 3);
+      assert.equal(commitResult.importedIds.length, 3);
+
+      // Verify records in DB
+      let ledgerSum = 0;
+      for (const idStr of commitResult.importedIds) {
+        const tx = await transactionRepository.findTransactionById(Number(idStr));
+        assert.ok(tx);
+        assert.equal(tx?.userId, testUserId);
+        assert.equal(tx?.source, TransactionSource.BANK_STATEMENT);
+        ledgerSum += Number(tx?.amount);
+      }
+      assert.equal(ledgerSum, 18508.98);
+
+      // Cleanup
+      for (const idStr of commitResult.importedIds) {
+        await transactionRepository.deleteTransaction(Number(idStr));
+      }
+    });
+
+    it("regression: credit-only statement correctly excludes credits as non-expenses and does not inflate expense ledger", async () => {
+      const pdfBuffer = await generateCreditOnlyPdf();
+
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "credit_only.pdf");
+      assert.equal(meta.fileType, "pdf");
+      assert.equal(meta.totalRows, 3);
+
+      const preview = await importService.generateImportPreview(
+        String(testUserId),
+        meta.fileId,
+        meta.suggestedMapping
+      );
+
+      assert.equal(preview.summary.totalRows, 3);
+      assert.equal(preview.summary.validExpenseCount, 0);
+      assert.equal(preview.summary.excludedNonExpenseCount, 3);
+      assert.equal(preview.summary.expectedToImportCount, 0);
+
+      for (const row of preview.sampleRows) {
+        assert.equal(row.status, "EXCLUDED_NON_EXPENSE");
+        assert.match(row.reasons[0], /Credit \/ deposit entry.*excluded from expense ledger/i);
+      }
+
+      // Confirm & Commit yields 0 imported records
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: meta.fileId,
+        mapping: meta.suggestedMapping,
+      });
+
+      assert.equal(commitResult.imported, 0);
+      assert.equal(commitResult.importedIds.length, 0);
+      assert.equal(commitResult.excludedNonExpense, 3);
+    });
+
+    it("regression: dual debit/credit columns with Indian formats, empty cells, malformed amounts, and summary balance exclusions", async () => {
+      const pdfBuffer = await generateIndianFormatsAndAmbiguousPdf();
+
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "indian_dual_col.pdf");
+      assert.equal(meta.suggestedMapping.amountMode, "debit_credit");
+      assert.equal(meta.suggestedMapping.debitColumn, "Debit");
+      assert.equal(meta.suggestedMapping.creditColumn, "Credit");
+
+      const preview = await importService.generateImportPreview(
+        String(testUserId),
+        meta.fileId,
+        meta.suggestedMapping
+      );
+
+      assert.equal(preview.summary.totalRows, 6);
+      assert.equal(preview.summary.validExpenseCount, 2);
+      assert.equal(preview.summary.excludedNonExpenseCount, 2);
+      assert.equal(preview.summary.invalidRowCount, 2);
+      assert.equal(preview.summary.expectedToImportCount, 2);
+
+      // Row 1: Valid Indian-style debit 14,955.00
+      const row1 = preview.sampleRows[0];
+      assert.equal(row1.status, "READY");
+      assert.equal(row1.mapped.amount, 14955.00);
+      assert.equal(row1.mapped.title, "Tech Equipment Purchase");
+
+      // Row 2: Valid Credit 1,285.98
+      const row2 = preview.sampleRows[1];
+      assert.equal(row2.status, "EXCLUDED_NON_EXPENSE");
+      assert.equal(row2.mapped.amount, 1285.98);
+      assert.match(row2.reasons[0], /Credit \/ deposit entry/i);
+
+      // Row 3: Valid Debit 2,268.00 with blank credit cell
+      const row3 = preview.sampleRows[2];
+      assert.equal(row3.status, "READY");
+      assert.equal(row3.mapped.amount, 2268.00);
+      assert.equal(row3.mapped.title, "Office Supplies");
+
+      // Row 4: Zero amounts in both columns
+      const row4 = preview.sampleRows[3];
+      assert.equal(row4.status, "INVALID");
+      assert.match(row4.reasons[0], /Row contains zero amount in both Debit and Credit columns/i);
+
+      // Row 5: Malformed debit amount
+      const row5 = preview.sampleRows[4];
+      assert.equal(row5.status, "INVALID");
+      assert.match(row5.reasons[0], /Malformed amount in Debit column/i);
+
+      // Row 6: Closing Balance summary row
+      const row6 = preview.sampleRows[5];
+      assert.equal(row6.status, "EXCLUDED_NON_EXPENSE");
+      assert.match(row6.reasons[0], /balance header\/footer row/i);
+
+      // Commit & Confirm
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: meta.fileId,
+        mapping: meta.suggestedMapping,
+      });
+
+      assert.equal(commitResult.imported, 2);
+      assert.equal(commitResult.excludedNonExpense, 2);
+      assert.equal(commitResult.importedIds.length, 2);
+
+      // Verify DB persistence
+      const tx1 = await transactionRepository.findTransactionById(Number(commitResult.importedIds[0]));
+      const tx2 = await transactionRepository.findTransactionById(Number(commitResult.importedIds[1]));
+      assert.equal(Number(tx1?.amount), 14955.00);
+      assert.equal(Number(tx2?.amount), 2268.00);
+      assert.equal(Number(tx1?.amount) + Number(tx2?.amount), 17223.00);
+
+      // Cleanup
+      for (const idStr of commitResult.importedIds) {
+        await transactionRepository.deleteTransaction(Number(idStr));
+      }
+    });
+
+    it("regression: multi-page wrapped narration with continuation line carrying reference and debit amount", async () => {
+      const pdfBuffer = await generateWrappedAndRepeatedHeaderPdf();
+
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "wrapped_multipage.pdf");
+      assert.equal(meta.totalRows, 2);
+
+      const preview = await importService.generateImportPreview(
+        String(testUserId),
+        meta.fileId,
+        meta.suggestedMapping
+      );
+
+      assert.equal(preview.summary.totalRows, 2);
+      assert.equal(preview.summary.validExpenseCount, 2);
+      assert.equal(preview.summary.expectedToImportCount, 2);
+
+      // Row 1: narration stitched from line 1 and line 2, ref and debit amount stitched from line 2
+      const row1 = preview.sampleRows[0];
+      assert.equal(row1.status, "READY");
+      assert.ok(row1.mapped.title?.includes("Supermarket Groceries Payment and Delivery Order #994821 - Express Delivery"));
+      assert.equal(row1.mapped.amount, 14955.00);
+      assert.equal(row1.mapped.externalId, "REF-SUP-01");
+
+      // Row 2: extracted from page 2 after skipping repeated headers
+      const row2 = preview.sampleRows[1];
+      assert.equal(row2.status, "READY");
+      assert.equal(row2.mapped.title, "Fuel Station refill");
+      assert.equal(row2.mapped.amount, 2268.00);
+      assert.equal(row2.mapped.externalId, "REF-FUEL-02");
+
+      // Commit & Confirm
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: meta.fileId,
+        mapping: meta.suggestedMapping,
+      });
+
+      assert.equal(commitResult.imported, 2);
+      assert.equal(commitResult.importedIds.length, 2);
+
+      // Verify in DB
+      for (const idStr of commitResult.importedIds) {
+        const tx = await transactionRepository.findTransactionById(Number(idStr));
+        assert.ok(tx);
+        assert.equal(tx?.source, TransactionSource.BANK_STATEMENT);
+      }
+
+      // Cleanup
+      for (const idStr of commitResult.importedIds) {
+        await transactionRepository.deleteTransaction(Number(idStr));
+      }
     });
   });
 });

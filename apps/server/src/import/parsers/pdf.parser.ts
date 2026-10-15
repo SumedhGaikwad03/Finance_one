@@ -63,6 +63,10 @@ function isKnownHeaderBoundary(word: string): boolean {
   );
 }
 
+function isNumericColumnName(name: string): boolean {
+  return /Debit|Credit|Balance|Amount|Withdrawal|Deposit|Paid\s*Out|Paid\s*In/i.test(name);
+}
+
 /**
  * Merges horizontally adjacent header text items that form a multi-word column header.
  */
@@ -86,12 +90,12 @@ function clusterHeaderItems(items: any[]): HeaderCluster[] {
 
     const gap = x - current.maxX;
     const combined = `${current.words.join(" ")} ${text}`.toLowerCase();
-    const isMultiWord = /^(?:value\s*(?:date|dt)|val\s*(?:date|dt)|txn\s*date|transaction\s*date|trans\s*date|booking\s*date|posting\s*date|chq[\/\s._-]*ref[\/\s._-]*no|ref\s*no|reference\s*no|chq\s*no|cheque\s*no|paid\s*out|paid\s*in|withdrawal\s*(?:amt\.?|amount|\(?dr\.?\)?)?|debit\s*(?:amt\.?|amount|\(?dr\.?\)?)?|deposit\s*(?:amt\.?|amount|\(?cr\.?\)?)?|credit\s*(?:amt\.?|amount|\(?cr\.?\)?)?|closing\s*(?:bal|balance)|opening\s*(?:bal|balance)|available\s*(?:bal|balance)|running\s*(?:bal|balance)|statement\s*(?:bal|balance))$/i.test(
+    const isMultiWord = /^(?:value\s*(?:date|dt)|val\s*(?:date|dt)|txn\s*date|transaction\s*date|trans\s*date|booking\s*date|posting\s*date|chq[\/\s._-]*ref[\/\s._-]*no|ref\s*no|reference\s*no|chq\s*no|cheque\s*no|paid\s*out|paid\s*in|withdrawal\s*(?:amt\.?|amount|\(?dr\.?\)?)?\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|debit\s*(?:amt\.?|amount|\(?dr\.?\)?)?\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|deposit\s*(?:amt\.?|amount|\(?cr\.?\)?)?\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|credit\s*(?:amt\.?|amount|\(?cr\.?\)?)?\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|closing\s*(?:bal|balance)\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|opening\s*(?:bal|balance)\s*(?:\(?(?:inr|rs\.?|usd|eur)\)?)?|available\s*(?:bal|balance)|running\s*(?:bal|balance)|statement\s*(?:bal|balance))$/i.test(
       combined
     );
 
     // Merge if explicitly matching a multi-word column header OR very tight spacing not crossing a known header boundary
-    const shouldMerge = isMultiWord || (gap <= 6 && !isKnownHeaderBoundary(text));
+    const shouldMerge = isMultiWord || (gap <= 8 && !isKnownHeaderBoundary(text));
 
     if (shouldMerge) {
       current.words.push(text);
@@ -127,33 +131,32 @@ function matchItemToColumn(item: any, columns: ColumnDef[]): ColumnDef {
   const right = x + w;
   const str = (item.str || "").trim();
 
-  // If this item looks like a monetary amount, prioritize numeric columns
+  // If this item looks like a monetary amount or a dash empty amount marker
   const isNumericAmount = /^-?[₹$€£]?\s*[\d,]+(?:\.\d+)?(?:\s*(?:dr|cr))?$/i.test(str);
+  const isDashMarker = /^[-–—]{1,2}$/.test(str);
 
-  if (isNumericAmount) {
-    // 1. Right-edge match for right-aligned numeric columns (Debit, Credit, Balance, Amount)
-    for (const col of columns) {
-      if (/Debit|Credit|Balance|Amount/i.test(col.name)) {
-        if (right >= col.minX + 5 && right <= col.maxX + 15 && center >= col.minX - 15) {
-          return col;
-        }
-      }
-    }
-  }
-
-  // 2. Direct match by center within column bounds
+  // 1. Direct match: center is within column boundaries
   for (const col of columns) {
     if (center >= col.minX && center < col.maxX) {
       return col;
     }
   }
 
-  // 3. Right-edge match for right-aligned numeric columns (Debit, Credit, Balance, Amount) fallback
-  for (const col of columns) {
-    if (/Debit|Credit|Balance|Amount/i.test(col.name)) {
-      if (right >= col.minX && right <= col.maxX + 15) {
-        return col;
+  // 2. For right-aligned amounts: right edge aligns near the column boundary
+  if (isNumericAmount || isDashMarker) {
+    for (const col of columns) {
+      if (isNumericColumnName(col.name)) {
+        if (x >= col.minX - 25 && right <= col.maxX + 12 && center >= col.minX - 10) {
+          return col;
+        }
       }
+    }
+  }
+
+  // 3. Right edge within bounds fallback
+  for (const col of columns) {
+    if (x >= col.minX - 5 && right <= col.maxX + 5) {
+      return col;
     }
   }
 
@@ -274,15 +277,41 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
 
       for (const y of sortedY) {
         if (!linesMap.has(y)) continue;
-        // Sort items left-to-right (ascending X)
-        const items = linesMap.get(y)!.sort((a, b) => a.transform[4] - b.transform[4]);
+        const rawItems = linesMap.get(y)!;
+        // Expand any single item that contains multiple text tokens separated by 2+ spaces
+        const items: any[] = [];
+        for (const it of rawItems) {
+          const str = it.str || "";
+          if (/\S\s{2,}\S/.test(str)) {
+            const regex = /(\S+)/g;
+            let m: RegExpExecArray | null;
+            const totalLen = str.length;
+            const baseW = typeof it.width === "number" && it.width > 0 ? it.width : totalLen * 5;
+            const baseX = it.transform[4];
+            while ((m = regex.exec(str)) !== null) {
+              const token = m[1];
+              const tokenIdx = m.index;
+              const tokenW = (token.length / totalLen) * baseW;
+              const tokenX = baseX + (tokenIdx / totalLen) * baseW;
+              items.push({
+                ...it,
+                str: token,
+                width: tokenW,
+                transform: [it.transform[0], it.transform[1], it.transform[2], it.transform[3], tokenX, it.transform[5]],
+              });
+            }
+          } else {
+            items.push(it);
+          }
+        }
+        items.sort((a, b) => a.transform[4] - b.transform[4]);
         const lineText = items.map((it) => it.str.trim()).join(" ");
 
         // Header detection on first page or before columns are initialized
         if (columns.length === 0) {
-          const hasDate = items.some((it) => /date/i.test(it.str));
+          const hasDate = items.some((it) => /(?:date|\bdt\b)/i.test(it.str));
           const hasAmountOrDesc = items.some((it) =>
-            /narration|description|particulars|debit|credit|amount|withdrawal|deposit/i.test(it.str)
+            /narration|description|particulars|details|debit|credit|amount|withdrawal|deposit|balance/i.test(it.str)
           );
 
           if (hasDate && hasAmountOrDesc) {
@@ -292,11 +321,11 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
             let headerItems = items.map((it) => ({ ...it, str: it.str }));
             let consumedNextY = false;
 
-            if (nextY !== null && y - nextY <= 18) {
+            if (nextY !== null && y - nextY <= 24) {
               const nextLineItems = linesMap.get(nextY)!;
               const hasDateInNext = nextLineItems.some((it) => isDateToken(it.str));
               const hasContinuationWord = nextLineItems.some((it) =>
-                /^(?:amt\.?|amount|dt\.?|balance|bal\.?|no\.?|cr\.?|dr\.?)$/i.test(it.str.trim())
+                /^(?:amt\.?|amount|dt\.?|balance|bal\.?|no\.?|cr\.?|dr\.?|\(?inr\)?|\(?rs\.?\)?)$/i.test(it.str.trim())
               );
 
               if (!hasDateInNext && hasContinuationWord) {
@@ -331,10 +360,29 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
                 if (name === "Narration" || name === "Description" || name === "Particulars") {
                   descColName = name;
                 }
-                const prevRight = i > 0 ? clusters[i - 1].maxX : 0;
-                const nextLeft = i < clusters.length - 1 ? clusters[i + 1].minX : 9999;
-                const minX = i === 0 ? 0 : (prevRight + c.minX) / 2;
-                const maxX = i === clusters.length - 1 ? 9999 : (c.maxX + nextLeft) / 2;
+                const isNum = isNumericColumnName(name);
+                const prev = i > 0 ? clusters[i - 1] : null;
+                const next = i < clusters.length - 1 ? clusters[i + 1] : null;
+
+                let minX: number;
+                if (i === 0) {
+                  minX = 0;
+                } else if (isNum) {
+                  const prevIsNum = isNumericColumnName(normalizeHeaderName(prev!.str));
+                  minX = prevIsNum ? c.minX : (prev!.maxX + c.minX) / 2;
+                } else {
+                  minX = (prev!.maxX + c.minX) / 2;
+                }
+
+                let maxX: number;
+                if (i === clusters.length - 1) {
+                  maxX = 9999;
+                } else if (isNum || isNumericColumnName(normalizeHeaderName(next!.str))) {
+                  maxX = next!.minX;
+                } else {
+                  maxX = (c.maxX + next!.minX) / 2;
+                }
+
                 columns.push({ name, minX, maxX });
               }
               if (consumedNextY) {
@@ -349,8 +397,8 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
         if (columns.length > 0) {
           // Check for repeated table headers across pages
           const isRepeatedHeader =
-            items.some((it) => /date/i.test(it.str)) &&
-            items.some((it) => /narration|description|debit|credit|amount|withdrawal|deposit/i.test(it.str));
+            items.some((it) => /(?:date|\bdt\b)/i.test(it.str)) &&
+            items.some((it) => /narration|description|particulars|details|debit|credit|amount|withdrawal|deposit/i.test(it.str));
           if (isRepeatedHeader) {
             continue;
           }
@@ -393,21 +441,31 @@ export async function parsePdfBuffer(buffer: Buffer): Promise<ParsedPdfResult> {
             // Explicit new transaction candidate row
             candidateRows.push(rowData);
           } else if (candidateRows.length > 0) {
-            // Check for wrapped multi-line description or summary balance rows
-            const hasDebit = Boolean(rowData["Debit"] && rowData["Debit"] !== "-");
-            const hasCredit = Boolean(rowData["Credit"] && rowData["Credit"] !== "-");
-            const hasAmount = Boolean(rowData["Amount"] && rowData["Amount"] !== "-");
-            const hasRef = Boolean(rowData["Ref"]);
+            // Check for summary or balance rows
+            const isSummary =
+              /^(?:opening|closing|current|available|ledger|clear)\s*balance/i.test(lineText) ||
+              /^(?:total|subtotal|summary|brought\s*forward|carried\s*forward|b\/f|c\/f|grand\s*total)/i.test(lineText) ||
+              /balance\s*(?:b\/f|c\/f|as\s*on)/i.test(lineText);
 
-            // If line matches opening or closing balance keywords, preserve as separate row
-            if (/opening\s*balance|closing\s*balance|balance\s*b\/f|brought\s*forward/i.test(lineText)) {
+            if (isSummary) {
               candidateRows.push(rowData);
-            } else if (!hasDebit && !hasCredit && !hasAmount && !hasRef && lineText.trim()) {
-              // Wrapped narration continuation line: append to previous row's narration
+            } else {
+              // Wrapped continuation line: stitch into previous row
+              const prevRow = candidateRows[candidateRows.length - 1];
+
               const appendText = rowData[descColName] || lineText.trim();
               if (appendText) {
-                candidateRows[candidateRows.length - 1][descColName] =
-                  (candidateRows[candidateRows.length - 1][descColName] + " " + appendText).trim();
+                prevRow[descColName] = (prevRow[descColName] + " " + appendText).trim();
+              }
+
+              if (!prevRow["Ref"] && rowData["Ref"]) {
+                prevRow["Ref"] = rowData["Ref"];
+              }
+
+              for (const col of ["Debit", "Credit", "Amount", "Balance"]) {
+                if ((!prevRow[col] || prevRow[col] === "-") && rowData[col] && rowData[col] !== "-") {
+                  prevRow[col] = rowData[col];
+                }
               }
             }
           }

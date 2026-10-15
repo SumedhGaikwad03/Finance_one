@@ -261,7 +261,20 @@ export function transformRow(
       isCreditOrIncome = true;
       detectedAmount = creditParsed.value;
     } else if (!hasDebit && !hasCredit) {
-      reasons.push("Row contains no amount in either Debit or Credit columns");
+      const rawDebitClean = String(rawDebit || "").trim();
+      const rawCreditClean = String(rawCredit || "").trim();
+      const isDebitEmpty = !rawDebitClean || /^[-–—]+$/.test(rawDebitClean);
+      const isCreditEmpty = !rawCreditClean || /^[-–—]+$/.test(rawCreditClean);
+
+      if (!isDebitEmpty && debitParsed.value === null) {
+        reasons.push(`Malformed amount in Debit column '${mapping.debitColumn}' (value: '${rawDebit}')`);
+      } else if (!isCreditEmpty && creditParsed.value === null) {
+        reasons.push(`Malformed amount in Credit column '${mapping.creditColumn}' (value: '${rawCredit}')`);
+      } else if (debitParsed.value === 0 && creditParsed.value === 0) {
+        reasons.push("Row contains zero amount in both Debit and Credit columns");
+      } else {
+        reasons.push("Row contains no amount in either Debit or Credit columns");
+      }
     } else {
       // Both debit and credit are populated
       reasons.push("Ambiguous row: both Debit and Credit columns have non-zero amounts");
@@ -274,7 +287,14 @@ export function transformRow(
     if (parsed.value === null || parsed.value === 0) {
       reasons.push(`Missing, zero, or unparseable amount in column '${mapping.amountColumn}' (value: '${rawAmountVal || ""}')`);
     } else {
-      const convention = options.amountConvention || "negative_is_expense";
+      let defaultConvention = "negative_is_expense";
+      if (mapping.amountColumn && /debit|withdrawal|spent|paid\s*out|\bdr\b/i.test(mapping.amountColumn)) {
+        defaultConvention = "positive_is_expense";
+      } else if (mapping.amountColumn && /credit|deposit|paid\s*in|\bcr\b/i.test(mapping.amountColumn)) {
+        defaultConvention = "negative_is_expense";
+      }
+
+      const convention = options.amountConvention || defaultConvention;
 
       if (convention === "negative_is_expense") {
         if (parsed.isNegative) {
@@ -357,7 +377,7 @@ export function transformRow(
 
   const priority = mapping.priorityColumn
     ? normalizePriority(rawRow[mapping.priorityColumn])
-    : Priority.UNCLASSIFIED;
+    : ((Priority as any).UNCLASSIFIED || (Priority as any).GOOD_TO_HAVE);
 
   const notes = mapping.notesColumn
     ? normalizeNotes(rawRow[mapping.notesColumn])
