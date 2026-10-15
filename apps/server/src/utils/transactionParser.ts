@@ -7,6 +7,7 @@ export interface ParsedTransactionResult {
     priority: Priority;
     transactionDate: string;
     notes?: string;
+    tags?: string[];
     rawText: string;
     confidence: number;
     extractedFields: {
@@ -87,6 +88,9 @@ const PRIORITY_KEYWORDS: Record<Priority, string[]> = {
         "grocery", "food", "lunch", "dinner", "breakfast", "fuel", "petrol",
         "medicine", "doctor", "health", "hospital", "education", "fee",
         "metro", "bus", "train", "work"
+    ],
+    UNCLASSIFIED: [
+        "unclassified", "unassigned", "uncategorized", "unknown", "none"
     ]
 };
 
@@ -97,7 +101,7 @@ export function parseQuickTransaction(input: string): ParsedTransactionResult {
             amount: null,
             title: "Expense",
             category: Category.OTHER,
-            priority: Priority.ESSENTIAL,
+            priority: Priority.UNCLASSIFIED,
             transactionDate: new Date().toISOString(),
             rawText: "",
             confidence: 0,
@@ -167,7 +171,7 @@ export function parseQuickTransaction(input: string): ParsedTransactionResult {
     }
 
     // Priority detection
-    let detectedPriority: Priority = Priority.ESSENTIAL;
+    let detectedPriority: Priority = Priority.UNCLASSIFIED;
     let priorityDetected = false;
 
     for (const [pri, keywords] of Object.entries(PRIORITY_KEYWORDS) as [Priority, string[]][]) {

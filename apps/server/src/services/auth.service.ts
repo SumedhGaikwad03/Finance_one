@@ -8,8 +8,8 @@ import { ConflictError , UnauthorizedError } from "../error/AppError";
 import { generateToken } from "../lib/jwt";
 
 export const registerUser = async (user : RegisterInput) => {
-
-    const existing_user = await userRepository.findUserbyEmail(user.email);
+    const normalizedEmail = user.email.trim().toLowerCase();
+    const existing_user = await userRepository.findUserbyEmail(normalizedEmail);
 
     if(existing_user){
 
@@ -19,7 +19,7 @@ export const registerUser = async (user : RegisterInput) => {
 
         const newUser = await userRepository.addUser({
             name: user.name,
-            email: user.email,
+            email: normalizedEmail,
             passwordHash
         });
 
@@ -32,8 +32,8 @@ export const registerUser = async (user : RegisterInput) => {
 
 
 export const loginUser = async ( credentials: LoginInput) => {
-
-    const user = await userRepository.findUserbyEmail(credentials.email);
+    const normalizedEmail = credentials.email.trim().toLowerCase();
+    const user = await userRepository.findUserbyEmail(normalizedEmail);
 
     if (!user) {
         throw new UnauthorizedError("Invalid email or password");

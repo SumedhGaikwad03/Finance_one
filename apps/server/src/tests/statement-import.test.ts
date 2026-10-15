@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach } from "node:test";
+import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import ExcelJS from "exceljs";
 import { Prisma } from "../generated/prisma/client";
@@ -15,10 +15,37 @@ import {
 } from "../import";
 import * as transactionRepository from "../repositories/transaction.repository";
 import { ValidationError, ForbiddenError } from "../error/AppError";
+import prisma from "../lib/prisma";
+
+let testUserId: number;
 
 describe("Phase 3: CSV & XLSX Expense Import Test Suite", () => {
-  beforeEach(() => {
+  before(async () => {
+    const user = await prisma.user.create({
+      data: {
+        name: "Statement Test User",
+        email: `statement.test.${Date.now()}@internal.test`,
+        passwordHash: "dummyhash123",
+      },
+    });
+    testUserId = user.id;
+  });
+
+  after(async () => {
+    if (testUserId) {
+      await prisma.user.delete({ where: { id: testUserId } });
+    }
+  });
+
+  beforeEach(async () => {
     importSessionStore.clearAllForTesting();
+    if (testUserId) {
+      await prisma.transaction.deleteMany({
+        where: {
+          userId: testUserId,
+        },
+      });
+    }
   });
 
   // =========================================================================
@@ -137,13 +164,13 @@ Item",12.00`;
       const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
       // Parse with service
-      const meta = await importService.parseUploadedFile("1", buffer, "bank.xlsx");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "bank.xlsx");
       assert.equal(meta.worksheets.length, 2);
       assert.equal(meta.activeWorksheet, "October");
       assert.equal(meta.headers.includes("Debit"), true);
 
       // Switch to sheet 2
-      const switched = await importService.switchWorksheet("1", meta.fileId, "November");
+      const switched = await importService.switchWorksheet(String(testUserId), meta.fileId, "November");
       assert.equal(switched.activeWorksheet, "November");
       assert.equal(switched.headers.includes("Narration"), true);
       assert.equal(switched.totalRows, 1);
@@ -159,7 +186,7 @@ Item",12.00`;
       sheet.addRow(["2026-10-02", "@SUM(1+1)", 100]);
 
       const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
-      const meta = await importService.parseUploadedFile("1", buffer, "calc.xlsx");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "calc.xlsx");
 
       // Verify that description has formula trigger prefixed or escaped
       assert.ok(meta.previewRows[0]["Description"].startsWith("'="));
@@ -291,8 +318,8 @@ Item",12.00`;
 2026-10-02,Pharmacy,-20.00,TXN888
 2026-10-01,Groceries,-50.00,TXN999`;
 
-      const meta = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "test.csv");
-      const preview = await importService.generateImportPreview("1", meta.fileId, {
+      const meta = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "test.csv");
+      const preview = await importService.generateImportPreview(String(testUserId), meta.fileId, {
         dateColumn: "Date",
         descriptionColumn: "Description",
         amountMode: "single_amount",
@@ -308,12 +335,12 @@ Item",12.00`;
 
     it("enforces user isolation: rejects access to another user's session", async () => {
       const csv = `Date,Description,Amount\n2026-10-01,Dinner,-40.00`;
-      const meta = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "secret.csv");
+      const meta = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "secret.csv");
 
       // User 2 tries to access User 1's fileId
       await assert.rejects(
         async () => {
-          await importService.generateImportPreview("2", meta.fileId, {
+          await importService.generateImportPreview(String(testUserId + 999), meta.fileId, {
             dateColumn: "Date",
             descriptionColumn: "Description",
             amountMode: "single_amount",
@@ -336,7 +363,7 @@ Item",12.00`;
 2026-10-06,Client Payment,,2000.00,INC_123
 2026-10-07,Internet Bill,80.00,,${testRef}_2`;
 
-      const meta = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "expenses.csv");
+      const meta = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "expenses.csv");
 
       const mapping: ColumnMapping = {
         dateColumn: "Date",
@@ -347,7 +374,7 @@ Item",12.00`;
         externalIdColumn: "Ref",
       };
 
-      const result = await importService.confirmAndCommitImport("1", {
+      const result = await importService.confirmAndCommitImport(String(testUserId), {
         fileId: meta.fileId,
         mapping,
       });
@@ -357,8 +384,8 @@ Item",12.00`;
       assert.equal(result.importedIds.length, 2);
 
       // Verify that re-importing the exact same rows in a new file recognizes them as confirmed duplicates
-      const meta2 = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "expenses_retry.csv");
-      const preview2 = await importService.generateImportPreview("1", meta2.fileId, mapping);
+      const meta2 = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "expenses_retry.csv");
+      const preview2 = await importService.generateImportPreview(String(testUserId), meta2.fileId, mapping);
 
       // The two expenses with external IDs should now be marked CONFIRMED_DUPLICATE
       assert.equal(preview2.summary.confirmedDuplicateCount, 2);
@@ -385,7 +412,7 @@ Item",12.00`;
 2026-10-06,Online shopping,TEST005,1499.00,`;
 
       // 1. Upload & parse
-      const meta = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "reconciliation.csv");
+      const meta = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "reconciliation.csv");
       assert.equal(meta.totalRows, 6);
 
       // 2. Mapping
@@ -399,7 +426,7 @@ Item",12.00`;
       };
 
       // 3. Preview
-      const preview = await importService.generateImportPreview("1", meta.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
+      const preview = await importService.generateImportPreview(String(testUserId), meta.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
       assert.equal(preview.summary.totalRows, 6);
       assert.equal(preview.summary.validExpenseCount, 4);
       assert.equal(preview.summary.excludedNonExpenseCount, 2);
@@ -423,7 +450,7 @@ Item",12.00`;
       assert.ok(balanceRow?.reasons[0].includes("balance"));
 
       // 4. Confirm & Commit Import
-      const commitResult = await importService.confirmAndCommitImport("1", {
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
         fileId: meta.fileId,
         mapping,
       });
@@ -443,8 +470,8 @@ Item",12.00`;
       assert.equal(ledgerSum, 2729.00);
 
       // 5. Re-import: verify idempotency and zero ledger increase
-      const metaRetry = await importService.parseUploadedFile("1", Buffer.from(csv, "utf8"), "reconciliation_retry.csv");
-      const previewRetry = await importService.generateImportPreview("1", metaRetry.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
+      const metaRetry = await importService.parseUploadedFile(String(testUserId), Buffer.from(csv, "utf8"), "reconciliation_retry.csv");
+      const previewRetry = await importService.generateImportPreview(String(testUserId), metaRetry.fileId, mapping, { dateFormat: "YYYY-MM-DD" });
 
       assert.equal(previewRetry.summary.totalRows, 6);
       assert.equal(previewRetry.summary.validExpenseCount, 0); // All 4 are now duplicates!
@@ -456,7 +483,7 @@ Item",12.00`;
         .reduce((sum, r) => sum + (r.mapped.amount || 0), 0);
       assert.equal(retryTotal, 0);
 
-      const commitRetry = await importService.confirmAndCommitImport("1", {
+      const commitRetry = await importService.confirmAndCommitImport(String(testUserId), {
         fileId: metaRetry.fileId,
         mapping,
       });

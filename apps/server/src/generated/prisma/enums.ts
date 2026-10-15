@@ -29,7 +29,8 @@ export type Category = (typeof Category)[keyof typeof Category]
 export const Priority = {
   ESSENTIAL: 'ESSENTIAL',
   GOOD_TO_HAVE: 'GOOD_TO_HAVE',
-  LUXURY: 'LUXURY'
+  LUXURY: 'LUXURY',
+  UNCLASSIFIED: 'UNCLASSIFIED'
 } as const
 
 export type Priority = (typeof Priority)[keyof typeof Priority]

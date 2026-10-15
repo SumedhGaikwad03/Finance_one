@@ -16,37 +16,24 @@ export interface Budget {
 }
 
 export interface Transaction {
-
     id: number;
-
     title: string | null;
-
     amount: string;
-
     category: TransactionCategory;
-
     priority: TransactionPriority;
-
-    notes : string  | null ; 
-
-    transactionDate: string ;
-
+    notes: string | null;
+    transactionDate: string;
+    tags?: string[];
 }
 
 export interface CreateTransactionRequest {
-
     amount: number;
-
     category: TransactionCategory;
-
     priority: TransactionPriority;
-
     title?: string;
-
     notes?: string;
-
     transactionDate?: string;
-
+    tags?: string[];
 }
 
 export interface QuickTransactionRequest {
@@ -57,6 +44,7 @@ export interface QuickTransactionRequest {
     title?: string;
     notes?: string;
     transactionDate?: string;
+    tags?: string[];
 }
 
 export interface ParsedTransactionResponse {
@@ -66,6 +54,7 @@ export interface ParsedTransactionResponse {
     priority: TransactionPriority;
     transactionDate: string;
     notes?: string;
+    tags?: string[];
     rawText: string;
     confidence: number;
     extractedFields: {
@@ -116,7 +105,8 @@ export type TransactionCategory =
 export type TransactionPriority =
     | "ESSENTIAL"
     | "GOOD_TO_HAVE"
-    | "LUXURY";
+    | "LUXURY"
+    | "UNCLASSIFIED";
 
 export type SortField = "transactionDate" | "amount" | "createdAt";
 export type SortDirection = "asc" | "desc";
@@ -126,6 +116,7 @@ export interface TransactionQueryParams {
     categories?: TransactionCategory[];
     priority?: TransactionPriority | TransactionPriority[];
     priorities?: TransactionPriority[];
+    tags?: string[];
     startDate?: string;
     endDate?: string;
     minAmount?: number;
@@ -140,6 +131,7 @@ export interface TransactionQueryParams {
 export interface TransactionQuery {
     categories?: TransactionCategory[];
     priorities?: TransactionPriority[];
+    tags?: string[];
     startDate?: Date;
     endDate?: Date;
     minAmount?: number;
