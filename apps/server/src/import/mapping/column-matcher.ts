@@ -85,8 +85,9 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     /^paid\s*in$/i,
   ]);
 
-  // Check for generic Amount column
-  const amountCol = findBestMatch(headers, [
+  // Check for generic Amount column (explicitly exclude balance columns)
+  const nonBalanceHeaders = headers.filter((h) => !/balance|bal\b/i.test(h));
+  const amountCol = findBestMatch(nonBalanceHeaders, [
     /^amount$/i,
     /^net\s*amount$/i,
     /^transaction\s*amount$/i,

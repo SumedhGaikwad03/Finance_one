@@ -51,6 +51,15 @@ export function parseStatementAmount(rawVal: unknown): { value: number | null; i
     str = str.replace(/[-–—]$/, "").trim();
   }
 
+  // Check for Dr / Cr indicators commonly found in bank statements (e.g. 150.00 Dr, 500.00 Cr)
+  if (/\bdr\b/i.test(str)) {
+    isNegative = true;
+    str = str.replace(/\bdr\b/gi, "").trim();
+  } else if (/\bcr\b/i.test(str)) {
+    isNegative = false;
+    str = str.replace(/\bcr\b/gi, "").trim();
+  }
+
   // Strip currency symbols, commas, spaces
   const cleaned = str.replace(/[₹$€£,\s]/g, "");
   if (!cleaned || isNaN(Number(cleaned))) {

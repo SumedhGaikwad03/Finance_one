@@ -66,10 +66,10 @@ describe("Phase 3: CSV & XLSX Expense Import Test Suite", () => {
       );
     });
 
-    it("rejects unsupported extensions like .pdf or .exe", () => {
+    it("rejects unsupported extensions like .exe or .docx", () => {
       const buf = Buffer.from("some content", "utf8");
       assert.throws(
-        () => detectAndValidateFileType(buf, "invoice.pdf"),
+        () => detectAndValidateFileType(buf, "invoice.exe"),
         (err: any) => err instanceof ValidationError && err.message.includes("Unsupported file format")
       );
     });

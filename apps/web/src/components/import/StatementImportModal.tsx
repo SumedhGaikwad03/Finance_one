@@ -86,8 +86,8 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
   // ============================================================
   const handleFileSelect = async (selectedFile: File) => {
     const ext = selectedFile.name.split(".").pop()?.toLowerCase();
-    if (ext !== "csv" && ext !== "xlsx") {
-      setErrorMessage("Please select a valid CSV (.csv) or Excel (.xlsx) file.");
+    if (ext !== "csv" && ext !== "xlsx" && ext !== "pdf") {
+      setErrorMessage("Please select a valid CSV (.csv), Excel (.xlsx), or text PDF (.pdf) statement.");
       return;
     }
 
@@ -360,7 +360,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .xlsx"
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .xlsx, application/pdf, .pdf"
                   className="hidden"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
@@ -379,7 +379,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                   {isUploading ? "Uploading and inspecting file..." : "Click or drag statement file here"}
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mb-4">
-                  Supports CSV (.csv) and Microsoft Excel (.xlsx) files up to 5MB.
+                  Supports CSV (.csv), Microsoft Excel (.xlsx), and text-based PDF (.pdf) statements up to 5MB.
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-600">
@@ -387,6 +387,9 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                   </span>
                   <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-600">
                     .XLSX
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-600">
+                    .PDF
                   </span>
                   <span className="text-[11px] text-slate-400">Max 5,000 rows</span>
                 </div>

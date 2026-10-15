@@ -32,7 +32,7 @@ export interface ImportOptions {
 export interface FileMetadata {
   fileId: string;
   fileName: string;
-  fileType: "csv" | "xlsx";
+  fileType: "csv" | "xlsx" | "pdf";
   fileSize: number;
   worksheets: string[];
   activeWorksheet: string;

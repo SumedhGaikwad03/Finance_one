@@ -14,6 +14,7 @@ import { transformRow } from "../mapping/row-transformer";
 import { parseCsvBuffer } from "../parsers/csv.parser";
 import { detectAndValidateFileType } from "../parsers/file-detector";
 import { parseExcelWorksheet } from "../parsers/xlsx.parser";
+import { parsePdfBuffer } from "../parsers/pdf.parser";
 import { importSessionStore } from "../session/import-session.store";
 import {
   ColumnMapping,
@@ -48,6 +49,11 @@ export class ImportService {
       parsedSheet = parseCsvBuffer(buffer);
       worksheets = ["CSV"];
       activeWorksheet = "CSV";
+    } else if (fileType === "pdf") {
+      const pdfResult = await parsePdfBuffer(buffer);
+      parsedSheet = pdfResult.parsedSheet;
+      worksheets = pdfResult.pages;
+      activeWorksheet = pdfResult.pages[0] || "All Pages";
     } else {
       const excelResult = await parseExcelWorksheet(buffer, targetWorksheet);
       parsedSheet = excelResult.parsedSheet;
@@ -222,6 +228,13 @@ export class ImportService {
       }
       seenContentInFile.add(contentKey);
 
+      // Tag candidate with session source (CSV_IMPORT vs BANK_STATEMENT)
+      const source =
+        session.fileType === "csv"
+          ? TransactionSource.CSV_IMPORT
+          : TransactionSource.BANK_STATEMENT;
+      result.candidateInput.source = source;
+
       // Check against database using Phase 2 duplicate detector
       const normalized = normalizeTransactionInput(result.candidateInput);
       const validation = validateTransactionCandidate(normalized, numericUserId);
@@ -324,9 +337,9 @@ export class ImportService {
 
     const candidatesToIngest: IngestionSourceInput[] = [];
     const source =
-      session.fileType === "xlsx"
-        ? TransactionSource.BANK_STATEMENT
-        : TransactionSource.CSV_IMPORT;
+      session.fileType === "csv"
+        ? TransactionSource.CSV_IMPORT
+        : TransactionSource.BANK_STATEMENT;
 
     let excludedNonExpense = 0;
     let invalidSkipped = 0;
@@ -379,7 +392,8 @@ export class ImportService {
       }
       seenContentInFile.add(contentKey);
 
-      // Check DB duplicate before queueing
+      // Tag candidate with session source before duplicate detection
+      transformed.candidateInput.source = source;
       const normalized = normalizeTransactionInput(transformed.candidateInput);
       const validation = validateTransactionCandidate(normalized, numericUserId);
 
@@ -402,8 +416,6 @@ export class ImportService {
         transformed.candidateInput.allowPotentialDuplicate = true;
       }
 
-      // Tag with source
-      transformed.candidateInput.source = source;
       candidatesToIngest.push(transformed.candidateInput);
     }
 
