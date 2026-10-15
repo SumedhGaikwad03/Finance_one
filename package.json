@@ -4,7 +4,12 @@
   "version": "1.0.0",
   "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "dev": "echo \"No applications configured yet\"",
-    "build": "echo \"Nothing to build yet\""
+    "dev:server": "pnpm --filter server dev",
+    "dev:web": "pnpm --filter web dev",
+    "build:server": "pnpm --filter server build",
+    "build:web": "pnpm --filter web build",
+    "build": "pnpm --filter server build && pnpm --filter web build",
+    "test:server": "pnpm --filter server test",
+    "test": "pnpm --filter server test"
   }
 }
