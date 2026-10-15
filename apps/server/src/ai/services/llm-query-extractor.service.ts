@@ -1,20 +1,19 @@
-import { QueryExtractor , LLMProvider } from "../types/query-extractor.types";
-import { AIQuestion} from "../types/ai.types";
+import { QueryExtractor, LLMProvider } from "../types/query-extractor.types";
+import { AIQuestion } from "../types/ai.types";
 import { TransactionQuery } from "../types/transaction-query.types";
-import {transactionQuerySchema} from "../schemas/question.schema"
+import { transactionQuerySchema } from "../schemas/question.schema";
 import { resolveDateRange } from "../utils/date-range.utils";
+import { BadRequestError } from "../../error/AppError";
 
-/* Turn a user's natural-language question into a structured query intent and eventually an executable TransactionQuery. */
+/* Turn a user's natural-language question into a structured query intent and an executable TransactionQuery. */
 export class LLMQueryExtractor implements QueryExtractor {
-
-      constructor(
-        private readonly llmProvider: LLMProvider
-    ) {} // right now the llm provider is ollama 
+    constructor(private readonly llmProvider: LLMProvider) {}
 
     async extract(question: AIQuestion): Promise<TransactionQuery> {
+        if (!question?.question || question.question.trim().length === 0) {
+            throw new BadRequestError("Question cannot be empty");
+        }
 
-        
-        // LLM implementation later
         const prompt = `
 You are a transaction query extraction system.
 
@@ -106,53 +105,72 @@ Output:
 }
 
 User:
-"Show my travel transactions this week"
+"What was my biggest expense on shopping?"
 
 Output:
 {
-    "operation": "LIST",
-    "category": "TRAVEL",
+    "operation": "MAX",
+    "category": "SHOPPING"
+}
+
+User:
+"How many times did I pay for fuel this year?"
+
+Output:
+{
+    "operation": "COUNT",
+    "category": "FUEL",
     "dateRange": {
         "type": "CALENDAR_PERIOD",
-        "period": "THIS_WEEK"
+        "period": "THIS_YEAR"
     }
 }
 
-
 Do not include userId.
-
 Do not include fields that are not required.
 
 User question:
-${question.question}
+${question.question.trim()}
 `;
 
-// this is the query tha we send to the llm we be working on 
-const response = await this.llmProvider.generate(prompt);
+        const rawResponse = await this.llmProvider.generate(prompt);
 
-const parsed = JSON.parse(response);
+        // Strip markdown code fences if model enclosed JSON in ```json ... ```
+        let cleaned = rawResponse.trim();
+        const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        if (codeBlockMatch) {
+            cleaned = codeBlockMatch[1].trim();
+        }
 
-const validated = transactionQuerySchema.parse(parsed);
+        let parsed: unknown;
+        try {
+            parsed = JSON.parse(cleaned);
+        } catch (err: any) {
+            console.error("[LLMQueryExtractor] JSON parse failure on raw response:", rawResponse);
+            throw new BadRequestError("AI language model returned invalid JSON structure");
+        }
 
-   
+        const validated = transactionQuerySchema.safeParse(parsed);
+        if (!validated.success) {
+            console.error("[LLMQueryExtractor] Zod validation failure:", validated.error.format());
+            throw new BadRequestError("Extracted query parameters failed schema validation");
+        }
+
         const query: TransactionQuery = {
-            operation: validated.operation,
-            category: validated.category,
+            operation: validated.data.operation,
+            category: validated.data.category,
         };
 
-        if (validated.dateRange) {
-
-            const range = resolveDateRange(
-                validated.dateRange
-            );
-
-            query.startDate = range.startDate;
-            query.endDate = range.endDate;
+        if (validated.data.dateRange) {
+            try {
+                const range = resolveDateRange(validated.data.dateRange);
+                query.startDate = range.startDate;
+                query.endDate = range.endDate;
+            } catch (err: any) {
+                throw new BadRequestError(`Invalid date range: ${err?.message || "Failed to resolve dates"}`);
+            }
         }
 
         return query;
     }
 }
-
-
-

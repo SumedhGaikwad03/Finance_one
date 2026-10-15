@@ -62,3 +62,9 @@ export class BudgetLockedError extends AppError {
         super(message, 400);
     }
 }
+
+export class ServiceUnavailableError extends AppError {
+    constructor(message: string = "Service temporarily unavailable") {
+        super(message, 503);
+    }
+}

@@ -14,7 +14,8 @@ const test = async () => {
         },
         {
             question: "How much did I spend on groceries?",
-        }
+        },
+        1
     );
 
     console.log("Executor result:", result);

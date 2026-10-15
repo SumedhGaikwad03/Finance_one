@@ -9,6 +9,7 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 
 import importRouter from "./import/routes/import.routes";
+import aiRouter from "./ai/routes/ai.routes";
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use("/api/transactions/import", importRouter);
 app.use("/api/transactions", transactionRouter);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai", aiRouter);
 
 // Centralized Error Handling Middleware (must be registered after all routes)
 app.use(errorMiddleware);

@@ -1,158 +1,98 @@
 import { aiSkills } from "../skills";
-import { generateEmbedding } from "./embedding.service"; 
-import { VectorSearchService } from "./vector-search.service"; // this is the service that comapres our genrated vector 
-// with static vectors in the system 
+import { AiSkill } from "../types/ai.types";
+import { generateEmbedding } from "./embedding.service";
+import { VectorSearchService } from "./vector-search.service";
+import { EMBEDDING_CONFIG } from "../config/embedding";
 
-// this file is used to determine what the user actually wants and intend to do with the input 
-
-
-// this block is used to compute vectors but now its obsalte 
-/*
-const cosineSimilarity = (
-    a: number[],
-    b: number[]
-): number => {
-
-    let dot = 0;
-    let magnitudeA = 0;
-    let magnitudeB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-
-        dot += a[i] * b[i];
-
-        magnitudeA += a[i] * a[i];
-
-        magnitudeB += b[i] * b[i];
-    }
-
-    return dot /
-        (Math.sqrt(magnitudeA) * Math.sqrt(magnitudeB));
-};
-*/
-export class SkillMatcher {
-
-    private vectorSearchService = new VectorSearchService ; 
-
-    async match(
-        
-        question : string , 
-      //  skills : AiSkill[]
-
-    ){
-
-        const questionsEmbedding =
-        await generateEmbedding(question);
-           
-        const result = await this.vectorSearchService.search(questionsEmbedding); 
-
-       console.log("Vector search results  ", result)
-
-
-       if(!result){
-        return{
-            skill: null ,
-            score : 0 ,
-        };
-
-
-       }
-  // this is the skill for confidence matching 
-       const similarity = 1 - result.distance;
-
-    const CONFIDENCE_THRESHOLD = 0.70;
-
-    if (similarity < CONFIDENCE_THRESHOLD) {
-        return {
-            skill: null,
-            score: similarity,
-        };
-    }
-
-    //here we try to reslove the skillid structure 
-      const skill = aiSkills.find(
-        skill => skill.id === result.skillId
-    );
-
-    if (!skill){
-        throw new Error( `Skill " ${result.skillId}" was found in the vector database but not registerd `);
-    }
-
-
-    return {
-        skill,
-        score: similarity,
-    };
+export interface SkillMatchResult {
+    matched: boolean;
+    skill: AiSkill | null;
+    score: number;
+    reason?: "EMPTY_QUERY" | "NO_VECTOR_MATCH" | "LOW_CONFIDENCE" | "UNKNOWN_SKILL" | "SUCCESS";
 }
-    
 
-    // this code is now not needed as its obselete 
+export class SkillMatcher {
+    private readonly vectorSearchService: VectorSearchService;
+    private readonly confidenceThreshold: number;
+    private readonly embeddingFn: (text: string) => Promise<number[]>;
+    private readonly skillsRegistry: AiSkill[];
 
-    /*
-    let bestSkill: AiSkill | null = null;
+    constructor(options: {
+        vectorSearchService?: VectorSearchService;
+        confidenceThreshold?: number;
+        embeddingFn?: (text: string) => Promise<number[]>;
+        skillsRegistry?: AiSkill[];
+    } = {}) {
+        this.vectorSearchService = options.vectorSearchService ?? new VectorSearchService();
+        this.confidenceThreshold = options.confidenceThreshold ?? EMBEDDING_CONFIG.confidenceThreshold;
+        this.embeddingFn = options.embeddingFn ?? generateEmbedding;
+        this.skillsRegistry = options.skillsRegistry ?? aiSkills;
+    }
 
-    let bestScore = -1;
-
-    const CONFIDENCE_THRESHOLD = 0.70;
-/*
-    for (const skill of skills) {
-
-        let bestSimilarity = -1;
-
-        for (const example of skill.examples) {
-
-            const exampleEmbedding =
-                await generateEmbedding(example);
-
-            const similarity =
-                cosineSimilarity(
-                    questionsEmbedding,
-                    exampleEmbedding
-                );
-
-            console.log(
-                skill.name,
-                example,
-                similarity
-            );
-
-            if (similarity > bestSimilarity) {
-
-                bestSimilarity = similarity;
-
-            }
+    async match(question: string): Promise<SkillMatchResult> {
+        if (!question || typeof question !== "string" || question.trim().length === 0) {
+            return {
+                matched: false,
+                skill: null,
+                score: 0,
+                reason: "EMPTY_QUERY",
+            };
         }
 
-        console.log(
-            "Best score for",
-            skill.name,
-            ":",
-            bestSimilarity
+        const normalizedQuestion = question.trim();
+        const questionEmbedding = await this.embeddingFn(normalizedQuestion);
+
+        if (!questionEmbedding || questionEmbedding.length === 0) {
+            return {
+                matched: false,
+                skill: null,
+                score: 0,
+                reason: "NO_VECTOR_MATCH",
+            };
+        }
+
+        const result = await this.vectorSearchService.search(questionEmbedding);
+
+        if (!result) {
+            return {
+                matched: false,
+                skill: null,
+                score: 0,
+                reason: "NO_VECTOR_MATCH",
+            };
+        }
+
+        // Cosine distance is in [0, 2]. Cosine similarity is 1 - distance.
+        const similarity = 1 - result.distance;
+
+        if (similarity < this.confidenceThreshold) {
+            return {
+                matched: false,
+                skill: null,
+                score: similarity,
+                reason: "LOW_CONFIDENCE",
+            };
+        }
+
+        const matchedSkill = this.skillsRegistry.find(
+            (skill) => skill.id === result.skillId
         );
 
-        if (bestSimilarity > bestScore) {
-
-            bestScore = bestSimilarity;
-
-            bestSkill = skill;
-
+        if (!matchedSkill) {
+            console.warn(`[SkillMatcher] Skill ID '${result.skillId}' found in vector DB but not registered in aiSkills.`);
+            return {
+                matched: false,
+                skill: null,
+                score: similarity,
+                reason: "UNKNOWN_SKILL",
+            };
         }
+
+        return {
+            matched: true,
+            skill: matchedSkill,
+            score: similarity,
+            reason: "SUCCESS",
+        };
     }
-
-    if (bestScore < CONFIDENCE_THRESHOLD) {
-
-    return {
-        skill: null,
-        score: bestScore,
-    };
-}
-
-    return {
-        skill: bestSkill,
-        score: bestScore,
-    };
-}
-}*/ 
-
-
 }
