@@ -476,26 +476,46 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                     </select>
                   </div>
 
-                  {/* Date Column */}
+                  {/* Date Column and Format */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
                       <span>Transaction Date *</span>
                       <span className="text-[10px] text-purple-600 font-normal">Required</span>
                     </label>
-                    <select
-                      value={mapping.dateColumn}
-                      onChange={(e) =>
-                        setMapping({ ...mapping, dateColumn: e.target.value })
-                      }
-                      className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
-                    >
-                      <option value="">-- Select Column --</option>
-                      {metadata.headers.map((h) => (
-                        <option key={h} value={h}>
-                          {h}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <select
+                        aria-label="Transaction Date Column"
+                        value={mapping.dateColumn}
+                        onChange={(e) =>
+                          setMapping({ ...mapping, dateColumn: e.target.value })
+                        }
+                        className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+                      >
+                        <option value="">-- Select Column --</option>
+                        {metadata.headers.map((h) => (
+                          <option key={h} value={h}>
+                            {h}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        aria-label="Date Format Convention"
+                        value={options.dateFormat || "AUTO"}
+                        onChange={(e) =>
+                          setOptions({
+                            ...options,
+                            dateFormat: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"
+                        title="Date format convention"
+                      >
+                        <option value="AUTO">Auto-detect Date Format</option>
+                        <option value="DD/MM/YYYY">DD/MM/YYYY (Day first)</option>
+                        <option value="MM/DD/YYYY">MM/DD/YYYY (Month first)</option>
+                        <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Amount Mode Selector */}

@@ -164,19 +164,6 @@ export function transformRow(
   const rawTitle = rawRow[mapping.descriptionColumn] || "";
   const title = normalizeTitle(rawTitle);
 
-  // Check for summary or balance row
-  if (rawTitle && isSummaryOrBalanceRow(rawTitle)) {
-    return {
-      status: "EXCLUDED_NON_EXPENSE",
-      reasons: ["Statement summary or balance header/footer row"],
-      mapped: {
-        title: rawTitle,
-        amount: null,
-        transactionDate: null,
-      },
-    };
-  }
-
   // Parse Date
   const rawDateStr = rawRow[mapping.dateColumn];
   const parsedDate = parseStatementDate(rawDateStr, options.dateFormat || "AUTO");
@@ -254,6 +241,19 @@ export function transformRow(
         detectedAmount = parsed.value;
       }
     }
+  }
+
+  // Check for summary or balance row
+  if (rawTitle && isSummaryOrBalanceRow(rawTitle)) {
+    return {
+      status: "EXCLUDED_NON_EXPENSE",
+      reasons: ["Statement summary or balance header/footer row"],
+      mapped: {
+        title: rawTitle,
+        amount: detectedAmount,
+        transactionDate: isoDateStr,
+      },
+    };
   }
 
   // Title validation
