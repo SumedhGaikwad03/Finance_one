@@ -224,6 +224,7 @@ const CreateTransactionForm = ({
                             <option value="ESSENTIAL">Essential Need</option>
                             <option value="GOOD_TO_HAVE">Good to Have</option>
                             <option value="LUXURY">Luxury / Discretionary</option>
+                            <option value="UNCLASSIFIED">Unclassified / Decide Later</option>
                         </select>
                     </div>
                     {errors.priority?.message && (

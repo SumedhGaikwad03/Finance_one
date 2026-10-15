@@ -10,7 +10,8 @@ import {
   IngestionSourceInput,
 } from "../../ingestion/types/ingestion.types";
 import { suggestColumnMapping } from "../mapping/column-matcher";
-import { transformRow } from "../mapping/row-transformer";
+import { transformRow, TransformedRowResult } from "../mapping/row-transformer";
+import { reconcileStatement } from "../reconciliation/statement-reconciler";
 import { parseCsvBuffer } from "../parsers/csv.parser";
 import { detectAndValidateFileType } from "../parsers/file-detector";
 import { parseExcelWorksheet } from "../parsers/xlsx.parser";
@@ -153,6 +154,7 @@ export class ImportService {
     const seenContentInFile = new Set<string>();
 
     const sampleRows: PreviewRowItem[] = [];
+    const allTransformedResults: TransformedRowResult[] = [];
 
     let validExpenseCount = 0;
     let confirmedDuplicateCount = 0;
@@ -166,6 +168,7 @@ export class ImportService {
       const rawRow = rows[i];
 
       const result = transformRow(rawRow, mapping, options, rowIndex, session.fileName);
+      allTransformedResults.push(result);
 
       if (result.status === "EXCLUDED_NON_EXPENSE") {
         excludedNonExpenseCount++;
@@ -305,6 +308,15 @@ export class ImportService {
       excludedNonExpenseCount,
       expectedToImportCount,
     };
+ 
+    const balanceColumn = session.parsedSheet.headers.find((h) =>
+      /balance|bal\b/i.test(h)
+    );
+    const reconciliation = reconcileStatement(
+      allTransformedResults,
+      rows,
+      balanceColumn
+    );
 
     return {
       fileId,
@@ -312,6 +324,7 @@ export class ImportService {
       mapping,
       options,
       sampleRows,
+      reconciliation,
     };
   }
 

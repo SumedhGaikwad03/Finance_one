@@ -104,7 +104,53 @@ export function parseStatementDate(rawVal: unknown, preferredFormat: string = "A
     }
   }
 
-  // 2. Day-Month-Year vs Month-Day-Year
+  // 2. Textual month formats: e.g. "15-Oct-2026", "15 Oct 2026", "Oct 15, 2026"
+  const MONTH_MAP: Record<string, number> = {
+    jan: 0, january: 0,
+    feb: 1, february: 1,
+    mar: 2, march: 2,
+    apr: 3, april: 3,
+    may: 4,
+    jun: 5, june: 5,
+    jul: 6, july: 6,
+    aug: 7, august: 7,
+    sep: 8, sept: 8, september: 8,
+    oct: 9, october: 9,
+    nov: 10, november: 10,
+    dec: 11, december: 11,
+  };
+
+  const dmyText = str.match(/^(\d{1,2})[-/\s]([A-Za-z]{3,9})[-/\s](\d{2,4})/);
+  if (dmyText) {
+    const mKey = dmyText[2].toLowerCase();
+    if (MONTH_MAP[mKey] !== undefined) {
+      const day = parseInt(dmyText[1], 10);
+      const month = MONTH_MAP[mKey];
+      let year = parseInt(dmyText[3], 10);
+      if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+      const date = new Date(Date.UTC(year, month, day));
+      if (!isNaN(date.getTime()) && date.getUTCDate() === day) {
+        return date;
+      }
+    }
+  }
+
+  const mdyText = str.match(/^([A-Za-z]{3,9})[-/\s](\d{1,2})(?:,)?[-/\s](\d{2,4})/);
+  if (mdyText) {
+    const mKey = mdyText[1].toLowerCase();
+    if (MONTH_MAP[mKey] !== undefined) {
+      const day = parseInt(mdyText[2], 10);
+      const month = MONTH_MAP[mKey];
+      let year = parseInt(mdyText[3], 10);
+      if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+      const date = new Date(Date.UTC(year, month, day));
+      if (!isNaN(date.getTime()) && date.getUTCDate() === day) {
+        return date;
+      }
+    }
+  }
+
+  // 3. Day-Month-Year vs Month-Day-Year
   const partsMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
   if (partsMatch) {
     let p1 = parseInt(partsMatch[1], 10);
@@ -129,15 +175,17 @@ export function parseStatementDate(rawVal: unknown, preferredFormat: string = "A
       month = p2;
     }
 
-    const date = new Date(Date.UTC(year, month - 1, day));
-    if (!isNaN(date.getTime()) && date.getUTCMonth() === month - 1) {
-      return date;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (!isNaN(date.getTime()) && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+        return date;
+      }
     }
   }
 
-  // 3. Textual date: e.g. "15-Oct-2026", "15 Oct 2026", "Oct 15 2026"
+  // 4. Native JS date parse fallback
   const textDate = new Date(str);
-  if (!isNaN(textDate.getTime())) {
+  if (!isNaN(textDate.getTime()) && textDate.getFullYear() >= 2000) {
     return textDate;
   }
 
@@ -309,7 +357,7 @@ export function transformRow(
 
   const priority = mapping.priorityColumn
     ? normalizePriority(rawRow[mapping.priorityColumn])
-    : Priority.GOOD_TO_HAVE;
+    : Priority.UNCLASSIFIED;
 
   const notes = mapping.notesColumn
     ? normalizeNotes(rawRow[mapping.notesColumn])

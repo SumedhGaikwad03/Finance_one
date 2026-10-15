@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from "node:test";
+import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import {
@@ -138,17 +138,106 @@ async function generateSingleAmountPdf(): Promise<Buffer> {
   return Buffer.from(bytes);
 }
 
+// Helper: Generates realistic bank statement PDF fixture with separate Debit, Credit, and Balance columns
+async function generateSeparateDebitCreditPdf(): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.create();
+  const page = pdfDoc.addPage([700, 500]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  // Bank Header (Noise to ignore)
+  page.drawText("HDFC BANK LIMITED", { x: 50, y: 470, size: 14, font: boldFont });
+  page.drawText("Statement of Account | A/C: 5010029384819 | Currency: INR", { x: 50, y: 450, size: 9, font });
+  page.drawText("Period: 01-Jun-2018 to 30-Jun-2018", { x: 50, y: 435, size: 9, font });
+
+  // Table Headers
+  const yHeader = 400;
+  page.drawText("Date", { x: 30, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Narration", { x: 90, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Chq./Ref.No.", { x: 260, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Value Dt", { x: 340, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Withdrawal Amt.", { x: 400, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Deposit Amt.", { x: 490, y: yHeader, size: 9, font: boldFont });
+  page.drawText("Closing Balance", { x: 580, y: yHeader, size: 9, font: boldFont });
+
+  // Row 1: Debit of 1,285.98
+  const y1 = 370;
+  page.drawText("2018-06-03", { x: 30, y: y1, size: 8, font });
+  page.drawText("IB BILLPAY DR-HDFCPE-5459384", { x: 90, y: y1, size: 8, font });
+  page.drawText("REF00000001", { x: 260, y: y1, size: 8, font });
+  page.drawText("2018-06-03", { x: 340, y: y1, size: 8, font });
+  page.drawText("1,285.98", { x: 420, y: y1, size: 8, font });
+  page.drawText("-", { x: 510, y: y1, size: 8, font });
+  page.drawText("54,321.00", { x: 600, y: y1, size: 8, font });
+
+  // Row 2: Debit of 5,000.00
+  const y2 = 340;
+  page.drawText("2018-06-04", { x: 30, y: y2, size: 8, font });
+  page.drawText("NEFT DR-UBIN053968-RAJU-TEST", { x: 90, y: y2, size: 8, font });
+  page.drawText("N15518053968", { x: 260, y: y2, size: 8, font });
+  page.drawText("2018-06-04", { x: 340, y: y2, size: 8, font });
+  page.drawText("5,000.00", { x: 420, y: y2, size: 8, font });
+  page.drawText("-", { x: 510, y: y2, size: 8, font });
+  page.drawText("49,321.00", { x: 600, y: y2, size: 8, font });
+
+  // Row 3: Credit of 7,000.00
+  const y3 = 310;
+  page.drawText("2018-06-06", { x: 30, y: y3, size: 8, font });
+  page.drawText("SALARY CREDIT JUNE 2018", { x: 90, y: y3, size: 8, font });
+  page.drawText("CMS00001234", { x: 260, y: y3, size: 8, font });
+  page.drawText("2018-06-06", { x: 340, y: y3, size: 8, font });
+  page.drawText("-", { x: 420, y: y3, size: 8, font });
+  page.drawText("7,000.00", { x: 510, y: y3, size: 8, font });
+  page.drawText("56,321.00", { x: 600, y: y3, size: 8, font });
+
+  // Row 4: Blank/dash debit & credit cell with running balance
+  const y4 = 280;
+  page.drawText("2018-06-07", { x: 30, y: y4, size: 8, font });
+  page.drawText("ANNUAL MAINTENANCE WAIVER", { x: 90, y: y4, size: 8, font });
+  page.drawText("REF00000004", { x: 260, y: y4, size: 8, font });
+  page.drawText("2018-06-07", { x: 340, y: y4, size: 8, font });
+  page.drawText("-", { x: 420, y: y4, size: 8, font });
+  page.drawText("-", { x: 510, y: y4, size: 8, font });
+  page.drawText("56,321.00", { x: 600, y: y4, size: 8, font });
+
+  // Footer
+  page.drawText("Page 1 of 1 -- Computer Generated Statement", { x: 150, y: 40, size: 8, font });
+
+  const bytes = await pdfDoc.save();
+  return Buffer.from(bytes);
+}
+
 import prisma from "../lib/prisma";
 
+let testUserId: number;
+
 describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
-  beforeEach(async () => {
-    importSessionStore.clearAllForTesting();
-    await prisma.transaction.deleteMany({
-      where: {
-        userId: 1,
-        externalId: { in: ["TEST001", "TEST002", "TEST003", "TEST004", "TEST005"] },
+  before(async () => {
+    const user = await prisma.user.create({
+      data: {
+        name: "PDF Regression Test User",
+        email: `pdf.test.${Date.now()}@internal.test`,
+        passwordHash: "dummyhash123",
       },
     });
+    testUserId = user.id;
+  });
+
+  after(async () => {
+    if (testUserId) {
+      await prisma.user.delete({ where: { id: testUserId } });
+    }
+  });
+
+  beforeEach(async () => {
+    importSessionStore.clearAllForTesting();
+    if (testUserId) {
+      await prisma.transaction.deleteMany({
+        where: {
+          userId: testUserId,
+        },
+      });
+    }
   });
 
   // =========================================================================
@@ -184,7 +273,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
 
       await assert.rejects(
         async () => {
-          await importService.parseUploadedFile("1", Buffer.from(bytes), "scanned.pdf");
+          await importService.parseUploadedFile(String(testUserId), Buffer.from(bytes), "scanned.pdf");
         },
         (err: any) =>
           err instanceof ValidationError &&
@@ -202,7 +291,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
 
       await assert.rejects(
         async () => {
-          await importService.parseUploadedFile("1", Buffer.from(bytes), "huge.pdf");
+          await importService.parseUploadedFile(String(testUserId), Buffer.from(bytes), "huge.pdf");
         },
         (err: any) =>
           err instanceof ValidationError &&
@@ -219,7 +308,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
 
       await assert.rejects(
         async () => {
-          await importService.parseUploadedFile("1", Buffer.from(bytes), "letter.pdf");
+          await importService.parseUploadedFile(String(testUserId), Buffer.from(bytes), "letter.pdf");
         },
         (err: any) =>
           err instanceof ValidationError &&
@@ -234,7 +323,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
   describe("2. Table Extraction, Multi-page & Multi-line Narration", () => {
     it("handles multi-page PDF statements and skips repeated headers", async () => {
       const buffer = await generateMultiPagePdf();
-      const meta = await importService.parseUploadedFile("1", buffer, "multipage.pdf");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "multipage.pdf");
 
       assert.equal(meta.fileType, "pdf");
       assert.equal(meta.totalRows, 2);
@@ -244,7 +333,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
 
     it("reconstructs wrapped multi-line descriptions into a single row", async () => {
       const buffer = await generateSection10Pdf();
-      const meta = await importService.parseUploadedFile("1", buffer, "wrapped.pdf");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "wrapped.pdf");
 
       const metroRow = meta.previewRows.find((r) => r["Narration"]?.includes("Metro travel"));
       assert.ok(metroRow);
@@ -254,7 +343,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
 
     it("correctly identifies columns and never maps Balance as transaction amount", async () => {
       const buffer = await generateSingleAmountPdf();
-      const meta = await importService.parseUploadedFile("1", buffer, "single_amount.pdf");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "single_amount.pdf");
 
       assert.ok(meta.headers.includes("Amount"));
       assert.ok(meta.headers.includes("Balance"));
@@ -275,7 +364,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       const pdfBuffer = await generateSection10Pdf();
 
       // 1. Upload & parse
-      const meta = await importService.parseUploadedFile("1", pdfBuffer, "bank_statement.pdf");
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "bank_statement.pdf");
       assert.equal(meta.fileType, "pdf");
       assert.equal(meta.totalRows, 6);
 
@@ -290,7 +379,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       };
 
       // 3. Preview
-      const preview = await importService.generateImportPreview("1", meta.fileId, mapping, {
+      const preview = await importService.generateImportPreview(String(testUserId), meta.fileId, mapping, {
         dateFormat: "YYYY-MM-DD",
       });
 
@@ -317,7 +406,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       assert.equal(balanceRow?.mapped.amount, 2500.00);
 
       // 4. Confirm & Commit Import
-      const commitResult = await importService.confirmAndCommitImport("1", {
+      const commitResult = await importService.confirmAndCommitImport(String(testUserId), {
         fileId: meta.fileId,
         mapping,
       });
@@ -337,8 +426,8 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       assert.equal(ledgerSum, 2729.00);
 
       // 5. Re-import: verify idempotency and zero ledger increase
-      const metaRetry = await importService.parseUploadedFile("1", pdfBuffer, "retry_statement.pdf");
-      const previewRetry = await importService.generateImportPreview("1", metaRetry.fileId, mapping, {
+      const metaRetry = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "retry_statement.pdf");
+      const previewRetry = await importService.generateImportPreview(String(testUserId), metaRetry.fileId, mapping, {
         dateFormat: "YYYY-MM-DD",
       });
 
@@ -348,7 +437,7 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
       assert.equal(previewRetry.summary.excludedNonExpenseCount, 2);
       assert.equal(previewRetry.summary.expectedToImportCount, 0);
 
-      const commitRetry = await importService.confirmAndCommitImport("1", {
+      const commitRetry = await importService.confirmAndCommitImport(String(testUserId), {
         fileId: metaRetry.fileId,
         mapping,
       });
@@ -361,6 +450,110 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
         await transactionRepository.deleteTransaction(Number(idStr));
       }
     });
+
+    it("regression: re-importing the same PDF statement adds 0 new transactions and preserves ledger integrity", async () => {
+      const pdfBuffer = await generateSection10Pdf();
+      const mapping: ColumnMapping = {
+        dateColumn: "Date",
+        descriptionColumn: "Narration",
+        amountMode: "debit_credit",
+        debitColumn: "Debit",
+        creditColumn: "Credit",
+        externalIdColumn: "Ref",
+      };
+
+      // Initial import
+      const session1 = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "statement_initial.pdf");
+      const commit1 = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: session1.fileId,
+        mapping,
+      });
+      assert.equal(commit1.imported, 4);
+
+      // Second identical import
+      const session2 = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "statement_second.pdf");
+      const preview2 = await importService.generateImportPreview(String(testUserId), session2.fileId, mapping);
+      assert.equal(preview2.summary.expectedToImportCount, 0);
+      assert.equal(preview2.summary.confirmedDuplicateCount, 4);
+
+      const commit2 = await importService.confirmAndCommitImport(String(testUserId), {
+        fileId: session2.fileId,
+        mapping,
+      });
+      assert.equal(commit2.imported, 0);
+      assert.equal(commit2.importedIds.length, 0);
+
+      // Cleanup
+      for (const idStr of commit1.importedIds) {
+        await transactionRepository.deleteTransaction(Number(idStr));
+      }
+    });
+
+    it("regression: correctly maps separate debit, credit, and balance columns without treating balance as amount or failing valid debits", async () => {
+      const pdfBuffer = await generateSeparateDebitCreditPdf();
+
+      const meta = await importService.parseUploadedFile(String(testUserId), pdfBuffer, "hdfc_statement.pdf");
+
+      // Verify headers
+      assert.deepEqual(meta.headers, [
+        "Date",
+        "Narration",
+        "Ref",
+        "Value Date",
+        "Debit",
+        "Credit",
+        "Balance",
+      ]);
+
+      // Verify suggested mapping
+      assert.equal(meta.suggestedMapping.amountMode, "debit_credit");
+      assert.equal(meta.suggestedMapping.debitColumn, "Debit");
+      assert.equal(meta.suggestedMapping.creditColumn, "Credit");
+      assert.equal(meta.suggestedMapping.dateColumn, "Date");
+      assert.equal(meta.suggestedMapping.descriptionColumn, "Narration");
+      assert.equal(meta.suggestedMapping.externalIdColumn, "Ref");
+
+      // Generate preview
+      const preview = await importService.generateImportPreview(String(testUserId), meta.fileId, meta.suggestedMapping);
+
+      // Overall counts: 4 total rows, 2 valid expenses, 1 excluded credit, 1 invalid (no amount in either debit or credit)
+      assert.equal(preview.summary.totalRows, 4);
+      assert.equal(preview.summary.validExpenseCount, 2);
+      assert.equal(preview.summary.excludedNonExpenseCount, 1);
+      assert.equal(preview.summary.invalidRowCount, 1);
+      assert.equal(preview.summary.expectedToImportCount, 2);
+
+      // Row 1: Debit 1,285.98
+      const row1 = preview.sampleRows[0];
+      assert.equal(row1.status, "READY");
+      assert.equal(row1.mapped.amount, 1285.98);
+      assert.equal(row1.mapped.title, "IB BILLPAY DR-HDFCPE-5459384");
+      assert.equal(row1.mapped.priority, "UNCLASSIFIED");
+      assert.notEqual(row1.mapped.amount, 54321.00); // running balance is NEVER treated as amount
+
+      // Row 2: Debit 5,000.00
+      const row2 = preview.sampleRows[1];
+      assert.equal(row2.status, "READY");
+      assert.equal(row2.mapped.amount, 5000.00);
+      assert.equal(row2.mapped.title, "NEFT DR-UBIN053968-RAJU-TEST");
+      assert.equal(row2.mapped.priority, "UNCLASSIFIED");
+      assert.notEqual(row2.mapped.amount, 49321.00); // running balance is NEVER treated as amount
+
+      // Row 3: Credit 7,000.00
+      const row3 = preview.sampleRows[2];
+      assert.equal(row3.status, "EXCLUDED_NON_EXPENSE");
+      assert.equal(row3.mapped.amount, 7000.00);
+      assert.equal(row3.mapped.title, "SALARY CREDIT JUNE 2018");
+      assert.match(row3.reasons[0], /excluded from expense ledger/i);
+      assert.notEqual(row3.mapped.amount, 56321.00); // running balance is NEVER treated as amount
+
+      // Row 4: Dash in both debit and credit
+      const row4 = preview.sampleRows[3];
+      assert.equal(row4.status, "INVALID");
+      assert.equal(row4.mapped.amount, null);
+      assert.match(row4.reasons[0], /Row contains no amount in either Debit or Credit columns/i);
+      assert.notEqual(row4.mapped.amount, 56321.00); // running balance is NEVER treated as amount
+    });
   });
 
   // =========================================================================
@@ -369,11 +562,11 @@ describe("Phase 4: PDF Bank Statement Import Test Suite", () => {
   describe("4. Security, Isolation & Edge Cases", () => {
     it("enforces tenant isolation: user 2 cannot access user 1's PDF session", async () => {
       const buffer = await generateSection10Pdf();
-      const meta = await importService.parseUploadedFile("1", buffer, "user1.pdf");
+      const meta = await importService.parseUploadedFile(String(testUserId), buffer, "user1.pdf");
 
       await assert.rejects(
         async () => {
-          await importService.generateImportPreview("2", meta.fileId, {
+          await importService.generateImportPreview(String(testUserId + 999), meta.fileId, {
             dateColumn: "Date",
             descriptionColumn: "Narration",
             amountMode: "debit_credit",

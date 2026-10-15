@@ -52,6 +52,14 @@ export const PriorityBadge = ({ priority, className = "" }: PriorityBadgeProps) 
                     Luxury
                 </span>
             );
+        case "UNCLASSIFIED":
+            return (
+                <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 ${className}`}
+                >
+                    Unclassified
+                </span>
+            );
         default:
             return (
                 <span

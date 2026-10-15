@@ -85,6 +85,7 @@ export interface ImportPreviewResult {
   mapping: ColumnMapping;
   options: ImportOptions;
   sampleRows: PreviewRowItem[];
+  reconciliation?: import("../reconciliation/statement-reconciler").ReconciliationReport;
 }
 
 export interface ConfirmImportPayload {

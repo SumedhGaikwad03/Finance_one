@@ -17,6 +17,7 @@ export interface CanonicalTransactionRecord {
     source: TransactionSource;
     externalId: string | null;
     sourceMetadata: Prisma.JsonValue | null;
+    tags?: string[];
     createdAt: Date;
     updatedAt: Date;
 }
