@@ -6,13 +6,11 @@ export const createTransactionSchema = z.object({ // the is the schem that clien
     amount : z.number().positive("amount must be a positive number"),
     category : z.enum(Category), // this is the category that the user will select from the frontend and we will validate it here
  
-    priority : z.enum(Priority), // this is the priority that the user will select from the frontend and we will validate it here
+    priority : z.enum(Priority).optional().default(Priority.UNCLASSIFIED), // Defaults to UNCLASSIFIED if omitted
     title : z.string().trim().max(50 , "title is too long ").optional(),
     notes : z.string().trim().max(200 , "notes is too long ").optional(), // this is the notes that the user will enter from the frontend and we will validate it here
     transactionDate : z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" }).optional(), // this is the transaction date that the user will enter from the frontend and we will validate it here
-
-
-
+    tags: z.array(z.string().trim().max(30)).max(10).optional(),
 })
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>; // this is the type that we will use in the service layer to validate the data that we get from the 
 // controller and then we will pass it to the repository layer 
@@ -27,10 +25,8 @@ export const updateTransactionSchema = z.object({
     priority : z.enum(Priority).optional(), // this is the priority that the user will select from the frontend and we will validate it here
     title : z.string().trim().max(50 , "title is too long ").optional(),
     notes : z.string().trim().max(200 , "notes is too long ").optional(), // this is the notes that the user will enter from the frontend and we will validate it here
-    transactionDate : z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" }).optional()
-
-
-
+    transactionDate : z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" }).optional(),
+    tags: z.array(z.string().trim().max(30)).max(10).optional(),
 
 }).refine( // this is used for cross field validation 
     (data) => Object.keys(data).length > 0 , 
@@ -52,7 +48,8 @@ export const quickTransactionSchema = z.object({
     priority: z.enum(Priority).optional(),
     title: z.string().trim().max(50, "title is too long").optional(),
     notes: z.string().trim().max(200, "notes is too long").optional(),
-    transactionDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" }).optional()
+    transactionDate: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" }).optional(),
+    tags: z.array(z.string().trim().max(30)).max(10).optional(),
 });
 export type QuickTransactionInput = z.infer<typeof quickTransactionSchema>;
 
@@ -73,6 +70,7 @@ export type SortDirection = "asc" | "desc";
 export interface TransactionQuery {
     categories?: Category[];
     priorities?: Priority[];
+    tags?: string[];
     startDate?: Date;
     endDate?: Date;
     minAmount?: number;
@@ -90,6 +88,8 @@ export const transactionQueryInputSchema = z
         categories: stringToEnumArray(z.enum(Category)),
         priority: stringToEnumArray(z.enum(Priority)),
         priorities: stringToEnumArray(z.enum(Priority)),
+        tag: stringToEnumArray(z.string().trim()),
+        tags: stringToEnumArray(z.string().trim()),
         startDate: z
             .string()
             .refine((date) => !isNaN(Date.parse(date)), { message: "Invalid startDate format" })
@@ -149,10 +149,12 @@ const normalizeDateBoundary = (dateStr: string, isEnd: boolean): Date => {
 export function toCanonicalTransactionQuery(input: TransactionQueryInput): TransactionQuery {
     const categories = input.categories ?? input.category;
     const priorities = input.priorities ?? input.priority;
+    const tags = input.tags ?? input.tag;
 
     return {
         ...(categories && categories.length > 0 && { categories }),
         ...(priorities && priorities.length > 0 && { priorities }),
+        ...(tags && tags.length > 0 && { tags }),
         ...(input.startDate && { startDate: normalizeDateBoundary(input.startDate, false) }),
         ...(input.endDate && { endDate: normalizeDateBoundary(input.endDate, true) }),
         ...(input.minAmount !== undefined && { minAmount: input.minAmount }),

@@ -102,6 +102,7 @@ const TransactionToolbar = ({
                             <option value="ESSENTIAL">Essential</option>
                             <option value="GOOD_TO_HAVE">Good to Have</option>
                             <option value="LUXURY">Luxury</option>
+                            <option value="UNCLASSIFIED">Unclassified</option>
                         </select>
                     </div>
 

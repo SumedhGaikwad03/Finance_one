@@ -91,7 +91,7 @@ export function normalizeTransactionDate(rawDate?: string | Date | null): Date {
  */
 export function normalizeCategory(rawCategory?: Category | string | null): Category {
     if (!rawCategory) return Category.OTHER;
-    const upper = String(rawCategory).trim().toUpperCase();
+    const upper = String(rawCategory).trim().toUpperCase().replace(/[-\s]+/g, "_");
     if (Object.values(Category).includes(upper as Category)) {
         return upper as Category;
     }
@@ -99,15 +99,37 @@ export function normalizeCategory(rawCategory?: Category | string | null): Categ
 }
 
 /**
- * Normalizes priority string or enum to valid Priority, falling back to Priority.GOOD_TO_HAVE.
+ * Normalizes priority string or enum to valid Priority, falling back to Priority.UNCLASSIFIED.
  */
 export function normalizePriority(rawPriority?: Priority | string | null): Priority {
-    if (!rawPriority) return Priority.GOOD_TO_HAVE;
-    const upper = String(rawPriority).trim().toUpperCase();
+    if (!rawPriority) return Priority.UNCLASSIFIED;
+    const upper = String(rawPriority).trim().toUpperCase().replace(/[-\s]+/g, "_");
     if (Object.values(Priority).includes(upper as Priority)) {
         return upper as Priority;
     }
-    return Priority.GOOD_TO_HAVE;
+    return Priority.UNCLASSIFIED;
+}
+
+/**
+ * Normalizes tags array or comma-separated string to sanitized lowercase string array.
+ */
+export function normalizeTags(rawTags?: unknown): string[] {
+    if (!rawTags) return [];
+    if (Array.isArray(rawTags)) {
+        const cleaned = rawTags
+            .filter((t) => t !== null && t !== undefined)
+            .map((t) => String(t).trim().toLowerCase().replace(/[^a-z0-9_-]/g, ""))
+            .filter((t) => t.length > 0 && t.length <= 30);
+        return Array.from(new Set(cleaned)).slice(0, 10);
+    }
+    if (typeof rawTags === "string") {
+        const cleaned = rawTags
+            .split(/[,;\s]+/)
+            .map((t) => t.trim().toLowerCase().replace(/[^a-z0-9_-]/g, ""))
+            .filter((t) => t.length > 0 && t.length <= 30);
+        return Array.from(new Set(cleaned)).slice(0, 10);
+    }
+    return [];
 }
 
 /**
@@ -141,7 +163,13 @@ export function normalizeTransactionInput(
     const priority = normalizePriority(input.priority);
     const source = input.source || TransactionSource.MANUAL;
     const externalId = input.externalId?.trim() || null;
-    const sourceMetadata = input.sourceMetadata || null;
+    const rawTags = input.tags ?? (input.sourceMetadata as Record<string, unknown> | undefined)?.tags;
+    const tags = normalizeTags(rawTags);
+
+    const sourceMetadata = {
+        ...(input.sourceMetadata || {}),
+        ...(tags.length > 0 ? { tags } : {}),
+    };
     const allowPotentialDuplicate = Boolean(input.allowPotentialDuplicate);
 
     const fingerprint = computeTransactionFingerprint(
@@ -160,7 +188,8 @@ export function normalizeTransactionInput(
         transactionDate,
         source,
         externalId,
-        sourceMetadata,
+        sourceMetadata: Object.keys(sourceMetadata).length > 0 ? sourceMetadata : null,
+        tags: tags.length > 0 ? tags : undefined,
         fingerprint,
         allowPotentialDuplicate,
     };

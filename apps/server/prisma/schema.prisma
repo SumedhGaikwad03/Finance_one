@@ -32,6 +32,7 @@ enum Priority {
   ESSENTIAL
   GOOD_TO_HAVE
   LUXURY
+  UNCLASSIFIED
 }
 
 enum BudgetPeriod {

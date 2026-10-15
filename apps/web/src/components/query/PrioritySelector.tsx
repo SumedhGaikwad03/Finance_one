@@ -25,6 +25,11 @@ const PRIORITY_METADATA: Record<
         tag: "Discretionary",
         description: "Fine dining, vacations, high-end purchases",
     },
+    UNCLASSIFIED: {
+        label: "Unclassified",
+        tag: "Pending Review",
+        description: "Imported or uncategorized transactions needing review",
+    },
 };
 
 const PrioritySelector = ({
@@ -51,7 +56,7 @@ const PrioritySelector = ({
                 )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                 {(Object.keys(PRIORITY_METADATA) as TransactionPriority[]).map((priority) => {
                     const isSelected = selectedPriorities.includes(priority);
                     const meta = PRIORITY_METADATA[priority];
