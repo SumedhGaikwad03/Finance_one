@@ -43,6 +43,14 @@ export interface FileMetadata {
   createdAt: number;
 }
 
+export interface RowCorrection {
+  category?: string;
+  priority?: string;
+  title?: string;
+  transactionDate?: string;
+  notes?: string | null;
+}
+
 export type RowClassificationStatus =
   | "READY"
   | "CONFIRMED_DUPLICATE"
@@ -65,17 +73,25 @@ export interface PreviewRowItem {
     externalId?: string | null;
     notes?: string | null;
   };
+  isUnclassified?: boolean;
+  needsReview?: boolean;
+  userCorrected?: boolean;
 }
 
 export interface ImportPreviewSummary {
   totalRows: number;
   validExpenseCount: number;
+  validExpenseTotal: number;
   confirmedDuplicateCount: number;
   potentialDuplicateCount: number;
   duplicateInFileCount: number;
   invalidRowCount: number;
   excludedNonExpenseCount: number;
+  excludedNonExpenseTotal: number;
   expectedToImportCount: number;
+  readyToImportTotal: number;
+  unclassifiedCount: number;
+  needsCorrectionCount: number;
 }
 
 export interface ReconciliationReport {
@@ -104,6 +120,7 @@ export interface ConfirmImportPayload {
   options?: ImportOptions;
   importPotentialDuplicates?: boolean;
   selectedRowIndices?: number[];
+  rowCorrections?: Record<string | number, RowCorrection>;
 }
 
 export interface ImportExecutionResult {
@@ -164,11 +181,12 @@ export async function switchWorksheet(
 export async function previewStatement(
   fileId: string,
   mapping: ColumnMapping,
-  options?: ImportOptions
+  options?: ImportOptions,
+  rowCorrections?: Record<string | number, RowCorrection>
 ): Promise<ImportPreviewResult> {
   const response = await api.post<{ success: boolean; data: ImportPreviewResult }>(
     ENDPOINTS.IMPORT.PREVIEW,
-    { fileId, mapping, options }
+    { fileId, mapping, options, rowCorrections }
   );
 
   return response.data.data;

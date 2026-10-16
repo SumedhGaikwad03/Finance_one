@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { ForbiddenError, NotFoundError } from "../../error/AppError";
-import { ColumnMapping, FileMetadata, RawParsedSheet, SupportedFileType } from "../types/import.types";
+import { ColumnMapping, FileMetadata, RawParsedSheet, RowCorrection, SupportedFileType } from "../types/import.types";
 
 export interface ImportSession {
   fileId: string;
@@ -13,6 +13,7 @@ export interface ImportSession {
   rawBuffer?: Buffer; // Kept in memory only during session if needed for worksheet re-parsing
   parsedSheet: RawParsedSheet;
   suggestedMapping: ColumnMapping;
+  rowCorrections?: Map<number, RowCorrection>;
   createdAt: number;
   expiresAt: number;
 }
@@ -99,6 +100,26 @@ class ImportSessionStore {
     session.activeWorksheet = activeWorksheet;
     session.parsedSheet = parsedSheet;
     session.suggestedMapping = suggestedMapping;
+    session.expiresAt = Date.now() + SESSION_TTL_MS;
+    return session;
+  }
+
+  public updateRowCorrections(
+    fileId: string,
+    userId: string,
+    corrections: Record<string | number, RowCorrection>
+  ): ImportSession {
+    const session = this.getSession(fileId, userId);
+    if (!session.rowCorrections) {
+      session.rowCorrections = new Map<number, RowCorrection>();
+    }
+    for (const [key, corr] of Object.entries(corrections)) {
+      const rowIndex = Number(key);
+      if (!isNaN(rowIndex) && rowIndex > 0) {
+        const existing = session.rowCorrections.get(rowIndex) || {};
+        session.rowCorrections.set(rowIndex, { ...existing, ...corr });
+      }
+    }
     session.expiresAt = Date.now() + SESSION_TTL_MS;
     return session;
   }
