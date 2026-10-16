@@ -203,9 +203,10 @@ const TransactionsPage = () => {
             }),
     });
 
-    const transactions = paginatedResponse?.data ?? [];
+    const transactions = useMemo(() => paginatedResponse?.data ?? [], [paginatedResponse?.data]);
     const pagination = paginatedResponse?.pagination ?? {
         total: 0,
+        totalAmount: 0,
         page: 1,
         totalPages: 1,
         limit,
@@ -213,10 +214,14 @@ const TransactionsPage = () => {
         hasMore: false,
     };
 
-    // Calculate total spend of currently visible transactions
+    // Calculate total spend across all matching records (from server pagination.totalAmount),
+    // falling back to currently visible records sum if not available
     const filteredTotalAmount = useMemo(() => {
+        if (pagination.totalAmount !== undefined) {
+            return Number(pagination.totalAmount) || 0;
+        }
         return transactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    }, [transactions]);
+    }, [pagination.totalAmount, transactions]);
 
     // ============================================================
     // MUTATIONS

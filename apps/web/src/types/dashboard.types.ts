@@ -125,6 +125,7 @@ export type SortDirection = "asc" | "desc";
 
 export interface PaginationMeta {
     total: number;
+    totalAmount?: number;
     page: number;
     totalPages: number;
     limit: number;

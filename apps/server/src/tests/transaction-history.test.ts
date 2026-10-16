@@ -344,5 +344,60 @@ describe("FinOne PR 10: Transaction History, Search & Pagination Suite", () => {
                 assert.equal(hasMore, tc.hasMore, `hasMore mismatch for total=${tc.total}, page=${tc.page}`);
             }
         });
+
+        it("ensures pagination is deterministic with secondary id sort key", async () => {
+            // Verify findTransactions applies secondary id sort key
+            const originalFindMany = prisma.transaction.findMany;
+            let capturedOrderBy: any = null;
+
+            (prisma.transaction as any).findMany = async (args: any) => {
+                capturedOrderBy = args.orderBy;
+                return [];
+            };
+
+            try {
+                await transactionRepository.findTransactions(1, {
+                    sortBy: "transactionDate",
+                    sortDirection: "desc",
+                });
+
+                assert.deepEqual(capturedOrderBy, [
+                    { transactionDate: "desc" },
+                    { id: "desc" }
+                ], "Must include secondary sort key { id: 'desc' } for stable pagination");
+            } finally {
+                (prisma.transaction as any).findMany = originalFindMany;
+            }
+        });
+
+        it("findTransactionsWithCount calculates totalAmount across matching records", async () => {
+            const originalFindMany = prisma.transaction.findMany;
+            const originalCount = prisma.transaction.count;
+            const originalAggregate = prisma.transaction.aggregate;
+
+            (prisma.transaction as any).findMany = async () => [
+                { id: 1, amount: new Prisma.Decimal(100), userId: 1 },
+                { id: 2, amount: new Prisma.Decimal(200), userId: 1 },
+            ];
+            (prisma.transaction as any).count = async () => 50; // 50 total records matching
+            (prisma.transaction as any).aggregate = async () => ({
+                _sum: { amount: new Prisma.Decimal(5000.5) },
+            });
+
+            try {
+                const result = await transactionRepository.findTransactionsWithCount(1, {
+                    limit: 2,
+                    offset: 0,
+                });
+
+                assert.equal(result.transactions.length, 2);
+                assert.equal(result.totalCount, 50);
+                assert.equal(result.totalAmount, 5000.5, "totalAmount must reflect aggregate across all matching records");
+            } finally {
+                (prisma.transaction as any).findMany = originalFindMany;
+                (prisma.transaction as any).count = originalCount;
+                (prisma.transaction as any).aggregate = originalAggregate;
+            }
+        });
     });
 });

@@ -42,7 +42,7 @@ export async function queryTransactions(
     const validatedInput = transactionQueryInputSchema.parse(req.query);
     const domainQuery = toCanonicalTransactionQuery(validatedInput);
 
-    const { transactions, totalCount } = await transactionService.queryTransactionsWithCount(userId, domainQuery);
+    const { transactions, totalCount, totalAmount } = await transactionService.queryTransactionsWithCount(userId, domainQuery);
 
     const limit = domainQuery.limit ?? 50;
     const offset = domainQuery.offset ?? 0;
@@ -50,6 +50,7 @@ export async function queryTransactions(
     const totalPages = Math.ceil(totalCount / limit) || 1;
 
     res.setHeader("X-Total-Count", totalCount.toString());
+    res.setHeader("X-Total-Amount", totalAmount.toString());
     res.setHeader("X-Page", page.toString());
     res.setHeader("X-Total-Pages", totalPages.toString());
     res.setHeader("X-Limit", limit.toString());
@@ -60,6 +61,7 @@ export async function queryTransactions(
             data: transactions,
             pagination: {
                 total: totalCount,
+                totalAmount,
                 page,
                 totalPages,
                 limit,

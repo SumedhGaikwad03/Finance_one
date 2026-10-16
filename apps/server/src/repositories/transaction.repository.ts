@@ -237,36 +237,54 @@ export const findTransactions = async (
     query: transactionSchemas.TransactionQuery
 ): Promise<Transaction[]> => {
     const where = buildTransactionWhereInput(userId, query);
+    const sortField = query.sortBy ?? "transactionDate";
+    const sortDir: Prisma.SortOrder = query.sortDirection === "asc" ? "asc" : "desc";
+
+    const orderBy: Prisma.TransactionOrderByWithRelationInput[] = [
+        { [sortField]: sortDir },
+        { id: "desc" },
+    ];
 
     return prisma.transaction.findMany({
         where,
         take: query.limit ?? 50,
         skip: query.offset ?? 0,
-        orderBy: {
-            [query.sortBy ?? "transactionDate"]: query.sortDirection ?? "desc",
-        },
+        orderBy,
     });
 };
 
 export const findTransactionsWithCount = async (
     userId: number,
     query: transactionSchemas.TransactionQuery
-): Promise<{ transactions: Transaction[]; totalCount: number }> => {
+): Promise<{ transactions: Transaction[]; totalCount: number; totalAmount: number }> => {
     const where = buildTransactionWhereInput(userId, query);
+    const sortField = query.sortBy ?? "transactionDate";
+    const sortDir: Prisma.SortOrder = query.sortDirection === "asc" ? "asc" : "desc";
 
-    const [transactions, totalCount] = await Promise.all([
+    const orderBy: Prisma.TransactionOrderByWithRelationInput[] = [
+        { [sortField]: sortDir },
+        { id: "desc" },
+    ];
+
+    const [transactions, totalCount, aggregate] = await Promise.all([
         prisma.transaction.findMany({
             where,
             take: query.limit ?? 50,
             skip: query.offset ?? 0,
-            orderBy: {
-                [query.sortBy ?? "transactionDate"]: query.sortDirection ?? "desc",
-            },
+            orderBy,
         }),
         prisma.transaction.count({ where }),
+        prisma.transaction.aggregate({
+            _sum: { amount: true },
+            where,
+        }),
     ]);
 
-    return { transactions, totalCount };
+    const totalAmount = aggregate._sum.amount
+        ? Number(aggregate._sum.amount)
+        : 0;
+
+    return { transactions, totalCount, totalAmount };
 };
 
 
