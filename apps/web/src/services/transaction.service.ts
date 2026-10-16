@@ -21,9 +21,9 @@ export const getMyTransactions = async (): Promise<transactionTypes.Transaction[
     return response.data;
 };
 
-export const queryTransactions = async (
+export const buildTransactionSearchParams = (
     params?: transactionTypes.TransactionQueryParams
-): Promise<transactionTypes.Transaction[]> => {
+): URLSearchParams => {
     const searchParams = new URLSearchParams();
 
     if (params) {
@@ -41,6 +41,13 @@ export const queryTransactions = async (
             searchParams.set("priority", pris);
         }
 
+        if (params.sources && params.sources.length > 0) {
+            searchParams.set("sources", params.sources.join(","));
+        } else if (params.source) {
+            const srcs = Array.isArray(params.source) ? params.source.join(",") : params.source;
+            searchParams.set("source", srcs);
+        }
+
         if (params.startDate) searchParams.set("startDate", params.startDate);
         if (params.endDate) searchParams.set("endDate", params.endDate);
         if (params.minAmount !== undefined) searchParams.set("minAmount", params.minAmount.toString());
@@ -48,16 +55,36 @@ export const queryTransactions = async (
         if (params.search) searchParams.set("search", params.search);
         if (params.limit !== undefined) searchParams.set("limit", params.limit.toString());
         if (params.offset !== undefined) searchParams.set("offset", params.offset.toString());
+        if (params.page !== undefined) searchParams.set("page", params.page.toString());
+        if (params.paginate !== undefined) searchParams.set("paginate", params.paginate.toString());
         if (params.sortBy) searchParams.set("sortBy", params.sortBy);
         if (params.sortDirection) searchParams.set("sortDirection", params.sortDirection);
     }
 
+    return searchParams;
+};
+
+export const queryTransactions = async (
+    params?: transactionTypes.TransactionQueryParams
+): Promise<transactionTypes.Transaction[]> => {
+    const searchParams = buildTransactionSearchParams(params);
     const queryString = searchParams.toString();
     const endpoint = queryString
         ? `${ENDPOINTS.TRANSACTIONS.ROOT}?${queryString}`
         : ENDPOINTS.TRANSACTIONS.ROOT;
 
     const response = await api.get<transactionTypes.Transaction[]>(endpoint);
+    return response.data;
+};
+
+export const queryTransactionsPaginated = async (
+    params?: transactionTypes.TransactionQueryParams
+): Promise<transactionTypes.PaginatedTransactionsResponse> => {
+    const searchParams = buildTransactionSearchParams({ ...params, paginate: true });
+    const queryString = searchParams.toString();
+    const endpoint = `${ENDPOINTS.TRANSACTIONS.ROOT}?${queryString}`;
+
+    const response = await api.get<transactionTypes.PaginatedTransactionsResponse>(endpoint);
     return response.data;
 };
 
@@ -126,4 +153,13 @@ export const deleteTransaction = async (
         `${ENDPOINTS.TRANSACTIONS.ROOT}/${id}`
     );
 
+};
+
+export const getTransactionById = async (
+    id: number
+): Promise<transactionTypes.Transaction> => {
+    const response = await api.get<transactionTypes.Transaction>(
+        `${ENDPOINTS.TRANSACTIONS.ROOT}/${id}`
+    );
+    return response.data;
 };

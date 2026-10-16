@@ -36,6 +36,18 @@ export const queryTransactions = async (userId: number, query: TransactionQuery)
     return transactionRepository.findTransactions(userId, query);
 };
 
+export const queryTransactionsWithCount = async (userId: number, query: TransactionQuery) => {
+    return transactionRepository.findTransactionsWithCount(userId, query);
+};
+
+export const getTransactionById = async (id: number, userId: number) => {
+    const transaction = await transactionRepository.findTransactionById(id);
+    if (!transaction || transaction.userId !== userId) {
+        throw new TransactionNotFoundError("Transaction does not exist or user does not have access");
+    }
+    return transaction;
+};
+
 export const getMyTransactions = async (userId :number )=> {
 
     const transactions = await transactionRepository.getMyTransactions(userId);

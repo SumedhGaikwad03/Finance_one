@@ -10,6 +10,7 @@ router.get("/" , authMiddleware , asyncHandler(transactionController.queryTransa
 router.post("/parse", authMiddleware, asyncHandler(transactionController.parseTransaction));
 router.post("/quick", authMiddleware, asyncHandler(transactionController.createQuickTransaction));
 router.get("/getMyTransactions" , authMiddleware , asyncHandler(transactionController.getMyTransactions)); // this route is used to get the transactions for a user
+router.get("/:id", authMiddleware, asyncHandler(transactionController.getTransactionById));
 router.patch("/:id" , authMiddleware, asyncHandler(transactionController.updateTransaction)); 
 router.delete("/:id", authMiddleware ,asyncHandler(transactionController.deleteTransaction));
 // this makes sure that only an authticated user can create a request 

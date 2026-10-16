@@ -196,17 +196,20 @@ export const findTransactionsByFilters = (
     });
 };
 
-export const findTransactions = async (
+export const buildTransactionWhereInput = (
     userId: number,
     query: transactionSchemas.TransactionQuery
-): Promise<Transaction[]> => {
-    const where: Prisma.TransactionWhereInput = {
+): Prisma.TransactionWhereInput => {
+    return {
         userId,
         ...(query.categories && query.categories.length > 0 && {
             category: { in: query.categories },
         }),
         ...(query.priorities && query.priorities.length > 0 && {
             priority: { in: query.priorities },
+        }),
+        ...(query.sources && query.sources.length > 0 && {
+            source: { in: query.sources },
         }),
         ...((query.startDate || query.endDate) && {
             transactionDate: {
@@ -227,6 +230,13 @@ export const findTransactions = async (
             ],
         }),
     };
+};
+
+export const findTransactions = async (
+    userId: number,
+    query: transactionSchemas.TransactionQuery
+): Promise<Transaction[]> => {
+    const where = buildTransactionWhereInput(userId, query);
 
     return prisma.transaction.findMany({
         where,
@@ -236,6 +246,27 @@ export const findTransactions = async (
             [query.sortBy ?? "transactionDate"]: query.sortDirection ?? "desc",
         },
     });
+};
+
+export const findTransactionsWithCount = async (
+    userId: number,
+    query: transactionSchemas.TransactionQuery
+): Promise<{ transactions: Transaction[]; totalCount: number }> => {
+    const where = buildTransactionWhereInput(userId, query);
+
+    const [transactions, totalCount] = await Promise.all([
+        prisma.transaction.findMany({
+            where,
+            take: query.limit ?? 50,
+            skip: query.offset ?? 0,
+            orderBy: {
+                [query.sortBy ?? "transactionDate"]: query.sortDirection ?? "desc",
+            },
+        }),
+        prisma.transaction.count({ where }),
+    ]);
+
+    return { transactions, totalCount };
 };
 
 
