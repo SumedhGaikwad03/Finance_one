@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { ValidationError } from "../../error/AppError";
 import { importService } from "../services/import.service";
+import { Category, Priority } from "../../generated/prisma/enums";
 
 const ColumnMappingSchema = z.object({
   descriptionColumn: z.string().min(1, "Description column is required"),
@@ -26,18 +27,31 @@ const ImportOptionsSchema = z.object({
   allowPotentialDuplicates: z.boolean().optional(),
 });
 
-const PreviewRequestSchema = z.object({
+export const RowCorrectionSchema = z.object({
+  category: z.enum(Category, { error: "Invalid category" }).optional(),
+  priority: z.enum(Priority, { error: "Invalid spending tier" }).optional(),
+  title: z.string().trim().min(1, "Title cannot be empty").max(100, "Title is too long").optional(),
+  transactionDate: z
+    .string()
+    .refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format" })
+    .optional(),
+  notes: z.string().trim().max(200, "Notes cannot exceed 200 characters").nullable().optional(),
+});
+
+export const PreviewRequestSchema = z.object({
   fileId: z.string().min(1, "fileId is required"),
   mapping: ColumnMappingSchema,
   options: ImportOptionsSchema.optional(),
+  rowCorrections: z.record(z.string(), RowCorrectionSchema).optional(),
 });
 
-const ConfirmRequestSchema = z.object({
+export const ConfirmRequestSchema = z.object({
   fileId: z.string().min(1, "fileId is required"),
   mapping: ColumnMappingSchema,
   options: ImportOptionsSchema.optional(),
   importPotentialDuplicates: z.boolean().optional(),
   selectedRowIndices: z.array(z.number().int().positive()).optional(),
+  rowCorrections: z.record(z.string(), RowCorrectionSchema).optional(),
 });
 
 const SwitchWorksheetSchema = z.object({
@@ -101,13 +115,14 @@ export async function previewStatement(req: Request, res: Response): Promise<voi
     throw new ValidationError("Authenticated user context required");
   }
 
-  const { fileId, mapping, options } = PreviewRequestSchema.parse(req.body);
+  const { fileId, mapping, options, rowCorrections } = PreviewRequestSchema.parse(req.body);
 
   const preview = await importService.generateImportPreview(
     userId,
     fileId,
     mapping,
-    options
+    options,
+    rowCorrections
   );
 
   res.status(200).json({

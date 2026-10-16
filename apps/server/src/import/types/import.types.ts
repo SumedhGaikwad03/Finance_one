@@ -44,6 +44,14 @@ export interface FileMetadata {
   createdAt: number;
 }
 
+export interface RowCorrection {
+  category?: Category;
+  priority?: Priority;
+  title?: string;
+  transactionDate?: string;
+  notes?: string | null;
+}
+
 export type RowClassificationStatus = 
   | "READY"
   | "CONFIRMED_DUPLICATE"
@@ -66,17 +74,25 @@ export interface PreviewRowItem {
     externalId?: string | null;
     notes?: string | null;
   };
+  isUnclassified?: boolean;
+  needsReview?: boolean;
+  userCorrected?: boolean;
 }
 
 export interface ImportPreviewSummary {
   totalRows: number;
   validExpenseCount: number;
+  validExpenseTotal: number;
   confirmedDuplicateCount: number;
   potentialDuplicateCount: number;
   duplicateInFileCount: number;
   invalidRowCount: number;
   excludedNonExpenseCount: number;
+  excludedNonExpenseTotal: number;
   expectedToImportCount: number;
+  readyToImportTotal: number;
+  unclassifiedCount: number;
+  needsCorrectionCount: number;
 }
 
 export interface ImportPreviewResult {
@@ -94,6 +110,7 @@ export interface ConfirmImportPayload {
   options?: ImportOptions;
   importPotentialDuplicates?: boolean;
   selectedRowIndices?: number[]; // If omitted, imports all READY rows (and POTENTIAL_DUPLICATE if importPotentialDuplicates=true)
+  rowCorrections?: Record<string, RowCorrection>;
 }
 
 export interface ImportExecutionResult {

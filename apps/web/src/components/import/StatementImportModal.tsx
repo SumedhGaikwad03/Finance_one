@@ -15,6 +15,8 @@ import {
   Check,
   RefreshCw,
   Info,
+  Edit2,
+  Save,
 } from "lucide-react";
 import * as importService from "../../services/import.service";
 import axios from "axios";
@@ -28,6 +30,27 @@ import type {
   RowClassificationStatus,
   SingleAmountConvention,
 } from "../../services/import.service";
+
+const CATEGORY_OPTIONS = [
+  { value: "FOOD", label: "🍔 Food & Dining" },
+  { value: "SHOPPING", label: "🛍️ Shopping" },
+  { value: "FUEL", label: "⛽ Fuel & Transport" },
+  { value: "BILLS", label: "💡 Bills & Utilities" },
+  { value: "ENTERTAINMENT", label: "🎬 Entertainment" },
+  { value: "HEALTH", label: "🩺 Health & Care" },
+  { value: "TRAVEL", label: "✈️ Travel" },
+  { value: "EDUCATION", label: "📚 Education" },
+  { value: "SUBSCRIPTION", label: "📱 Subscriptions" },
+  { value: "GIFT", label: "🎁 Gifts" },
+  { value: "OTHER", label: "📦 Other / Misc" },
+] as const;
+
+const SPENDING_TIER_OPTIONS = [
+  { value: "ESSENTIAL", label: "Essential" },
+  { value: "GOOD_TO_HAVE", label: "Good to Have" },
+  { value: "LUXURY", label: "Luxury" },
+  { value: "UNCLASSIFIED", label: "Unclassified" },
+] as const;
 
 interface StatementImportModalProps {
   isOpen: boolean;
@@ -73,6 +96,12 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
   // Filter in preview table
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
+  // Row-level corrections state before confirmation
+  const [rowCorrections, setRowCorrections] = useState<Record<number, importService.RowCorrection>>({});
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState<string>("");
+  const [editDate, setEditDate] = useState<string>("");
+
   if (!isOpen) return null;
 
   const resetState = () => {
@@ -85,6 +114,10 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
     setIsUploading(false);
     setIsPreviewing(false);
     setIsCommitting(false);
+    setRowCorrections({});
+    setEditingRowIndex(null);
+    setEditTitle("");
+    setEditDate("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -173,11 +206,95 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
     setIsPreviewing(true);
 
     try {
-      const preview = await importService.previewStatement(metadata.fileId, mapping, options);
+      const preview = await importService.previewStatement(
+        metadata.fileId,
+        mapping,
+        options,
+        rowCorrections
+      );
       setPreviewResult(preview);
       setCurrentStep("preview");
     } catch (err: unknown) {
       const msg = getImportErrorMessage(err, "Failed to generate preview.");
+      setErrorMessage(msg);
+      toast.error(msg);
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
+  const handleUpdateRowCategory = (rowIndex: number, category: string) => {
+    setRowCorrections((prev) => ({
+      ...prev,
+      [rowIndex]: {
+        ...prev[rowIndex],
+        category,
+      },
+    }));
+  };
+
+  const handleUpdateRowPriority = (rowIndex: number, priority: string) => {
+    setRowCorrections((prev) => ({
+      ...prev,
+      [rowIndex]: {
+        ...prev[rowIndex],
+        priority,
+      },
+    }));
+  };
+
+  const handleStartEditing = (row: PreviewRowItem) => {
+    setEditingRowIndex(row.rowIndex);
+    setEditTitle(rowCorrections[row.rowIndex]?.title || row.mapped.title || "");
+    setEditDate(
+      rowCorrections[row.rowIndex]?.transactionDate ||
+        (row.mapped.transactionDate ? row.mapped.transactionDate.slice(0, 10) : "")
+    );
+  };
+
+  const handleSaveInlineEdit = (rowIndex: number) => {
+    if (!editTitle.trim()) {
+      toast.error("Description / title cannot be empty.");
+      return;
+    }
+    if (!editDate.trim() || isNaN(Date.parse(editDate))) {
+      toast.error("Please enter a valid date (YYYY-MM-DD).");
+      return;
+    }
+
+    setRowCorrections((prev) => ({
+      ...prev,
+      [rowIndex]: {
+        ...prev[rowIndex],
+        title: editTitle.trim(),
+        transactionDate: editDate.trim(),
+      },
+    }));
+    setEditingRowIndex(null);
+    toast.success(`Row #${rowIndex} updated.`);
+  };
+
+  const handleCancelInlineEdit = () => {
+    setEditingRowIndex(null);
+    setEditTitle("");
+    setEditDate("");
+  };
+
+  const handleRevalidatePreview = async () => {
+    if (!metadata || !mapping) return;
+    setIsPreviewing(true);
+    setErrorMessage(null);
+    try {
+      const preview = await importService.previewStatement(
+        metadata.fileId,
+        mapping,
+        options,
+        rowCorrections
+      );
+      setPreviewResult(preview);
+      toast.success("Preview recomputed with your corrections.");
+    } catch (err: unknown) {
+      const msg = getImportErrorMessage(err, "Failed to revalidate preview.");
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -200,6 +317,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
         mapping,
         options,
         importPotentialDuplicates: options.allowPotentialDuplicates,
+        rowCorrections,
       });
 
       setExecutionResult(result);
@@ -769,7 +887,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
           {currentStep === "preview" && previewResult && (
             <div className="space-y-6">
               {/* Summary Metric Counters */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div className="p-3 rounded-xl bg-purple-50/60 border border-purple-100">
                   <span className="text-[11px] font-semibold text-purple-700 block">
                     Total Rows
@@ -783,26 +901,54 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                   <span className="text-[11px] font-semibold text-emerald-700 block">
                     Ready to Import
                   </span>
-                  <span className="text-xl font-bold text-emerald-900">
-                    {previewResult.summary.validExpenseCount}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-bold text-emerald-900">
+                      {previewResult.summary.validExpenseCount}
+                    </span>
+                    <span className="text-xs font-semibold text-emerald-700">
+                      (₹{(previewResult.summary.validExpenseTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setStatusFilter("NEEDS_ATTENTION")}
+                  className="p-3 rounded-xl bg-amber-50/60 border border-amber-200 cursor-pointer hover:bg-amber-100/50 transition-colors"
+                >
+                  <span className="text-[11px] font-semibold text-amber-800 block">
+                    Needs Attention
                   </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-bold text-amber-950">
+                      {(previewResult.summary.unclassifiedCount || 0) + (previewResult.summary.invalidRowCount || 0)}
+                    </span>
+                    <span className="text-[10px] text-amber-700 font-medium">
+                      ({previewResult.summary.unclassifiedCount || 0} unclassified, {previewResult.summary.invalidRowCount || 0} invalid)
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-100/60 border border-slate-200">
                   <span className="text-[11px] font-semibold text-slate-600 block">
                     Excluded (Credits)
                   </span>
-                  <span className="text-xl font-bold text-slate-800">
-                    {previewResult.summary.excludedNonExpenseCount}
-                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xl font-bold text-slate-800">
+                      {previewResult.summary.excludedNonExpenseCount}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">
+                      (₹{(previewResult.summary.excludedNonExpenseTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                    </span>
+                  </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-100">
-                  <span className="text-[11px] font-semibold text-amber-700 block">
+                <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100">
+                  <span className="text-[11px] font-semibold text-blue-700 block">
                     Duplicates
                   </span>
-                  <span className="text-xl font-bold text-amber-900">
+                  <span className="text-xl font-bold text-blue-900">
                     {previewResult.summary.confirmedDuplicateCount +
+                      previewResult.summary.potentialDuplicateCount +
                       previewResult.summary.duplicateInFileCount}
                   </span>
                 </div>
@@ -818,7 +964,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                         {previewResult.summary.potentialDuplicateCount} Potential Duplicates Detected
                       </p>
                       <p className="text-blue-800/80">
-                        These transactions have matching amounts and dates with existing ledger entries.
+                        These transactions have matching amounts and dates with existing ledger entries. Check before importing.
                       </p>
                     </div>
                   </div>
@@ -880,60 +1026,90 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                 </div>
               )}
 
-              {/* Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="text-slate-500 font-semibold mr-1">Filter:</span>
-                {[
-                  { id: "ALL", label: `All (${previewResult.summary.totalRows})` },
-                  { id: "READY", label: `Ready (${previewResult.summary.validExpenseCount})` },
-                  {
-                    id: "DUPLICATES",
-                    label: `Duplicates (${
-                      previewResult.summary.confirmedDuplicateCount +
-                      previewResult.summary.potentialDuplicateCount +
-                      previewResult.summary.duplicateInFileCount
-                    })`,
-                  },
-                  {
-                    id: "EXCLUDED",
-                    label: `Excluded (${previewResult.summary.excludedNonExpenseCount})`,
-                  },
-                  { id: "INVALID", label: `Invalid (${previewResult.summary.invalidRowCount})` },
-                ].map((f) => (
+              {/* Filter Pills and Recompute Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-slate-500 font-semibold mr-1">Filter:</span>
+                  {[
+                    { id: "ALL", label: `All (${previewResult.summary.totalRows})` },
+                    { id: "READY", label: `Ready (${previewResult.summary.validExpenseCount})` },
+                    {
+                      id: "NEEDS_ATTENTION",
+                      label: `Needs Attention (${(previewResult.summary.unclassifiedCount || 0) + (previewResult.summary.invalidRowCount || 0)})`,
+                    },
+                    {
+                      id: "DUPLICATES",
+                      label: `Duplicates (${
+                        previewResult.summary.confirmedDuplicateCount +
+                        previewResult.summary.potentialDuplicateCount +
+                        previewResult.summary.duplicateInFileCount
+                      })`,
+                    },
+                    {
+                      id: "EXCLUDED",
+                      label: `Excluded (${previewResult.summary.excludedNonExpenseCount})`,
+                    },
+                    { id: "INVALID", label: `Invalid (${previewResult.summary.invalidRowCount})` },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setStatusFilter(f.id)}
+                      className={`px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
+                        statusFilter === f.id
+                          ? "bg-purple-600 text-white shadow-xs"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {Object.keys(rowCorrections).length > 0 && (
                   <button
-                    key={f.id}
                     type="button"
-                    onClick={() => setStatusFilter(f.id)}
-                    className={`px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
-                      statusFilter === f.id
-                        ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+                    onClick={handleRevalidatePreview}
+                    disabled={isPreviewing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {f.label}
+                    <RefreshCw className={`w-3.5 h-3.5 ${isPreviewing ? "animate-spin" : ""}`} />
+                    Revalidate ({Object.keys(rowCorrections).length} edits)
                   </button>
-                ))}
+                )}
               </div>
 
-              {/* Rows List */}
-              <div className="rounded-xl border border-slate-200 overflow-hidden bg-white max-h-[350px] overflow-y-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+              {/* Rows Review Table */}
+              <div className="rounded-xl border border-slate-200 overflow-hidden bg-white max-h-[420px] overflow-y-auto">
+                <table className="w-full text-left border-collapse text-xs" role="table">
+                  <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold z-10">
                     <tr>
-                      <th className="px-3 py-2.5">Row</th>
-                      <th className="px-3 py-2.5">Status</th>
-                      <th className="px-3 py-2.5">Date</th>
-                      <th className="px-3 py-2.5">Description</th>
-                      <th className="px-3 py-2.5">Tier</th>
-                      <th className="px-3 py-2.5 text-right">Amount</th>
-                      <th className="px-3 py-2.5">Notes / Reasons</th>
+                      <th scope="col" className="px-3 py-2.5">Row</th>
+                      <th scope="col" className="px-3 py-2.5">Status</th>
+                      <th scope="col" className="px-3 py-2.5">Date</th>
+                      <th scope="col" className="px-3 py-2.5">Description</th>
+                      <th scope="col" className="px-3 py-2.5">Category</th>
+                      <th scope="col" className="px-3 py-2.5">Spending Tier</th>
+                      <th scope="col" className="px-3 py-2.5 text-right">Amount</th>
+                      <th scope="col" className="px-3 py-2.5">Review Notes / Reasons</th>
+                      <th scope="col" className="px-2 py-2.5 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
                     {previewResult.sampleRows
                       .filter((row: PreviewRowItem) => {
+                        const rowCorr = rowCorrections[row.rowIndex];
+                        const currentPriority = rowCorr?.priority || row.mapped.priority || "UNCLASSIFIED";
+
                         if (statusFilter === "ALL") return true;
                         if (statusFilter === "READY") return row.status === "READY";
+                        if (statusFilter === "NEEDS_ATTENTION") {
+                          return (
+                            row.status === "INVALID" ||
+                            row.status === "POTENTIAL_DUPLICATE" ||
+                            (row.status === "READY" && currentPriority === "UNCLASSIFIED")
+                          );
+                        }
                         if (statusFilter === "DUPLICATES")
                           return (
                             row.status === "CONFIRMED_DUPLICATE" ||
@@ -945,49 +1121,220 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                         if (statusFilter === "INVALID") return row.status === "INVALID";
                         return true;
                       })
-                      .map((row: PreviewRowItem) => (
-                        <tr key={row.rowIndex} className="hover:bg-slate-50/50">
-                          <td className="px-3 py-2.5 text-slate-400 font-mono text-[11px]">
-                            {row.rowIndex}
-                          </td>
-                          <td className="px-3 py-2.5">{getStatusBadge(row.status)}</td>
-                          <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
-                            {row.mapped.transactionDate
-                              ? row.mapped.transactionDate.slice(0, 10)
-                              : "-"}
-                          </td>
-                          <td className="px-3 py-2.5 font-medium text-slate-900 truncate max-w-[180px]">
-                            {row.mapped.title || "-"}
-                          </td>
-                          <td className="px-3 py-2.5 whitespace-nowrap">
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                (row.mapped.priority || "UNCLASSIFIED") === "ESSENTIAL"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : (row.mapped.priority || "UNCLASSIFIED") === "GOOD_TO_HAVE"
-                                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                  : (row.mapped.priority || "UNCLASSIFIED") === "LUXURY"
-                                  ? "bg-purple-50 text-purple-700 border border-purple-200"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200"
-                              }`}
-                            >
-                              {(row.mapped.priority || "UNCLASSIFIED") === "UNCLASSIFIED"
-                                ? "Unclassified"
-                                : row.mapped.priority}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">
-                            {row.mapped.amount !== null
-                              ? `₹${row.mapped.amount.toFixed(2)}`
-                              : "-"}
-                          </td>
-                          <td className="px-3 py-2.5 text-[11px] text-slate-500 truncate max-w-[180px]">
-                            {row.reasons.length > 0 ? row.reasons.join("; ") : "Valid expense candidate"}
-                          </td>
-                        </tr>
-                      ))}
+                      .map((row: PreviewRowItem) => {
+                        const rowCorr = rowCorrections[row.rowIndex];
+                        const currentCategory = rowCorr?.category || row.mapped.category || "OTHER";
+                        const currentPriority = rowCorr?.priority || row.mapped.priority || "UNCLASSIFIED";
+                        const isEditingThisRow = editingRowIndex === row.rowIndex;
+                        const isExcluded = row.status === "EXCLUDED_NON_EXPENSE";
+                        const isDuplicate = row.status === "CONFIRMED_DUPLICATE" || row.status === "DUPLICATE_IN_FILE";
+                        const isUnclassified = currentPriority === "UNCLASSIFIED";
+                        const hasUserEdit = Boolean(rowCorr);
+
+                        return (
+                          <tr
+                            key={row.rowIndex}
+                            className={`hover:bg-slate-50/60 transition-colors ${
+                              isExcluded
+                                ? "bg-slate-50/40 text-slate-500"
+                                : row.status === "INVALID"
+                                ? "bg-rose-50/20"
+                                : isUnclassified
+                                ? "bg-amber-50/15"
+                                : ""
+                            }`}
+                          >
+                            <td className="px-3 py-2.5 text-slate-400 font-mono text-[11px]">
+                              {row.rowIndex}
+                              {hasUserEdit && (
+                                <span title="User corrected" className="block text-purple-600 font-bold">
+                                  ●
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="px-3 py-2.5 whitespace-nowrap">
+                              {getStatusBadge(row.status)}
+                            </td>
+
+                            {/* Date Column */}
+                            <td className="px-3 py-2.5 whitespace-nowrap text-slate-700">
+                              {isEditingThisRow ? (
+                                <input
+                                  type="date"
+                                  value={editDate}
+                                  onChange={(e) => setEditDate(e.target.value)}
+                                  className="px-2 py-1 text-xs border border-purple-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                />
+                              ) : rowCorr?.transactionDate ? (
+                                <span className="font-semibold text-purple-800">
+                                  {rowCorr.transactionDate.slice(0, 10)}
+                                </span>
+                              ) : row.mapped.transactionDate ? (
+                                row.mapped.transactionDate.slice(0, 10)
+                              ) : (
+                                <span className="text-rose-500 italic font-semibold">Missing Date</span>
+                              )}
+                            </td>
+
+                            {/* Description / Title Column */}
+                            <td className="px-3 py-2.5 font-medium text-slate-900 max-w-[180px]">
+                              {isEditingThisRow ? (
+                                <input
+                                  type="text"
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  placeholder="Enter description..."
+                                  className="w-full px-2 py-1 text-xs border border-purple-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                />
+                              ) : rowCorr?.title ? (
+                                <span className="font-semibold text-purple-900 truncate block">
+                                  {rowCorr.title}
+                                </span>
+                              ) : row.mapped.title ? (
+                                <span className="truncate block" title={row.mapped.title}>
+                                  {row.mapped.title}
+                                </span>
+                              ) : (
+                                <span className="text-rose-500 italic font-semibold">Missing Description</span>
+                              )}
+                            </td>
+
+                            {/* Category Selector (Independent from Spending Tier) */}
+                            <td className="px-3 py-2.5 whitespace-nowrap">
+                              {isExcluded || isDuplicate ? (
+                                <span className="text-[11px] text-slate-400 italic">
+                                  {isExcluded ? "N/A (Excluded)" : currentCategory}
+                                </span>
+                              ) : (
+                                <select
+                                  value={currentCategory}
+                                  onChange={(e) => handleUpdateRowCategory(row.rowIndex, e.target.value)}
+                                  className="px-2 py-1 text-[11px] font-medium rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs"
+                                  aria-label={`Select category for row ${row.rowIndex}`}
+                                >
+                                  {CATEGORY_OPTIONS.map((c) => (
+                                    <option key={c.value} value={c.value}>
+                                      {c.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </td>
+
+                            {/* Spending Tier / Priority Selector */}
+                            <td className="px-3 py-2.5 whitespace-nowrap">
+                              {isExcluded || isDuplicate ? (
+                                <span className="text-[11px] text-slate-400 italic">
+                                  {isExcluded ? "N/A (Excluded)" : currentPriority}
+                                </span>
+                              ) : (
+                                <select
+                                  value={currentPriority}
+                                  onChange={(e) => handleUpdateRowPriority(row.rowIndex, e.target.value)}
+                                  className={`px-2 py-1 text-[11px] font-semibold rounded-lg border focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs ${
+                                    currentPriority === "ESSENTIAL"
+                                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                      : currentPriority === "GOOD_TO_HAVE"
+                                      ? "bg-blue-50 text-blue-800 border-blue-200"
+                                      : currentPriority === "LUXURY"
+                                      ? "bg-purple-50 text-purple-800 border-purple-200"
+                                      : "bg-amber-50 text-amber-800 border-amber-200"
+                                  }`}
+                                  aria-label={`Select spending tier for row ${row.rowIndex}`}
+                                >
+                                  {SPENDING_TIER_OPTIONS.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                      {t.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </td>
+
+                            {/* Amount */}
+                            <td className="px-3 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">
+                              {row.mapped.amount !== null
+                                ? `₹${row.mapped.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : "-"}
+                            </td>
+
+                            {/* Review Notes / Reasons */}
+                            <td className="px-3 py-2.5 text-[11px] max-w-[200px]">
+                              {row.reasons.length > 0 ? (
+                                <div className="space-y-0.5">
+                                  {row.reasons.map((r, i) => (
+                                    <span
+                                      key={i}
+                                      className={`block truncate ${
+                                        row.status === "INVALID"
+                                          ? "text-rose-600 font-medium"
+                                          : isUnclassified
+                                          ? "text-amber-700"
+                                          : "text-slate-500"
+                                      }`}
+                                      title={r}
+                                    >
+                                      {r}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : isUnclassified ? (
+                                <span className="text-amber-700 font-medium">
+                                  Unclassified tier — select a tier or keep unclassified
+                                </span>
+                              ) : (
+                                <span className="text-emerald-700">Valid expense candidate</span>
+                              )}
+                            </td>
+
+                            {/* Action / Inline Edit */}
+                            <td className="px-2 py-2.5 text-center whitespace-nowrap">
+                              {isEditingThisRow ? (
+                                <div className="flex items-center gap-1 justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveInlineEdit(row.rowIndex)}
+                                    title="Save row"
+                                    className="p-1 rounded bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+                                  >
+                                    <Save className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleCancelInlineEdit}
+                                    title="Cancel"
+                                    className="p-1 rounded bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : !isExcluded && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEditing(row)}
+                                  title="Edit title or date"
+                                  className="p-1 rounded text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors cursor-pointer"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Informational Help Note */}
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px]">
+                <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Import Review Guide:</strong> You can assign Categories and Spending Tiers before confirming.
+                  Expenses with an <em>Unclassified</em> tier will import normally and remain unclassified.
+                  Non-expense entries (credits, incoming transfers, balance headers) are excluded automatically to protect your expense ledger.
+                </p>
               </div>
             </div>
           )}
@@ -1052,7 +1399,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {currentStep === "upload" && (
             <>
               <button
@@ -1096,17 +1443,28 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
 
           {currentStep === "preview" && previewResult && (
             <>
-              <button
-                type="button"
-                onClick={() => setCurrentStep("mapping")}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Adjust Mapping
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep("mapping")}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Adjust Mapping
+                </button>
+                {previewResult.summary.invalidRowCount > 0 && (
+                  <span className="text-[11px] font-medium text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                    ⚠️ {previewResult.summary.invalidRowCount} invalid row(s) will be skipped
+                  </span>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handleConfirmImport}
-                disabled={isCommitting || (previewResult.summary.validExpenseCount === 0 && !options.allowPotentialDuplicates)}
+                disabled={
+                  isCommitting ||
+                  (previewResult.summary.validExpenseCount === 0 && !options.allowPotentialDuplicates)
+                }
                 className="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-xl shadow-sm shadow-purple-200 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isCommitting ? (
@@ -1115,7 +1473,17 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" /> Confirm & Import {options.allowPotentialDuplicates ? previewResult.summary.validExpenseCount + previewResult.summary.potentialDuplicateCount : previewResult.summary.validExpenseCount} Expenses
+                    <CheckCircle2 className="w-4 h-4" /> Confirm & Import{" "}
+                    {options.allowPotentialDuplicates
+                      ? previewResult.summary.validExpenseCount + previewResult.summary.potentialDuplicateCount
+                      : previewResult.summary.validExpenseCount}{" "}
+                    Expenses (₹
+                    {(
+                      options.allowPotentialDuplicates
+                        ? previewResult.summary.readyToImportTotal || previewResult.summary.validExpenseTotal || 0
+                        : previewResult.summary.validExpenseTotal || 0
+                    ).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    )
                   </>
                 )}
               </button>
@@ -1140,3 +1508,4 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
 };
 
 export default StatementImportModal;
+
