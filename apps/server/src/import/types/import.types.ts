@@ -77,6 +77,8 @@ export interface PreviewRowItem {
   isUnclassified?: boolean;
   needsReview?: boolean;
   userCorrected?: boolean;
+  existingCategory?: Category | null;
+  existingPriority?: Priority | null;
 }
 
 export interface ImportPreviewSummary {
