@@ -1,5 +1,5 @@
 import type { FinanceQuery, QueryBuilderStep } from "../../types/financeQuery.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 import { Sparkles, ArrowLeft, Layers, Calendar, BarChart3, Edit2 } from "lucide-react";
 
 interface QuerySummaryProps {

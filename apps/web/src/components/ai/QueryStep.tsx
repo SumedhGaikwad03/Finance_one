@@ -5,7 +5,7 @@ import type {
     TimePeriodOption,
 } from "../../types/financeQuery.types";
 import type { TransactionCategory } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 import { ArrowLeft, Search, Check, Sparkles, X } from "lucide-react";
 
 interface QueryStepProps {
@@ -18,7 +18,7 @@ interface QueryStepProps {
 
 const TRANSITION_DELAY_MS = 120;
 
-export const CATEGORY_ITEMS: {
+const CATEGORY_ITEMS: {
     value: TransactionCategory | null;
     label: string;
     icon: string;
@@ -38,7 +38,7 @@ export const CATEGORY_ITEMS: {
     { value: "OTHER", label: "Other / Misc", icon: "📦", desc: "Miscellaneous expenses" },
 ];
 
-export const TIMEFRAME_OPTIONS: {
+const TIMEFRAME_OPTIONS: {
     id: TimePeriodOption;
     label: string;
     desc: string;
@@ -58,7 +58,8 @@ export const QueryStep = ({
     onBack,
 }: QueryStepProps) => {
     const [categorySearch, setCategorySearch] = useState("");
-    const [transitioningItem, setTransitioningItem] = useState<string | null>(null);
+    const [transitioning, setTransitioning] = useState<{ step: string; itemId: string } | null>(null);
+    const transitioningItem = transitioning?.step === step ? transitioning.itemId : null;
     const isTransitioningRef = useRef(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,25 +68,30 @@ export const QueryStep = ({
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
+            isTransitioningRef.current = false;
         };
     }, []);
-
-    useEffect(() => {
-        isTransitioningRef.current = false;
-        setTransitioningItem(null);
-    }, [step]);
 
     const handleSelectAndAdvance = (patch: Partial<FinanceQuery>, itemId: string) => {
         if (isTransitioningRef.current) return;
         isTransitioningRef.current = true;
-        setTransitioningItem(itemId);
+        setTransitioning({ step, itemId });
         onUpdateQuery(patch);
 
         timeoutRef.current = setTimeout(() => {
             onNext(patch);
             isTransitioningRef.current = false;
-            setTransitioningItem(null);
+            setTransitioning(null);
         }, TRANSITION_DELAY_MS);
+    };
+
+    const handleBack = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        isTransitioningRef.current = false;
+        setTransitioning(null);
+        onBack();
     };
 
     const filteredCategories = CATEGORY_ITEMS.filter((item) => {
@@ -212,7 +218,7 @@ export const QueryStep = ({
                 <div className="flex items-center justify-between">
                     <button
                         type="button"
-                        onClick={onBack}
+                        onClick={handleBack}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />

@@ -7,7 +7,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import type { TransactionCategory } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 import { formatPercentage } from "../../utils/formatters";
 

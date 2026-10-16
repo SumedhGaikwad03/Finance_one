@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { TransactionCategory } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 interface KPIRowProps {
     transactionCount: number;

@@ -60,7 +60,7 @@ Finance One bridges this gap by combining **ultra-fast transaction entry**, **st
 |---|---|---|---|
 | User Authentication (Register/Login/JWT) | **EXISTS** | `apps/server/src/controllers/auth.controller.ts` | JWT in Authorization header, bcrypt hashing |
 | User Profile & Password Update | **EXISTS** | `apps/server/src/controllers/user.controller.ts` | `/api/users/me` and `/api/users/me/password` |
-| Transaction CRUD & Query API | **EXISTS** | `apps/server/src/routes/transation.routes.ts` | Complete filtering, sorting, pagination |
+| Transaction CRUD & Query API | **EXISTS** | `apps/server/src/routes/transaction.routes.ts` | Complete filtering, sorting, pagination |
 | Heuristic Transaction Parsing | **EXISTS** | `apps/server/src/utils/transactionParser.ts` | Regex/keyword deterministic parser |
 | Budget Management & Overlap Guard | **EXISTS** | `apps/server/src/services/budget.service.ts` | Enforces non-overlapping budget windows |
 | Dashboard Data Aggregation | **EXISTS** | `apps/server/src/services/dashboard.service.ts` | SQL parallel aggregations |
@@ -173,7 +173,7 @@ flowchart TD
 Routes declare HTTP verbs and paths, attach `authMiddleware` for protected endpoints, and wrap controllers with `asyncHandler`.
 
 ```typescript
-// apps/server/src/routes/transation.routes.ts
+// apps/server/src/routes/transaction.routes.ts
 import Router from "express";
 import * as transactionController from "../controllers/transaction.controller";
 import { asyncHandler } from "../utils/asyncHandler";

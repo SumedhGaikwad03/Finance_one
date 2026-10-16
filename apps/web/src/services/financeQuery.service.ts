@@ -12,7 +12,7 @@ import type {
     TransactionQueryParams,
 } from "../types/dashboard.types";
 import * as transactionService from "./transaction.service";
-import { CATEGORY_METADATA } from "../components/query/CategorySelector";
+import { CATEGORY_METADATA } from "../constants/category.constants";
 
 export const DEFAULT_SUGGESTIONS: QuerySuggestion[] = [
     {

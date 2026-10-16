@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import type { FinanceQuery, QueryBuilderStep } from "../../types/financeQuery.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 interface QueryProgressProps {
     currentStep: QueryBuilderStep;

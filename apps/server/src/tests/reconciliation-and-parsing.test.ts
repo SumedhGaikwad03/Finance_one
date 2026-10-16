@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from "node:test";
+import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { Prisma } from "../generated/prisma/client";
 import { Category, Priority, TransactionSource } from "../generated/prisma/enums";
@@ -13,8 +13,28 @@ import { reconcileStatement } from "../import/reconciliation/statement-reconcile
 import { normalizePriority } from "../ingestion/normalizers/transaction.normalizer";
 import { createTransactionSchema } from "../schemas/transaction.schema";
 import * as transactionRepository from "../repositories/transaction.repository";
+import prisma from "../lib/prisma";
+
+let testUserId: string;
 
 describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Reliability", () => {
+  before(async () => {
+    const user = await prisma.user.create({
+      data: {
+        name: "Reconciliation Test User",
+        email: `reconciliation.test.${Date.now()}@internal.test`,
+        passwordHash: "dummyhash123",
+      },
+    });
+    testUserId = String(user.id);
+  });
+
+  after(async () => {
+    if (testUserId) {
+      await prisma.user.delete({ where: { id: Number(testUserId) } }).catch(() => {});
+    }
+  });
+
   beforeEach(() => {
     importSessionStore.clearAllForTesting();
   });
@@ -313,7 +333,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
 
       // 1. Upload & parse
       const meta = await importService.parseUploadedFile(
-        "1",
+        testUserId,
         Buffer.from(csvData, "utf8"),
         "reconciliation_unclassified_test.csv"
       );
@@ -327,7 +347,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
         creditColumn: "Credit",
       };
 
-      const preview = await importService.generateImportPreview("1", meta.fileId, mapping, {
+      const preview = await importService.generateImportPreview(testUserId, meta.fileId, mapping, {
         dateFormat: "YYYY-MM-DD",
       });
 
@@ -349,7 +369,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
       }
 
       // 3. Confirm & Commit Import
-      const commitResult = await importService.confirmAndCommitImport("1", {
+      const commitResult = await importService.confirmAndCommitImport(testUserId, {
         fileId: meta.fileId,
         mapping,
       });
@@ -384,7 +404,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
       ].join("\n");
 
       const meta = await importService.parseUploadedFile(
-        "1",
+        testUserId,
         Buffer.from(csvData, "utf8"),
         "explicit_priority_test.csv"
       );
@@ -398,7 +418,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
         priorityColumn: "Spending Tier",
       };
 
-      const preview = await importService.generateImportPreview("1", meta.fileId, mapping, {
+      const preview = await importService.generateImportPreview(testUserId, meta.fileId, mapping, {
         dateFormat: "YYYY-MM-DD",
       });
 
@@ -407,7 +427,7 @@ describe("Phase 4 & 5: Reconciliation, Unclassified Spending Tiers & Parsing Rel
       assert.equal(readyRows[0].mapped.priority, Priority.ESSENTIAL);
       assert.equal(readyRows[1].mapped.priority, Priority.LUXURY);
 
-      const commitResult = await importService.confirmAndCommitImport("1", {
+      const commitResult = await importService.confirmAndCommitImport(testUserId, {
         fileId: meta.fileId,
         mapping,
       });

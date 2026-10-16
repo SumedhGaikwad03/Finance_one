@@ -17,6 +17,7 @@ import {
   Info,
 } from "lucide-react";
 import * as importService from "../../services/import.service";
+import axios from "axios";
 import type {
   ColumnMapping,
   FileMetadata,
@@ -25,6 +26,7 @@ import type {
   ImportPreviewResult,
   PreviewRowItem,
   RowClassificationStatus,
+  SingleAmountConvention,
 } from "../../services/import.service";
 
 interface StatementImportModalProps {
@@ -33,6 +35,16 @@ interface StatementImportModalProps {
 }
 
 type Step = "upload" | "mapping" | "preview" | "complete";
+
+const getImportErrorMessage = (err: unknown, fallback: string): string => {
+  if (axios.isAxiosError<{ message?: string }>(err)) {
+    return err.response?.data?.message || err.message || fallback;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return fallback;
+};
 
 const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) => {
   const queryClient = useQueryClient();
@@ -104,8 +116,8 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
       setMetadata(meta);
       setMapping(meta.suggestedMapping);
       setCurrentStep("mapping");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to parse file.";
+    } catch (err: unknown) {
+      const msg = getImportErrorMessage(err, "Failed to parse file.");
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -122,8 +134,8 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
       const updatedMeta = await importService.switchWorksheet(metadata.fileId, worksheetName);
       setMetadata(updatedMeta);
       setMapping(updatedMeta.suggestedMapping);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to switch worksheet.";
+    } catch (err: unknown) {
+      const msg = getImportErrorMessage(err, "Failed to switch worksheet.");
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -164,8 +176,8 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
       const preview = await importService.previewStatement(metadata.fileId, mapping, options);
       setPreviewResult(preview);
       setCurrentStep("preview");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to generate preview.";
+    } catch (err: unknown) {
+      const msg = getImportErrorMessage(err, "Failed to generate preview.");
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -199,8 +211,8 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
 
       toast.success(`Imported ${result.imported} expenses successfully.`);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || "Failed to commit import.";
+    } catch (err: unknown) {
+      const msg = getImportErrorMessage(err, "Failed to commit import.");
       setErrorMessage(msg);
       toast.error(msg);
     } finally {
@@ -624,7 +636,7 @@ const StatementImportModal = ({ isOpen, onClose }: StatementImportModalProps) =>
                             onChange={(e) =>
                               setOptions({
                                 ...options,
-                                amountConvention: e.target.value as any,
+                                amountConvention: e.target.value as SingleAmountConvention,
                               })
                             }
                             className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer"

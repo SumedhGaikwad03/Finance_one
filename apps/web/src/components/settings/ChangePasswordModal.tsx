@@ -31,25 +31,31 @@ export const ChangePasswordModal = ({
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
     const [isSuccess, setIsSuccess] = useState(false);
 
-    // Reset state when opened or closed
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+    if (isOpen && !prevIsOpen) {
+        setPrevIsOpen(isOpen);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+        setErrorMessage(null);
+        setFieldErrors({});
+        setIsSuccess(false);
+    } else if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(isOpen);
+    }
+
+    // Synchronize DOM side-effects (body overflow, keydown listeners)
     useEffect(() => {
-        if (isOpen) {
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-            setShowCurrentPassword(false);
-            setShowNewPassword(false);
-            setShowConfirmPassword(false);
-            setErrorMessage(null);
-            setFieldErrors({});
-            setIsSuccess(false);
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "unset";
-        }
+        if (!isOpen) return;
+
+        document.body.style.overflow = "hidden";
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape" && isOpen && !isSubmitting) {
+            if (e.key === "Escape" && !isSubmitting) {
                 onClose();
             }
         };

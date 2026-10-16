@@ -1,5 +1,5 @@
 import type { TransactionCategory, TransactionPriority } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 interface CategoryBadgeProps {
     category: TransactionCategory;

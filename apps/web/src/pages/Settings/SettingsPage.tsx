@@ -1,6 +1,6 @@
-import { useState, useEffect, useId } from "react";
+import { useState, useId } from "react";
 import { User as UserIcon, Lock, CheckCircle2, AlertCircle, Save, ShieldCheck, Info } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import { updateProfile } from "../../services/user.service";
 import { updateProfileSchema } from "../../utils/user.schema";
 import ChangePasswordModal from "../../components/settings/ChangePasswordModal";
@@ -19,11 +19,11 @@ export const SettingsPage = () => {
     const [passwordSuccessMessage, setPasswordSuccessMessage] = useState<string | null>(null);
 
     // Sync state when user context changes
-    useEffect(() => {
-        if (user?.name) {
-            setName(user.name);
-        }
-    }, [user?.name]);
+    const [prevUserName, setPrevUserName] = useState(user?.name);
+    if (user?.name && user.name !== prevUserName) {
+        setPrevUserName(user.name);
+        setName(user.name);
+    }
 
     const isNameChanged = name.trim() !== (user?.name || "");
 
