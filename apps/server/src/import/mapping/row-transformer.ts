@@ -3,6 +3,7 @@ import { Category, Priority, TransactionSource } from "../../generated/prisma/en
 import { normalizeTitle, normalizeNotes, normalizeCategory, normalizePriority } from "../../ingestion/normalizers/transaction.normalizer";
 import { IngestionSourceInput } from "../../ingestion/types/ingestion.types";
 import { ColumnMapping, ImportOptions, PreviewRowItem, RowClassificationStatus } from "../types/import.types";
+import { determineFinancialEligibility } from "../../classification/contracts/classification.contract";
 
 /**
  * Checks if a string represents a balance or summary row.
@@ -320,51 +321,36 @@ export function transformRow(
     }
   }
 
-  // Check for summary or balance row
-  if (rawTitle && isSummaryOrBalanceRow(rawTitle)) {
-    return {
-      status: "EXCLUDED_NON_EXPENSE",
-      reasons: ["Statement summary or balance header/footer row"],
-      mapped: {
-        title: rawTitle,
-        amount: detectedAmount,
-        transactionDate: isoDateStr,
-      },
-    };
-  }
+  // Unified Financial Eligibility Contract: balance summaries, transfers, income/credits
+  const eligibility = determineFinancialEligibility({
+    amount: detectedAmount,
+    isCredit: isCreditOrIncome,
+    isDebit: isExpense,
+    narration: rawTitle,
+  });
 
-  // Check for internal transfer or liquidity rebalancing row
-  const isTransfer = /\b(internal\s*transfer|fund\s*transfer|ac\s*trf|self\s*transfer|trf\s*to\s*self)\b/i.test(rawTitle);
-  if (isTransfer) {
-    return {
-      status: "EXCLUDED_NON_EXPENSE",
-      reasons: ["Internal account transfer or liquidity rebalancing - excluded from expense ledger"],
-      mapped: {
-        title: rawTitle,
-        amount: detectedAmount,
-        transactionDate: isoDateStr,
-      },
-    };
+  if (!eligibility.isEligibleExpense) {
+    if (eligibility.recordType === "INVALID") {
+      reasons.push(eligibility.reason || "Invalid financial record");
+    } else {
+      return {
+        status: "EXCLUDED_NON_EXPENSE",
+        reasons: [
+          eligibility.reason ||
+            `${eligibility.recordType} record (${detectedAmount ? detectedAmount.toFixed(2) : ""}) excluded from expense ledger`,
+        ],
+        mapped: {
+          title: title || rawTitle,
+          amount: detectedAmount,
+          transactionDate: isoDateStr,
+        },
+      };
+    }
   }
 
   // Title validation
   if (!title) {
     reasons.push(`Missing description or title in column '${mapping.descriptionColumn}'`);
-  }
-
-  // If identified as credit/income: Exclude cleanly
-  if (isCreditOrIncome) {
-    return {
-      status: "EXCLUDED_NON_EXPENSE",
-      reasons: [
-        `Credit / deposit entry (amount: ${detectedAmount ? detectedAmount.toFixed(2) : ""}) - excluded from expense ledger`,
-      ],
-      mapped: {
-        title: title || rawTitle,
-        amount: detectedAmount,
-        transactionDate: isoDateStr,
-      },
-    };
   }
 
   // If invalid
