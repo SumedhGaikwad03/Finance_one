@@ -11,6 +11,7 @@ import { errorMiddleware } from "./middleware/error.middleware";
 import importRouter from "./import/routes/import.routes";
 import aiRouter from "./ai/routes/ai.routes";
 import recurringRouter from "./routes/recurring.routes";
+import insightsRouter from "./routes/insights.routes";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/transactions", transactionRouter);
 app.use("/api/recurring", recurringRouter);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/insights", insightsRouter);
 app.use("/api/ai", aiRouter);
 
 // Centralized Error Handling Middleware (must be registered after all routes)

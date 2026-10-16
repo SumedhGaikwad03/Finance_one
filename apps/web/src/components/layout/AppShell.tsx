@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Home, List, PieChart, Settings, LogOut, Wallet } from "lucide-react";
+import { Home, List, PieChart, TrendingUp, Settings, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 const NAV_ITEMS = [
@@ -17,6 +17,11 @@ const NAV_ITEMS = [
     name: "Budgets",
     path: "/budgets",
     icon: PieChart,
+  },
+  {
+    name: "Insights",
+    path: "/insights",
+    icon: TrendingUp,
   },
   {
     name: "Settings",

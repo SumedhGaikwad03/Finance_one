@@ -43,4 +43,8 @@ export const ENDPOINTS = {
         RESET: (id: string) => `/recurring/${id}/reset`,
     },
 
+    INSIGHTS: {
+        MONTHLY: "/insights/monthly",
+    },
+
 } as const; 

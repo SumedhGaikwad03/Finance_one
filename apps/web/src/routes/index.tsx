@@ -7,6 +7,7 @@ import DashboardPage from "../pages/Dashboard/DashboardPage";
 import TransactionsPage from "../pages/Transactions/TransactionsPage";
 import BudgetsPage from "../pages/Budgets/BudgetsPage";
 import SettingsPage from "../pages/Settings/SettingsPage";
+import InsightsPage from "../pages/Insights/InsightsPage";
 import NotFoundPage from "../pages/NotFound/NotFoundPage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import GuestRoute from "../components/common/GuestRoute";
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
             {
                 path: "/budgets",
                 element: <BudgetsPage />,
+            },
+            {
+                path: "/insights",
+                element: <InsightsPage />,
             },
             {
                 path: "/settings",
