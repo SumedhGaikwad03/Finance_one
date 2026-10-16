@@ -24,6 +24,8 @@ export const ENDPOINTS = {
     BUDGETS: {
         ROOT: "/budgets",
         ACTIVE: "/budgets/active",
+        ALERTS: "/budgets/alerts",
+        DISMISS_ALERT: (id: string) => `/budgets/alerts/${id}/dismiss`,
     },
 
     IMPORT: {

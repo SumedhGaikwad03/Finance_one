@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
+import BudgetAlertsBanner from "../../components/budgets/BudgetAlertsBanner";
 import BudgetHeroCard from "../../components/dashboard/BudgetHeroCard";
 import KPIRow from "../../components/dashboard/KPIRow";
 import CategoryDonutChart from "../../components/dashboard/CategoryDonutChart";
@@ -62,6 +63,9 @@ const DashboardPage = () => {
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
             {/* 1. Header */}
             <DashboardHeader onOpenExplorer={() => setIsExplorerOpen(true)} />
+
+            {/* Budget Alerts & Spending Guardrails */}
+            <BudgetAlertsBanner />
 
             {/* 2. Primary 70/30 Spending & Budget Overview */}
             <section
