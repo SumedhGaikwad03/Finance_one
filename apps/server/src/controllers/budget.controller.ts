@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import * as budgetService from "../services/budget.service";
+import * as budgetAlertService from "../services/budget-alert.service";
 import { createBudgetSchema, updateBudgetSchema, idParamSchema } from "../schemas/budget.schema";
+import { budgetAlertQuerySchema } from "../schemas/budget-alert.schema";
+import { AppError } from "../error/AppError";
 
 /**
  * Creates a new budget for the authenticated user.
@@ -81,3 +84,44 @@ export const lockBudget = async (req : Request , res : Response , next : NextFun
      res.status(200).json(budget); 
 
 }
+
+/**
+ * Evaluates spending guardrails and returns explainable budget alerts for the active budget.
+ */
+export const getBudgetAlerts = async (
+    req: Request,
+    res: Response
+): Promise<void> => {
+    const userId = req.user.userId;
+    const query = budgetAlertQuerySchema.parse(req.query);
+
+    const alertsData = await budgetAlertService.evaluateBudgetAlerts(userId, {
+        thresholds: query.thresholds,
+        includeDismissed: query.includeDismissed,
+    });
+
+    res.status(200).json(alertsData);
+};
+
+/**
+ * Dismisses a specific budget alert to prevent repeated alert fatigue.
+ */
+export const dismissBudgetAlert = async (
+    req: Request,
+    res: Response
+): Promise<void> => {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    if (!id || typeof id !== "string") {
+        throw new AppError("Alert ID is required", 400);
+    }
+
+    budgetAlertService.dismissAlert(userId, id);
+
+    res.status(200).json({
+        success: true,
+        message: "Alert dismissed successfully",
+        alertId: id,
+    });
+};

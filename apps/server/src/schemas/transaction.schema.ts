@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {Category , Priority} from "../generated/prisma/enums";
+import {Category, Priority, TransactionSource} from "../generated/prisma/enums";
 
 export const createTransactionSchema = z.object({ // the is the schem that client sends for the backend 
 
@@ -71,6 +71,7 @@ export interface TransactionQuery {
     categories?: Category[];
     priorities?: Priority[];
     tags?: string[];
+    sources?: TransactionSource[];
     startDate?: Date;
     endDate?: Date;
     minAmount?: number;
@@ -78,6 +79,7 @@ export interface TransactionQuery {
     search?: string;
     limit?: number;
     offset?: number;
+    page?: number;
     sortBy?: SortField;
     sortDirection?: SortDirection;
 }
@@ -90,6 +92,8 @@ export const transactionQueryInputSchema = z
         priorities: stringToEnumArray(z.enum(Priority)),
         tag: stringToEnumArray(z.string().trim()),
         tags: stringToEnumArray(z.string().trim()),
+        source: stringToEnumArray(z.enum(TransactionSource)),
+        sources: stringToEnumArray(z.enum(TransactionSource)),
         startDate: z
             .string()
             .refine((date) => !isNaN(Date.parse(date)), { message: "Invalid startDate format" })
@@ -103,6 +107,11 @@ export const transactionQueryInputSchema = z
         search: z.string().trim().max(100, "Search query is too long").optional(),
         limit: z.coerce.number().int().min(1, "limit must be at least 1").max(100, "limit cannot exceed 100").default(50),
         offset: z.coerce.number().int().min(0, "offset cannot be negative").default(0),
+        page: z.coerce.number().int().min(1, "page must be at least 1").optional(),
+        paginate: z.preprocess(
+            (val) => val === "true" || val === true || val === "1" || val === 1,
+            z.boolean()
+        ).optional(),
         sortBy: z.enum(["transactionDate", "amount", "createdAt"]).default("transactionDate"),
         sortDirection: z.enum(["asc", "desc"]).default("desc"),
     })
@@ -150,18 +159,24 @@ export function toCanonicalTransactionQuery(input: TransactionQueryInput): Trans
     const categories = input.categories ?? input.category;
     const priorities = input.priorities ?? input.priority;
     const tags = input.tags ?? input.tag;
+    const sources = input.sources ?? input.source;
+
+    const limit = input.limit ?? 50;
+    const offset = input.page ? (input.page - 1) * limit : input.offset;
 
     return {
         ...(categories && categories.length > 0 && { categories }),
         ...(priorities && priorities.length > 0 && { priorities }),
         ...(tags && tags.length > 0 && { tags }),
+        ...(sources && sources.length > 0 && { sources }),
         ...(input.startDate && { startDate: normalizeDateBoundary(input.startDate, false) }),
         ...(input.endDate && { endDate: normalizeDateBoundary(input.endDate, true) }),
         ...(input.minAmount !== undefined && { minAmount: input.minAmount }),
         ...(input.maxAmount !== undefined && { maxAmount: input.maxAmount }),
         ...(input.search && { search: input.search }),
-        limit: input.limit,
-        offset: input.offset,
+        limit,
+        offset,
+        ...(input.page && { page: input.page }),
         sortBy: input.sortBy,
         sortDirection: input.sortDirection,
     };

@@ -62,6 +62,52 @@ export const calculateEndDate = (
 };
 
 /**
+ * Calculates the immediately preceding period of the exact same duration.
+ * Used for historical baseline comparisons and surge anomaly detection.
+ */
+export const calculatePreviousPeriod = (
+    startDate: Date,
+    periodType: BudgetPeriod
+): { startDate: Date; endDate: Date } => {
+    const endDate = new Date(startDate);
+
+    switch (periodType) {
+        case BudgetPeriod.WEEKLY: {
+            const prevStart = new Date(startDate);
+            prevStart.setDate(prevStart.getDate() - 7);
+            return { startDate: prevStart, endDate };
+        }
+
+        case BudgetPeriod.MONTHLY: {
+            const prevStart = addMonthsSafely(startDate, -1);
+            return { startDate: prevStart, endDate };
+        }
+
+        case BudgetPeriod.QUARTERLY: {
+            const prevStart = addMonthsSafely(startDate, -3);
+            return { startDate: prevStart, endDate };
+        }
+
+        default:
+            throw new Error("Unsupported budget period.");
+    }
+};
+
+/**
+ * Calculates days remaining in a budget window relative to an optional reference date (default: now).
+ */
+export const calculateDaysRemaining = (
+    startDate: Date,
+    periodType: BudgetPeriod,
+    asOfDate: Date = new Date()
+): number => {
+    const endDate = calculateEndDate(startDate, periodType);
+    const msDiff = endDate.getTime() - asOfDate.getTime();
+    if (msDiff <= 0) return 0;
+    return Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+};
+
+/**
  * Checks whether a budget overlaps with any existing budget.
  * Returns true if an overlap is found, otherwise false.
  */

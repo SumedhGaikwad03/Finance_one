@@ -24,6 +24,8 @@ export const ENDPOINTS = {
     BUDGETS: {
         ROOT: "/budgets",
         ACTIVE: "/budgets/active",
+        ALERTS: "/budgets/alerts",
+        DISMISS_ALERT: (id: string) => `/budgets/alerts/${id}/dismiss`,
     },
 
     IMPORT: {
@@ -31,6 +33,14 @@ export const ENDPOINTS = {
         SWITCH_WORKSHEET: "/transactions/import/change-worksheet",
         PREVIEW: "/transactions/import/preview",
         CONFIRM: "/transactions/import/confirm",
+    },
+
+    RECURRING: {
+        ROOT: "/recurring",
+        DETAIL: (id: string) => `/recurring/${id}`,
+        CONFIRM: (id: string) => `/recurring/${id}/confirm`,
+        DISMISS: (id: string) => `/recurring/${id}/dismiss`,
+        RESET: (id: string) => `/recurring/${id}/reset`,
     },
 
     INSIGHTS: {

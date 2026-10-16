@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -9,13 +9,21 @@ import TransactionsHeader from "../../components/transaction/TransactionsHeader"
 import TransactionToolbar, { type SortOption } from "../../components/transaction/TransactionToolbar";
 import TransactionLedger from "../../components/transaction/TransactionLedger";
 import TransactionModal from "../../components/transaction/TransactionModal";
+import TransactionDetailModal from "../../components/transaction/TransactionDetailModal";
 import DeleteTransactionDialog from "../../components/transaction/DeleteTransactionDialog";
 import TransactionsSkeleton from "../../components/transaction/TransactionsSkeleton";
 import CreateTransactionForm from "../../components/forms/CreateTransactionForm";
 import { QueryExplorerPanel } from "../../components/ai/FinanceAIPanel";
 import StatementImportModal from "../../components/import/StatementImportModal";
 
-import type { Transaction } from "../../types/dashboard.types";
+import type {
+    Transaction,
+    TransactionCategory,
+    TransactionPriority,
+    TransactionSource,
+    SortField,
+    SortDirection,
+} from "../../types/dashboard.types";
 import type { CreateTransactionFormData } from "../../utils/transaction.schema";
 
 const TransactionsPage = () => {
@@ -24,31 +32,196 @@ const TransactionsPage = () => {
     // Modal & Dialog states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [selectedDetailTransaction, setSelectedDetailTransaction] = useState<Transaction | null>(null);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null);
 
     // Optional secondary Smart Query Explorer toggle
     const [isExplorerOpen, setIsExplorerOpen] = useState(false);
 
-    // Filter and Sort states
+    // Filter, Search, and Pagination states
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedPriority, setSelectedPriority] = useState("");
+    const [selectedSource, setSelectedSource] = useState("");
+    const [dateRangePreset, setDateRangePreset] = useState("all");
+    const [customStartDate, setCustomStartDate] = useState("");
+    const [customEndDate, setCustomEndDate] = useState("");
     const [sortBy, setSortBy] = useState<SortOption>("date_desc");
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+
+    // Debounce search input by 300ms
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setPage(1); // Reset to page 1 on new search
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // Reset page to 1 whenever filters change
+    const handleCategoryChange = (cat: string) => {
+        setSelectedCategory(cat);
+        setPage(1);
+    };
+
+    const handlePriorityChange = (pri: string) => {
+        setSelectedPriority(pri);
+        setPage(1);
+    };
+
+    const handleSourceChange = (src: string) => {
+        setSelectedSource(src);
+        setPage(1);
+    };
+
+    const handleDatePresetChange = (preset: string) => {
+        setDateRangePreset(preset);
+        setPage(1);
+    };
+
+    const handleCustomStartDateChange = (date: string) => {
+        setCustomStartDate(date);
+        setPage(1);
+    };
+
+    const handleCustomEndDateChange = (date: string) => {
+        setCustomEndDate(date);
+        setPage(1);
+    };
+
+    const handleSortChange = (sort: SortOption) => {
+        setSortBy(sort);
+        setPage(1);
+    };
+
+    const handleClearFilters = () => {
+        setSearchQuery("");
+        setDebouncedSearch("");
+        setSelectedCategory("");
+        setSelectedPriority("");
+        setSelectedSource("");
+        setDateRangePreset("all");
+        setCustomStartDate("");
+        setCustomEndDate("");
+        setPage(1);
+    };
+
+    // Calculate normalized date boundaries from preset
+    const { startDate, endDate } = useMemo(() => {
+        if (dateRangePreset === "this_month") {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            return { startDate: `${year}-${month}-01`, endDate: undefined };
+        }
+        if (dateRangePreset === "30d") {
+            const d = new Date();
+            d.setDate(d.getDate() - 30);
+            return { startDate: d.toISOString().slice(0, 10), endDate: undefined };
+        }
+        if (dateRangePreset === "90d") {
+            const d = new Date();
+            d.setDate(d.getDate() - 90);
+            return { startDate: d.toISOString().slice(0, 10), endDate: undefined };
+        }
+        if (dateRangePreset === "custom") {
+            return {
+                startDate: customStartDate || undefined,
+                endDate: customEndDate || undefined,
+            };
+        }
+        return { startDate: undefined, endDate: undefined };
+    }, [dateRangePreset, customStartDate, customEndDate]);
+
+    // Map SortOption to API fields
+    const { sortByField, sortDir } = useMemo<{ sortByField: SortField; sortDir: SortDirection }>(() => {
+        switch (sortBy) {
+            case "date_asc":
+                return { sortByField: "transactionDate", sortDir: "asc" };
+            case "amount_desc":
+                return { sortByField: "amount", sortDir: "desc" };
+            case "amount_asc":
+                return { sortByField: "amount", sortDir: "asc" };
+            case "date_desc":
+            default:
+                return { sortByField: "transactionDate", sortDir: "desc" };
+        }
+    }, [sortBy]);
+
+    const hasActiveFilters = Boolean(
+        searchQuery.trim() ||
+        selectedCategory ||
+        selectedPriority ||
+        selectedSource ||
+        dateRangePreset !== "all" ||
+        customStartDate ||
+        customEndDate
+    );
 
     // ============================================================
-    // FETCH TRANSACTIONS QUERY
+    // FETCH TRANSACTIONS QUERY (PAGINATED & FILTERED SERVER-SIDE)
     // ============================================================
+
+    const queryKey = [
+        "transactions",
+        {
+            page,
+            limit,
+            search: debouncedSearch,
+            category: selectedCategory,
+            priority: selectedPriority,
+            source: selectedSource,
+            startDate,
+            endDate,
+            sortByField,
+            sortDir,
+        },
+    ];
 
     const {
-        data: transactions = [],
+        data: paginatedResponse,
         isLoading,
         error,
         refetch,
     } = useQuery({
-        queryKey: ["transactions"],
-        queryFn: transactionService.getMyTransactions,
+        queryKey,
+        queryFn: () =>
+            transactionService.queryTransactionsPaginated({
+                category: selectedCategory ? (selectedCategory as TransactionCategory) : undefined,
+                priority: selectedPriority ? (selectedPriority as TransactionPriority) : undefined,
+                source: selectedSource ? (selectedSource as TransactionSource) : undefined,
+                search: debouncedSearch.trim() || undefined,
+                startDate,
+                endDate,
+                sortBy: sortByField,
+                sortDirection: sortDir,
+                page,
+                limit,
+            }),
     });
+
+    const transactions = useMemo(() => paginatedResponse?.data ?? [], [paginatedResponse?.data]);
+    const pagination = paginatedResponse?.pagination ?? {
+        total: 0,
+        totalAmount: 0,
+        page: 1,
+        totalPages: 1,
+        limit,
+        offset: 0,
+        hasMore: false,
+    };
+
+    // Calculate total spend across all matching records (from server pagination.totalAmount),
+    // falling back to currently visible records sum if not available
+    const filteredTotalAmount = useMemo(() => {
+        if (pagination.totalAmount !== undefined) {
+            return Number(pagination.totalAmount) || 0;
+        }
+        return transactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+    }, [pagination.totalAmount, transactions]);
 
     // ============================================================
     // MUTATIONS
@@ -57,8 +230,8 @@ const TransactionsPage = () => {
     const createTransactionMutation = useMutation({
         mutationFn: transactionService.createTransaction,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
-            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["transactions"], refetchType: "all" });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"], refetchType: "all" });
             setIsCreateModalOpen(false);
             toast.success("Transaction recorded successfully.");
         },
@@ -76,10 +249,14 @@ const TransactionsPage = () => {
             id: number;
             data: CreateTransactionFormData;
         }) => transactionService.updateTransaction(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
-            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        onSuccess: (updatedTx) => {
+            queryClient.invalidateQueries({ queryKey: ["transactions"], refetchType: "all" });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"], refetchType: "all" });
             setEditingTransaction(null);
+            // Refresh detail modal if open for this transaction
+            if (selectedDetailTransaction?.id === updatedTx.id) {
+                setSelectedDetailTransaction(updatedTx);
+            }
             toast.success("Transaction updated successfully.");
         },
         onError: (err) => {
@@ -91,9 +268,12 @@ const TransactionsPage = () => {
     const deleteTransactionMutation = useMutation({
         mutationFn: transactionService.deleteTransaction,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["transactions"] });
-            queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["transactions"], refetchType: "all" });
+            queryClient.invalidateQueries({ queryKey: ["dashboard"], refetchType: "all" });
             setDeletingTransaction(null);
+            if (selectedDetailTransaction) {
+                setSelectedDetailTransaction(null);
+            }
             toast.success("Transaction deleted successfully.");
         },
         onError: (err) => {
@@ -101,67 +281,6 @@ const TransactionsPage = () => {
             toast.error("Failed to delete transaction.");
         },
     });
-
-    // ============================================================
-    // FILTERING & SORTING LOGIC
-    // ============================================================
-
-    const filteredTransactions = useMemo(() => {
-        if (!transactions) return [];
-
-        return transactions
-            .filter((tx) => {
-                // Category match
-                if (selectedCategory && tx.category !== selectedCategory) {
-                    return false;
-                }
-
-                // Priority match
-                if (selectedPriority && tx.priority !== selectedPriority) {
-                    return false;
-                }
-
-                // Search query match (title, notes, or amount)
-                if (searchQuery.trim()) {
-                    const q = searchQuery.toLowerCase().trim();
-                    const titleMatch = (tx.title || "").toLowerCase().includes(q);
-                    const notesMatch = (tx.notes || "").toLowerCase().includes(q);
-                    const amountMatch = String(tx.amount).includes(q);
-                    const categoryMatch = tx.category.toLowerCase().includes(q);
-
-                    if (!titleMatch && !notesMatch && !amountMatch && !categoryMatch) {
-                        return false;
-                    }
-                }
-
-                return true;
-            })
-            .sort((a, b) => {
-                if (sortBy === "date_desc") {
-                    return new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime();
-                }
-                if (sortBy === "date_asc") {
-                    return new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime();
-                }
-                if (sortBy === "amount_desc") {
-                    return Number(b.amount) - Number(a.amount);
-                }
-                if (sortBy === "amount_asc") {
-                    return Number(a.amount) - Number(b.amount);
-                }
-                return 0;
-            });
-    }, [transactions, searchQuery, selectedCategory, selectedPriority, sortBy]);
-
-    const filteredTotalAmount = useMemo(() => {
-        return filteredTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    }, [filteredTransactions]);
-
-    const handleClearFilters = () => {
-        setSearchQuery("");
-        setSelectedCategory("");
-        setSelectedPriority("");
-    };
 
     // ============================================================
     // ACTION HANDLERS
@@ -176,6 +295,10 @@ const TransactionsPage = () => {
         } else {
             createTransactionMutation.mutate(data);
         }
+    };
+
+    const handleSelectTransaction = (transaction: Transaction) => {
+        setSelectedDetailTransaction(transaction);
     };
 
     const handleEdit = (transaction: Transaction) => {
@@ -239,45 +362,70 @@ const TransactionsPage = () => {
             />
 
             {/* 2. Filter & Search Toolbar */}
-            {transactions.length > 0 && (
-                <TransactionToolbar
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    selectedPriority={selectedPriority}
-                    onPriorityChange={setSelectedPriority}
-                    sortBy={sortBy}
-                    onSortChange={setSortBy}
-                    onClearFilters={handleClearFilters}
-                    filteredCount={filteredTransactions.length}
-                    totalCount={transactions.length}
-                    filteredTotalAmount={filteredTotalAmount}
-                />
-            )}
+            <TransactionToolbar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                selectedCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+                selectedPriority={selectedPriority}
+                onPriorityChange={handlePriorityChange}
+                selectedSource={selectedSource}
+                onSourceChange={handleSourceChange}
+                dateRangePreset={dateRangePreset}
+                onDateRangePresetChange={handleDatePresetChange}
+                customStartDate={customStartDate}
+                onCustomStartDateChange={handleCustomStartDateChange}
+                customEndDate={customEndDate}
+                onCustomEndDateChange={handleCustomEndDateChange}
+                sortBy={sortBy}
+                onSortChange={handleSortChange}
+                onClearFilters={handleClearFilters}
+                filteredCount={pagination.total}
+                totalCount={pagination.total}
+                filteredTotalAmount={filteredTotalAmount}
+            />
 
-            {/* 3. Transaction Ledger (Desktop Table + Mobile Cards) */}
+            {/* 3. Transaction Ledger (Table / Mobile Cards + Pagination) */}
             <TransactionLedger
-                transactions={filteredTransactions}
-                totalCount={transactions.length}
-                hasActiveFilters={Boolean(searchQuery || selectedCategory || selectedPriority)}
+                transactions={transactions}
+                totalCount={pagination.total}
+                hasActiveFilters={hasActiveFilters}
                 onClearFilters={handleClearFilters}
                 onAddTransaction={() => {
                     setEditingTransaction(null);
                     setIsCreateModalOpen(true);
                 }}
+                onSelect={handleSelectTransaction}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                isDeleting={deleteTransactionMutation.isPending}
+                page={pagination.page}
+                totalPages={pagination.totalPages}
+                limit={pagination.limit}
+                onPageChange={(newPage) => setPage(newPage)}
+                onLimitChange={(newLimit) => {
+                    setLimit(newLimit);
+                    setPage(1);
+                }}
+            />
+
+            {/* 4. Transaction Detail Modal */}
+            <TransactionDetailModal
+                isOpen={Boolean(selectedDetailTransaction)}
+                transaction={selectedDetailTransaction}
+                onClose={() => setSelectedDetailTransaction(null)}
                 onEdit={handleEdit}
                 onDelete={handleDeleteClick}
                 isDeleting={deleteTransactionMutation.isPending}
             />
 
-            {/* 4. Unified Query Explorer Drawer */}
+            {/* 5. Unified Query Explorer Drawer */}
             <QueryExplorerPanel
                 isOpen={isExplorerOpen}
                 onClose={() => setIsExplorerOpen(false)}
             />
 
-            {/* 5. Create Transaction Modal */}
+            {/* 6. Create Transaction Modal */}
             <TransactionModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
@@ -291,7 +439,7 @@ const TransactionsPage = () => {
                 />
             </TransactionModal>
 
-            {/* 6. Edit Transaction Modal */}
+            {/* 7. Edit Transaction Modal */}
             <TransactionModal
                 isOpen={Boolean(editingTransaction)}
                 onClose={() => setEditingTransaction(null)}
@@ -308,7 +456,7 @@ const TransactionsPage = () => {
                 )}
             </TransactionModal>
 
-            {/* 7. Delete Confirmation Dialog */}
+            {/* 8. Delete Confirmation Dialog */}
             <DeleteTransactionDialog
                 isOpen={Boolean(deletingTransaction)}
                 transaction={deletingTransaction}
@@ -317,7 +465,7 @@ const TransactionsPage = () => {
                 isDeleting={deleteTransactionMutation.isPending}
             />
 
-            {/* 8. Bank Statement CSV / XLSX Import Modal */}
+            {/* 9. Bank Statement CSV / XLSX Import Modal */}
             <StatementImportModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
