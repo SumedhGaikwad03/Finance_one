@@ -196,17 +196,20 @@ export const findTransactionsByFilters = (
     });
 };
 
-export const findTransactions = async (
+export const buildTransactionWhereInput = (
     userId: number,
     query: transactionSchemas.TransactionQuery
-): Promise<Transaction[]> => {
-    const where: Prisma.TransactionWhereInput = {
+): Prisma.TransactionWhereInput => {
+    return {
         userId,
         ...(query.categories && query.categories.length > 0 && {
             category: { in: query.categories },
         }),
         ...(query.priorities && query.priorities.length > 0 && {
             priority: { in: query.priorities },
+        }),
+        ...(query.sources && query.sources.length > 0 && {
+            source: { in: query.sources },
         }),
         ...((query.startDate || query.endDate) && {
             transactionDate: {
@@ -227,15 +230,61 @@ export const findTransactions = async (
             ],
         }),
     };
+};
+
+export const findTransactions = async (
+    userId: number,
+    query: transactionSchemas.TransactionQuery
+): Promise<Transaction[]> => {
+    const where = buildTransactionWhereInput(userId, query);
+    const sortField = query.sortBy ?? "transactionDate";
+    const sortDir: Prisma.SortOrder = query.sortDirection === "asc" ? "asc" : "desc";
+
+    const orderBy: Prisma.TransactionOrderByWithRelationInput[] = [
+        { [sortField]: sortDir },
+        { id: "desc" },
+    ];
 
     return prisma.transaction.findMany({
         where,
         take: query.limit ?? 50,
         skip: query.offset ?? 0,
-        orderBy: {
-            [query.sortBy ?? "transactionDate"]: query.sortDirection ?? "desc",
-        },
+        orderBy,
     });
+};
+
+export const findTransactionsWithCount = async (
+    userId: number,
+    query: transactionSchemas.TransactionQuery
+): Promise<{ transactions: Transaction[]; totalCount: number; totalAmount: number }> => {
+    const where = buildTransactionWhereInput(userId, query);
+    const sortField = query.sortBy ?? "transactionDate";
+    const sortDir: Prisma.SortOrder = query.sortDirection === "asc" ? "asc" : "desc";
+
+    const orderBy: Prisma.TransactionOrderByWithRelationInput[] = [
+        { [sortField]: sortDir },
+        { id: "desc" },
+    ];
+
+    const [transactions, totalCount, aggregate] = await Promise.all([
+        prisma.transaction.findMany({
+            where,
+            take: query.limit ?? 50,
+            skip: query.offset ?? 0,
+            orderBy,
+        }),
+        prisma.transaction.count({ where }),
+        prisma.transaction.aggregate({
+            _sum: { amount: true },
+            where,
+        }),
+    ]);
+
+    const totalAmount = aggregate._sum.amount
+        ? Number(aggregate._sum.amount)
+        : 0;
+
+    return { transactions, totalCount, totalAmount };
 };
 
 

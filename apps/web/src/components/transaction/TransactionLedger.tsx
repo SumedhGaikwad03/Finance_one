@@ -2,6 +2,7 @@ import { ReceiptText, Plus, FilterX } from "lucide-react";
 import type { Transaction } from "../../types/dashboard.types";
 import TransactionRow from "./TransactionRow";
 import TransactionCard from "./TransactionCard";
+import PaginationControls from "./PaginationControls";
 
 interface TransactionLedgerProps {
     transactions: Transaction[];
@@ -11,7 +12,14 @@ interface TransactionLedgerProps {
     onAddTransaction: () => void;
     onEdit: (transaction: Transaction) => void;
     onDelete: (transaction: Transaction) => void;
+    onSelect?: (transaction: Transaction) => void;
     isDeleting?: boolean;
+    // Pagination controls
+    page?: number;
+    totalPages?: number;
+    limit?: number;
+    onPageChange?: (newPage: number) => void;
+    onLimitChange?: (newLimit: number) => void;
 }
 
 const TransactionLedger = ({
@@ -22,10 +30,16 @@ const TransactionLedger = ({
     onAddTransaction,
     onEdit,
     onDelete,
+    onSelect,
     isDeleting = false,
+    page = 1,
+    totalPages = 1,
+    limit = 50,
+    onPageChange,
+    onLimitChange,
 }: TransactionLedgerProps) => {
     // 1. Overall Empty State (no transactions in database)
-    if (totalCount === 0) {
+    if (totalCount === 0 && !hasActiveFilters) {
         return (
             <div className="flex flex-col items-center justify-center p-8 sm:p-14 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
                 <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl">
@@ -52,7 +66,7 @@ const TransactionLedger = ({
     }
 
     // 2. Filter Empty State (filters returned 0 results)
-    if (transactions.length === 0 && hasActiveFilters) {
+    if (transactions.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
                 <div className="p-3 bg-slate-100 text-slate-500 rounded-2xl">
@@ -66,13 +80,15 @@ const TransactionLedger = ({
                         No records match your search or filter criteria. Try adjusting or clearing your filters.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClearFilters}
-                    className="btn-interactive px-4 py-2 text-xs font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-xl border border-purple-200 transition-colors cursor-pointer"
-                >
-                    Clear All Filters
-                </button>
+                {hasActiveFilters && (
+                    <button
+                        type="button"
+                        onClick={onClearFilters}
+                        className="btn-interactive px-4 py-2 text-xs font-semibold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-xl border border-purple-200 transition-colors cursor-pointer"
+                    >
+                        Clear All Filters
+                    </button>
+                )}
             </div>
         );
     }
@@ -86,9 +102,9 @@ const TransactionLedger = ({
                         <thead>
                             <tr className="bg-slate-50/70 border-b border-slate-200/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                 <th scope="col" className="py-3 px-4">Date</th>
-                                <th scope="col" className="py-3 px-4">Transaction</th>
+                                <th scope="col" className="py-3 px-4">Transaction / Narration</th>
                                 <th scope="col" className="py-3 px-4">Category</th>
-                                <th scope="col" className="py-3 px-4">Priority</th>
+                                <th scope="col" className="py-3 px-4">Spending Tier</th>
                                 <th scope="col" className="py-3 px-4 text-right">Amount</th>
                                 <th scope="col" className="py-3 px-4 text-right">Actions</th>
                             </tr>
@@ -98,6 +114,7 @@ const TransactionLedger = ({
                                 <TransactionRow
                                     key={tx.id}
                                     transaction={tx}
+                                    onSelect={onSelect}
                                     onEdit={onEdit}
                                     onDelete={onDelete}
                                     isDeleting={isDeleting}
@@ -114,6 +131,7 @@ const TransactionLedger = ({
                     <TransactionCard
                         key={tx.id}
                         transaction={tx}
+                        onSelect={onSelect}
                         onEdit={onEdit}
                         onDelete={(id) => {
                             const found = transactions.find((t) => t.id === id);
@@ -123,6 +141,18 @@ const TransactionLedger = ({
                     />
                 ))}
             </div>
+
+            {/* Pagination Controls */}
+            {onPageChange && onLimitChange && (
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    limit={limit}
+                    onPageChange={onPageChange}
+                    onLimitChange={onLimitChange}
+                />
+            )}
         </div>
     );
 };

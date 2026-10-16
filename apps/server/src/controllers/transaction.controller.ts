@@ -42,8 +42,49 @@ export async function queryTransactions(
     const validatedInput = transactionQueryInputSchema.parse(req.query);
     const domainQuery = toCanonicalTransactionQuery(validatedInput);
 
-    const transactions = await transactionService.queryTransactions(userId, domainQuery);
+    const { transactions, totalCount, totalAmount } = await transactionService.queryTransactionsWithCount(userId, domainQuery);
+
+    const limit = domainQuery.limit ?? 50;
+    const offset = domainQuery.offset ?? 0;
+    const page = domainQuery.page ?? Math.floor(offset / limit) + 1;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
+    res.setHeader("X-Total-Count", totalCount.toString());
+    res.setHeader("X-Total-Amount", totalAmount.toString());
+    res.setHeader("X-Page", page.toString());
+    res.setHeader("X-Total-Pages", totalPages.toString());
+    res.setHeader("X-Limit", limit.toString());
+    res.setHeader("X-Offset", offset.toString());
+
+    if (validatedInput.paginate) {
+        res.status(200).json({
+            data: transactions,
+            pagination: {
+                total: totalCount,
+                totalAmount,
+                page,
+                totalPages,
+                limit,
+                offset,
+                hasMore: offset + transactions.length < totalCount
+            }
+        });
+        return;
+    }
+
     res.status(200).json(transactions);
+}
+
+export async function getTransactionById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<void> {
+    const userId = req.user.userId;
+    const { id: transactionId } = idParamSchema.parse(req.params);
+
+    const transaction = await transactionService.getTransactionById(transactionId, userId);
+    res.status(200).json(transaction);
 }
 
 export async function getMyTransactions(

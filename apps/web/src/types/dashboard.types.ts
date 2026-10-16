@@ -24,6 +24,11 @@ export interface Transaction {
     notes: string | null;
     transactionDate: string;
     tags?: string[];
+    source?: TransactionSource;
+    externalId?: string | null;
+    sourceMetadata?: Record<string, unknown> | null;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface CreateTransactionRequest {
@@ -108,14 +113,38 @@ export type TransactionPriority =
     | "LUXURY"
     | "UNCLASSIFIED";
 
+export type TransactionSource =
+    | "MANUAL"
+    | "CSV_IMPORT"
+    | "BANK_STATEMENT"
+    | "RECEIPT_OCR"
+    | "SYSTEM";
+
 export type SortField = "transactionDate" | "amount" | "createdAt";
 export type SortDirection = "asc" | "desc";
+
+export interface PaginationMeta {
+    total: number;
+    totalAmount?: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+}
+
+export interface PaginatedTransactionsResponse {
+    data: Transaction[];
+    pagination: PaginationMeta;
+}
 
 export interface TransactionQueryParams {
     category?: TransactionCategory | TransactionCategory[];
     categories?: TransactionCategory[];
     priority?: TransactionPriority | TransactionPriority[];
     priorities?: TransactionPriority[];
+    source?: TransactionSource | TransactionSource[];
+    sources?: TransactionSource[];
     tags?: string[];
     startDate?: string;
     endDate?: string;
@@ -124,6 +153,8 @@ export interface TransactionQueryParams {
     search?: string;
     limit?: number;
     offset?: number;
+    page?: number;
+    paginate?: boolean;
     sortBy?: SortField;
     sortDirection?: SortDirection;
 }
@@ -132,6 +163,7 @@ export interface TransactionQuery {
     categories?: TransactionCategory[];
     priorities?: TransactionPriority[];
     tags?: string[];
+    sources?: TransactionSource[];
     startDate?: Date;
     endDate?: Date;
     minAmount?: number;
@@ -139,6 +171,7 @@ export interface TransactionQuery {
     search?: string;
     limit?: number;
     offset?: number;
+    page?: number;
     sortBy?: SortField;
     sortDirection?: SortDirection;
 }
