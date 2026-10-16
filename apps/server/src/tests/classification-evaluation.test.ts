@@ -10,6 +10,9 @@ import { evaluatePredictions, generateMarkdownReport } from "../evaluation/metri
 import { runEvaluation } from "../evaluation/runner";
 import {
   ClassificationAdapter,
+  EVALUATION_CATEGORIES,
+  EVALUATION_FINANCIAL_MEANINGS,
+  EVALUATION_SPENDING_TIERS,
   EvaluationFixture,
   EvaluationPrediction,
 } from "../evaluation/types/evaluation.types";
@@ -543,4 +546,129 @@ describe("FinOne | Branch 04: Classification Evaluation Framework Suite", () => 
       }
     });
   });
+
+  // =========================================================================
+  // 8. Advanced Evaluation Guardrails & Workstream 07 Invariants
+  // =========================================================================
+  describe("8. Workstream 07 Invariants & Evaluation Guardrails", () => {
+    const adapter = new DeterministicBaselineAdapter();
+
+    it("generates confusion matrices and per-record-type breakdowns in evaluation metrics", async () => {
+      const report = await runEvaluation({
+        adapter,
+        dataset: EVALUATION_DATASET,
+        confidenceThreshold: 0.65,
+      });
+
+      // Confusion matrices present
+      assert.ok(report.categoryOverall.confusionMatrix, "Category confusion matrix must be defined");
+      assert.ok(report.spendingTierOverall.confusionMatrix, "Spending tier confusion matrix must be defined");
+      assert.ok(report.financial.confusionMatrix, "Financial record type confusion matrix must be defined");
+
+      // Verify all taxonomy classes are represented in category confusion matrix
+      for (const cat of EVALUATION_CATEGORIES) {
+        assert.ok(cat in report.categoryOverall.confusionMatrix!, `Category ${cat} must be in confusion matrix`);
+      }
+
+      // Verify all tiers are represented in tier confusion matrix
+      for (const tier of EVALUATION_SPENDING_TIERS) {
+        assert.ok(tier in report.spendingTierOverall.confusionMatrix!, `Tier ${tier} must be in confusion matrix`);
+      }
+
+      // Verify all financial record types are represented in financial breakdown
+      assert.ok(report.financial.byRecordType);
+      for (const m of EVALUATION_FINANCIAL_MEANINGS) {
+        assert.ok(m in report.financial.byRecordType!, `Financial meaning ${m} must be in byRecordType breakdown`);
+        assert.ok(report.financial.byRecordType![m].support > 0, `Record type ${m} must have support > 0`);
+      }
+
+      // Verify macro averages are correctly calculated
+      assert.ok(report.categoryAutomatic.macroPrecision !== null);
+      assert.ok(report.categoryAutomatic.macroRecall !== null);
+      assert.ok(report.categoryAutomatic.macroF1 !== null);
+      assert.ok(report.spendingTierAutomatic.macroPrecision !== null);
+      assert.ok(report.spendingTierAutomatic.macroRecall !== null);
+      assert.ok(report.spendingTierAutomatic.macroF1 !== null);
+    });
+
+    it("verifies OTHER is a recognized category and is not treated as unknown or malformed", () => {
+      const explicitOtherFixtures = EVALUATION_DATASET.filter((f) =>
+        ["OTH-001", "OTH-006", "OTH-007", "OTH-008", "OTH-009", "OTH-010", "OTH-011"].includes(f.id)
+      );
+      assert.ok(explicitOtherFixtures.length >= 6, "Expected at least 6 explicit OTHER fixtures");
+
+      for (const fixture of explicitOtherFixtures) {
+        const pred = adapter.classify(fixture);
+        assert.equal(pred.category, "OTHER", `Fixture ${fixture.id} should be classified as OTHER`);
+        assert.equal(pred.isEligibleExpense, true, `Fixture ${fixture.id} must be an eligible expense`);
+        assert.equal(pred.spendingTier, "ESSENTIAL", `Explicit legal/gov fixture ${fixture.id} tier should be ESSENTIAL`);
+        assert.ok(pred.confidence >= 0.8, `Fixture ${fixture.id} should have confident rule match`);
+      }
+    });
+
+    it("verifies unknown categories and tiers remain UNCLASSIFIED and never silently default", () => {
+      const unknownFixtures = EVALUATION_DATASET.filter((f) =>
+        ["AMB-005", "AMB-006", "AMB-007", "AMB-008", "AMB-009"].includes(f.id)
+      );
+      assert.equal(unknownFixtures.length, 5, "Expected 5 opaque/unknown fixtures");
+
+      for (const fixture of unknownFixtures) {
+        const pred = adapter.classify(fixture);
+        assert.equal(pred.spendingTier, "UNCLASSIFIED", `Ambiguous ${fixture.id} must have UNCLASSIFIED tier`);
+        assert.notEqual(pred.spendingTier, "ESSENTIAL", `Ambiguous ${fixture.id} must not silently default to ESSENTIAL`);
+        assert.notEqual(pred.spendingTier, "GOOD_TO_HAVE", `Ambiguous ${fixture.id} must not silently default to GOOD_TO_HAVE`);
+        assert.equal(pred.requiresReview, true, `Ambiguous ${fixture.id} must require review`);
+      }
+    });
+
+    it("verifies valid expenses are never dropped merely because classification is unknown", () => {
+      const ambiguousFixtures = EVALUATION_DATASET.filter((f) => f.id.startsWith("AMB-"));
+
+      for (const fixture of ambiguousFixtures) {
+        const pred = adapter.classify(fixture);
+        assert.equal(pred.isEligibleExpense, true, `Valid expense ${fixture.id} must not be dropped due to unknown classification`);
+        assert.equal(pred.financialMeaning, "EXPENSE", `Valid expense ${fixture.id} must have financialMeaning EXPENSE`);
+      }
+    });
+
+    it("verifies non-expense records (credits, transfers, balance summaries, invalid rows) are never counted as expenses", () => {
+      const nonExpenseFixtures = EVALUATION_DATASET.filter((f) => !f.expected.isEligibleExpense);
+      assert.ok(nonExpenseFixtures.length >= 25, "Expected comprehensive non-expense suite");
+
+      for (const fixture of nonExpenseFixtures) {
+        const pred = adapter.classify(fixture);
+        assert.equal(
+          pred.isEligibleExpense,
+          false,
+          `Non-expense fixture ${fixture.id} (${fixture.description}) must NEVER be marked an eligible expense`
+        );
+        assert.notEqual(
+          pred.financialMeaning,
+          "EXPENSE",
+          `Non-expense fixture ${fixture.id} must not have financialMeaning EXPENSE`
+        );
+      }
+    });
+
+    it("verifies user-confirmed classifications survive reimport and take precedence", async () => {
+      const userFixtures = EVALUATION_DATASET.filter((f) => f.id.startsWith("USR-"));
+      assert.equal(userFixtures.length, 3, "Expected 3 user-confirmed regression fixtures");
+
+      for (const fixture of userFixtures) {
+        const baselinePred = adapter.classify(fixture);
+        assert.equal(baselinePred.category, fixture.existingCategory);
+        assert.equal(baselinePred.spendingTier, fixture.existingPriority);
+        assert.equal(baselinePred.confidence, 1.0);
+        assert.equal(baselinePred.requiresReview, false);
+
+        const prodAdapter = new ProductionTaxonomyAdapter();
+        const prodPred = await prodAdapter.classify(fixture);
+        assert.equal(prodPred.category, fixture.existingCategory);
+        assert.equal(prodPred.spendingTier, fixture.existingPriority);
+        assert.equal(prodPred.confidence, 1.0);
+        assert.equal(prodPred.requiresReview, false);
+      }
+    });
+  });
 });
+

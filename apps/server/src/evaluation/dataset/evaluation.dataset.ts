@@ -873,7 +873,7 @@ export const EVALUATION_DATASET: EvaluationFixture[] = [
     direction: "CREDIT",
     date: "2026-10-01",
     expected: {
-      financialMeaning: "BALANCE_ROW",
+      financialMeaning: "BALANCE_SUMMARY",
       isEligibleExpense: false,
       category: "OTHER",
       spendingTier: "UNCLASSIFIED",
@@ -887,7 +887,7 @@ export const EVALUATION_DATASET: EvaluationFixture[] = [
     direction: "CREDIT",
     date: "2026-10-31",
     expected: {
-      financialMeaning: "BALANCE_ROW",
+      financialMeaning: "BALANCE_SUMMARY",
       isEligibleExpense: false,
       category: "OTHER",
       spendingTier: "UNCLASSIFIED",
@@ -998,6 +998,1069 @@ export const EVALUATION_DATASET: EvaluationFixture[] = [
       ambiguityReason: "Blank description has zero semantic content for classification.",
     },
   },
+
+  // =========================================================================
+  // 17. EXPANDED BENCHMARK: FOOD (Spelling variations, abbreviations, multilingual)
+  // =========================================================================
+  {
+    id: "FOOD-009",
+    description: "POS/SWG*REST-BLR-01",
+    amount: 540.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["food", "delivery"],
+    },
+  },
+  {
+    id: "FOOD-010",
+    description: "SWIGY INSTAMART ORDER 4819",
+    amount: 320.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "ESSENTIAL",
+      tags: ["groceries", "quick-commerce"],
+    },
+  },
+  {
+    id: "FOOD-011",
+    description: "ZOMTO ONLINE MEALS DELIVERY",
+    amount: 420.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["food", "dining"],
+    },
+  },
+  {
+    id: "FOOD-012",
+    description: "SHARMA KIRANA STORE JAIPUR",
+    amount: 1150.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "ESSENTIAL",
+      tags: ["groceries", "local"],
+    },
+  },
+  {
+    id: "FOOD-013",
+    description: "MURTHY TIFFIN & DHABA EXPRESS",
+    amount: 180.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["food", "dining"],
+    },
+  },
+  {
+    id: "FOOD-014",
+    description: "BLUE TOKAI COFFEE ROASTERS BANDRA",
+    amount: 680.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FOOD",
+      spendingTier: "LUXURY",
+      tags: ["coffee", "artisanal", "discretionary"],
+    },
+  },
+
+  // =========================================================================
+  // 18. EXPANDED BENCHMARK: FUEL (Abbreviated, full merchant name variations)
+  // =========================================================================
+  {
+    id: "FUEL-005",
+    description: "POS/BPCL-RETAIL-OUTLET-DELHI",
+    amount: 2000.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FUEL",
+      spendingTier: "ESSENTIAL",
+      tags: ["fuel", "petrol"],
+    },
+  },
+  {
+    id: "FUEL-006",
+    description: "INDIAN OIL CO LTD PETROL AUTO",
+    amount: 500.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FUEL",
+      spendingTier: "ESSENTIAL",
+      tags: ["fuel", "petrol"],
+    },
+  },
+  {
+    id: "FUEL-007",
+    description: "SHELL SELECT CONVENIENCE STORE FUEL",
+    amount: 3200.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "FUEL",
+      spendingTier: "ESSENTIAL",
+      tags: ["fuel", "petrol"],
+    },
+  },
+
+  // =========================================================================
+  // 19. EXPANDED BENCHMARK: SHOPPING (Retail variations, apparel, electronics)
+  // =========================================================================
+  {
+    id: "SHOP-007",
+    description: "AMZON MKTPLACE RETAIL ORDER",
+    amount: 1499.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["shopping", "retail"],
+    },
+  },
+  {
+    id: "SHOP-008",
+    description: "FLPKRT INTERNET COMMERCE BLR",
+    amount: 2299.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["shopping", "electronics"],
+    },
+  },
+  {
+    id: "SHOP-009",
+    description: "ZARA CLOTHING PHOENIX MALL",
+    amount: 4990.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "LUXURY",
+      tags: ["shopping", "clothing", "luxury"],
+    },
+  },
+  {
+    id: "SHOP-010",
+    description: "CROMA ELECTRONICS STORE KORAMANGALA",
+    amount: 3499.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["shopping", "electronics"],
+    },
+  },
+  {
+    id: "SHOP-011",
+    description: "DECATHLON SPORTS INDIA GURGAON",
+    amount: 1890.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["shopping", "sports"],
+    },
+  },
+
+  // =========================================================================
+  // 20. EXPANDED BENCHMARK: BILLS (ACH, Rent, Bank Maintenance Fees)
+  // =========================================================================
+  {
+    id: "BILLS-009",
+    description: "ACH-TATA POWER-MUMBAI-OCT",
+    amount: 2150.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "electricity"],
+    },
+  },
+  {
+    id: "BILLS-010",
+    description: "NEFT-INP-RENT-PAYMENT-OCTOBER",
+    amount: 28000.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "rent"],
+    },
+  },
+  {
+    id: "BILLS-011",
+    description: "AIRTEL BROADBAND FIBER BILL",
+    amount: 1179.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "internet", "broadband"],
+    },
+  },
+  {
+    id: "BILLS-012",
+    description: "ANNUAL DEBIT CARD AMC CHARGE",
+    amount: 590.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "bank_fee"],
+    },
+  },
+  {
+    id: "BILLS-013",
+    description: "SMS ALERT CHARGES Q3",
+    amount: 59.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "bank_fee"],
+    },
+  },
+  {
+    id: "BILLS-014",
+    description: "ATM WITHDRAWAL INTERCHANGE FEE",
+    amount: 23.6,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "bank_fee"],
+    },
+  },
+  {
+    id: "BILLS-015",
+    description: "FOREX MARKUP CHARGES CROSS-BORDER",
+    amount: 354.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "BILLS",
+      spendingTier: "ESSENTIAL",
+      tags: ["bills", "bank_fee"],
+    },
+  },
+
+  // =========================================================================
+  // 21. EXPANDED BENCHMARK: ENTERTAINMENT (Cinema, recreation)
+  // =========================================================================
+  {
+    id: "ENT-004",
+    description: "BOOKMYSHOW TICKETS IMAX NOIDA",
+    amount: 1120.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "ENTERTAINMENT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["entertainment", "movie", "weekend"],
+    },
+  },
+  {
+    id: "ENT-005",
+    description: "SMASH BOWLING ARENA ENTERTAINMENT",
+    amount: 1850.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "ENTERTAINMENT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["entertainment", "recreation"],
+    },
+  },
+
+  // =========================================================================
+  // 22. EXPANDED BENCHMARK: HEALTH (Diagnostics, Pharmacy, Fitness)
+  // =========================================================================
+  {
+    id: "HLT-005",
+    description: "DR LAL PATHLABS BLOOD DIAGNOSTICS",
+    amount: 1650.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "HEALTH",
+      spendingTier: "ESSENTIAL",
+      tags: ["health", "lab", "diagnostics"],
+    },
+  },
+  {
+    id: "HLT-006",
+    description: "APOLLO PHARMACY RETREAT HYDERABAD",
+    amount: 640.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "HEALTH",
+      spendingTier: "ESSENTIAL",
+      tags: ["health", "pharmacy", "medicine"],
+    },
+  },
+  {
+    id: "HLT-007",
+    description: "CULT FIT ANNUAL FITNESS MEMBERSHIP",
+    amount: 14500.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "HEALTH",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["health", "fitness"],
+    },
+  },
+
+  // =========================================================================
+  // 23. EXPANDED BENCHMARK: TRAVEL (Cab abbreviation, FASTag, flights)
+  // =========================================================================
+  {
+    id: "TRV-007",
+    description: "UBR* TRIP RIDE DELHI NCR",
+    amount: 340.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "TRAVEL",
+      spendingTier: "ESSENTIAL",
+      tags: ["travel", "commute", "cab"],
+    },
+  },
+  {
+    id: "TRV-008",
+    description: "IHMCL FASTAG TOLL PLAZA CHARGE",
+    amount: 180.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "TRAVEL",
+      spendingTier: "ESSENTIAL",
+      tags: ["travel", "toll"],
+    },
+  },
+  {
+    id: "TRV-009",
+    description: "MAKEMYTRIP HOLIDAYS FLIGHT TICKET",
+    amount: 6850.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "TRAVEL",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["travel", "flight", "vacation"],
+    },
+  },
+
+  // =========================================================================
+  // 24. EXPANDED BENCHMARK: EDUCATION (School fees, online courses)
+  // =========================================================================
+  {
+    id: "EDU-004",
+    description: "ACH-DELHI-PUBLIC-SCHL-TERM-FEE",
+    amount: 18500.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "EDUCATION",
+      spendingTier: "ESSENTIAL",
+      tags: ["education", "school"],
+    },
+  },
+  {
+    id: "EDU-005",
+    description: "UDEMY ONLINE COURSE SUBSCRIPTION",
+    amount: 499.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "EDUCATION",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["education", "course"],
+    },
+  },
+
+  // =========================================================================
+  // 25. EXPANDED BENCHMARK: SUBSCRIPTION (Streaming, Cloud, SaaS, News)
+  // =========================================================================
+  {
+    id: "SUB-007",
+    description: "ACH-SPOTIFY-INDIA-MONTHLY",
+    amount: 119.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SUBSCRIPTION",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["subscription", "music"],
+    },
+  },
+  {
+    id: "SUB-008",
+    description: "APPLE.COM/BILL RECURRENT STORAGE",
+    amount: 75.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SUBSCRIPTION",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["subscription", "cloud"],
+    },
+  },
+  {
+    id: "SUB-009",
+    description: "OPENAI CHATGPT PLUS SUBSCRIPTION",
+    amount: 1999.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SUBSCRIPTION",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["subscription", "software", "ai"],
+    },
+  },
+  {
+    id: "SUB-010",
+    description: "THE HINDU DIGITAL NEWSPAPER SUB",
+    amount: 299.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SUBSCRIPTION",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["subscription", "news"],
+    },
+  },
+
+  // =========================================================================
+  // 26. EXPANDED BENCHMARK: GIFT (Flowers, Charity, Gift vouchers)
+  // =========================================================================
+  {
+    id: "GFT-003",
+    description: "FERNS N PETALS ANNIVERSARY FLOWERS",
+    amount: 1250.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "GIFT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["gift", "flowers", "celebration"],
+    },
+  },
+  {
+    id: "GFT-004",
+    description: "CRY CHILD RELIEF AND YOU DONATION",
+    amount: 2500.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "GIFT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["gift", "charity", "donation"],
+    },
+  },
+  {
+    id: "GFT-005",
+    description: "AMAZON GIFT CARD PURCHASE 5000",
+    amount: 5000.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "GIFT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["gift", "voucher"],
+    },
+  },
+
+  // =========================================================================
+  // 27. EXPANDED BENCHMARK: OTHER (Explicit miscellaneous known valid expenses)
+  // =========================================================================
+  {
+    id: "OTH-006",
+    description: "ADVOCATE LEGAL CONSULTATION FEES",
+    amount: 5000.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["legal", "professional"],
+    },
+  },
+  {
+    id: "OTH-007",
+    description: "NOTARY PUBLIC STAMP ATTESTATION CHARGES",
+    amount: 350.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["legal", "notary"],
+    },
+  },
+  {
+    id: "OTH-008",
+    description: "GOVERNMENT NON-JUDICIAL STAMP PAPER FEE",
+    amount: 500.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["government", "stamp"],
+    },
+  },
+  {
+    id: "OTH-009",
+    description: "REGIONAL PASSPORT OFFICE SEVA KENDRA FEE",
+    amount: 1500.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["government", "passport"],
+    },
+  },
+  {
+    id: "OTH-010",
+    description: "CITY LOCKSMITH EMERGENCY DOOR UNLOCK",
+    amount: 800.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["services", "repair"],
+    },
+  },
+  {
+    id: "OTH-011",
+    description: "MUNICIPAL TRADE LICENSE RENEWAL FEE",
+    amount: 2500.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["government", "license"],
+    },
+  },
+
+  // =========================================================================
+  // 28. EXPANDED BENCHMARK: INCOME (Credits, Dividends, Freelance, Salary)
+  // =========================================================================
+  {
+    id: "INC-006",
+    description: "NEFT CR-INFOSYS LTD-SALARY-OCT2026",
+    amount: 95000.0,
+    direction: "CREDIT",
+    date: "2026-10-01",
+    expected: {
+      financialMeaning: "INCOME",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["salary", "income"],
+    },
+  },
+  {
+    id: "INC-007",
+    description: "INTEREST CREDITED Q2 SAVINGS BANK",
+    amount: 1250.0,
+    direction: "CREDIT",
+    date: "2026-10-05",
+    expected: {
+      financialMeaning: "INCOME",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["interest", "income"],
+    },
+  },
+  {
+    id: "INC-008",
+    description: "CLIENT PAYMENT FREELANCE CONSULTING",
+    amount: 45000.0,
+    direction: "CREDIT",
+    date: "2026-10-08",
+    expected: {
+      financialMeaning: "INCOME",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["income", "freelance"],
+    },
+  },
+
+  // =========================================================================
+  // 29. EXPANDED BENCHMARK: TRANSFER (FD, RD, SIP, PPF, Reversals, Refunds)
+  // =========================================================================
+  {
+    id: "TRF-005",
+    description: "AUTO SWEEP TRF TO FIXED DEPOSIT A/C",
+    amount: 50000.0,
+    direction: "DEBIT",
+    date: "2026-10-02",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer", "savings"],
+    },
+  },
+  {
+    id: "TRF-006",
+    description: "SWEEP TRANSFER FROM FD TO SAVINGS A/C",
+    amount: 25000.0,
+    direction: "CREDIT",
+    date: "2026-10-03",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer", "savings"],
+    },
+  },
+  {
+    id: "TRF-007",
+    description: "RD INSTALMENT DEBIT RECURRING DEPOSIT",
+    amount: 5000.0,
+    direction: "DEBIT",
+    date: "2026-10-05",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer", "savings"],
+    },
+  },
+  {
+    id: "TRF-008",
+    description: "SIP-KOTAK MUTUAL FUND INVESTMENT",
+    amount: 7500.0,
+    direction: "DEBIT",
+    date: "2026-10-06",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer", "savings"],
+    },
+  },
+  {
+    id: "TRF-009",
+    description: "IMPS OUTWARD TO OWN ACCOUNT HDFC",
+    amount: 15000.0,
+    direction: "DEBIT",
+    date: "2026-10-07",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer"],
+    },
+  },
+  {
+    id: "TRF-010",
+    description: "TRANSFER TO PPF ACCOUNT OCT CONTRIB",
+    amount: 10000.0,
+    direction: "DEBIT",
+    date: "2026-10-08",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["transfer", "savings"],
+    },
+  },
+  {
+    id: "TRF-011",
+    description: "REFUND PROCESSED FLIPKART RETURNS",
+    amount: 1899.0,
+    direction: "CREDIT",
+    date: "2026-10-09",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "SHOPPING",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["refund"],
+    },
+  },
+  {
+    id: "TRF-012",
+    description: "CASHBACK CREDITED CRED UPI PAY",
+    amount: 50.0,
+    direction: "CREDIT",
+    date: "2026-10-10",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["refund"],
+    },
+  },
+  {
+    id: "TRF-013",
+    description: "REVERSAL OF FAILED ATM TXN CREDIT",
+    amount: 2000.0,
+    direction: "CREDIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "TRANSFER",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["refund"],
+    },
+  },
+
+  // =========================================================================
+  // 30. EXPANDED BENCHMARK: BALANCE_SUMMARY (Summary & Header Rows)
+  // =========================================================================
+  {
+    id: "BAL-003",
+    description: "CURRENT AVAILABLE BALANCE AS ON DATE",
+    amount: 52410.5,
+    direction: "CREDIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "BALANCE_SUMMARY",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["balance", "statement"],
+    },
+  },
+  {
+    id: "BAL-004",
+    description: "TOTAL STATEMENT SUMMARY DEBITS 48500",
+    amount: 48500.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "BALANCE_SUMMARY",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["balance", "statement"],
+    },
+  },
+  {
+    id: "BAL-005",
+    description: "LEDGER BALANCE CARRIED FORWARD",
+    amount: 39800.0,
+    direction: "CREDIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "BALANCE_SUMMARY",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: ["balance", "statement"],
+    },
+  },
+
+  // =========================================================================
+  // 31. EXPANDED BENCHMARK: AMBIGUOUS & UNKNOWN (Review / Abstention Cases)
+  // =========================================================================
+  {
+    id: "AMB-005",
+    description: "VNDR-829104-MKT-X9",
+    amount: 720.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Opaque merchant code without any readable business semantic hint.",
+    },
+  },
+  {
+    id: "AMB-006",
+    description: "TXN981029481028401",
+    amount: 450.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Transaction ID only, lacking descriptive merchant text.",
+    },
+  },
+  {
+    id: "AMB-007",
+    description: "MISC DEBIT REF 491028",
+    amount: 300.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Generic reference without category or merchant hints.",
+    },
+  },
+  {
+    id: "AMB-008",
+    description: "GLOBAL TECH VENTURES BLR",
+    amount: 3200.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Corporate holding name without clear transaction intent.",
+    },
+  },
+  {
+    id: "AMB-009",
+    description: "RECURRING PAYMENT SI-829104",
+    amount: 999.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Standing instruction ID without identifiable service or product.",
+    },
+  },
+
+  // =========================================================================
+  // 32. EXPANDED BENCHMARK: INVALID ROWS (Whitespace, Negative Amount)
+  // =========================================================================
+  {
+    id: "INV-003",
+    description: "   ",
+    amount: 250.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "INVALID",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Whitespace-only narration cannot be classified.",
+    },
+  },
+  {
+    id: "INV-004",
+    description: "NEGATIVE AMOUNT REVERSAL TEST",
+    amount: -150.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    expected: {
+      financialMeaning: "INVALID",
+      isEligibleExpense: false,
+      category: "OTHER",
+      spendingTier: "UNCLASSIFIED",
+      tags: [],
+      isAmbiguous: true,
+      ambiguityReason: "Negative transaction amount is invalid in canonical ledger.",
+    },
+  },
+
+  // =========================================================================
+  // 33. USER CORRECTIONS PRESERVATION (Reimport Regression Cases)
+  // =========================================================================
+  {
+    id: "USR-001",
+    description: "AMAZON PAY INDIA PRIVATE LIMITED",
+    amount: 2500.0,
+    direction: "DEBIT",
+    date: "2026-10-10",
+    userConfirmed: true,
+    existingCategory: "GIFT",
+    existingPriority: "GOOD_TO_HAVE",
+    existingTags: ["birthday-gift"],
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "GIFT",
+      spendingTier: "GOOD_TO_HAVE",
+      tags: ["birthday-gift"],
+      userConfirmed: true,
+    },
+  },
+  {
+    id: "USR-002",
+    description: "SWIGGY BANGALORE ORDER",
+    amount: 1850.0,
+    direction: "DEBIT",
+    date: "2026-10-11",
+    userConfirmed: true,
+    existingCategory: "OTHER",
+    existingPriority: "ESSENTIAL",
+    existingTags: ["team-lunch-reimbursable"],
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "OTHER",
+      spendingTier: "ESSENTIAL",
+      tags: ["team-lunch-reimbursable"],
+      userConfirmed: true,
+    },
+  },
+  {
+    id: "USR-003",
+    description: "VNDR-UNKNOWN-98214",
+    amount: 4500.0,
+    direction: "DEBIT",
+    date: "2026-10-12",
+    userConfirmed: true,
+    existingCategory: "SHOPPING",
+    existingPriority: "LUXURY",
+    existingTags: ["vintage-collectible"],
+    expected: {
+      financialMeaning: "EXPENSE",
+      isEligibleExpense: true,
+      category: "SHOPPING",
+      spendingTier: "LUXURY",
+      tags: ["vintage-collectible"],
+      userConfirmed: true,
+    },
+  },
 ];
 
 /**
@@ -1040,7 +2103,8 @@ export function validateEvaluationDataset(fixtures: EvaluationFixture[]): {
       continue;
     }
 
-    if (!EVALUATION_FINANCIAL_MEANINGS.includes(f.expected.financialMeaning)) {
+    const validMeanings: readonly string[] = [...EVALUATION_FINANCIAL_MEANINGS, "BALANCE_ROW"];
+    if (!validMeanings.includes(f.expected.financialMeaning)) {
       errors.push(
         `${prefix}: Invalid financialMeaning "${f.expected.financialMeaning}". Allowed: ${EVALUATION_FINANCIAL_MEANINGS.join(
           ", "

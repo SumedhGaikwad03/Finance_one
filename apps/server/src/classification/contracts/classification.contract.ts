@@ -148,13 +148,39 @@ export function determineFinancialEligibility(params: {
 }): FinancialEligibility {
     const text = (params.narration || "").trim().toLowerCase();
 
-    // 1. Balance Summary detection
+    // 1. Validation / Invalid check (empty narration or missing/non-positive amount)
+    if (!text) {
+        return {
+            recordType: "INVALID",
+            isEligibleExpense: false,
+            reason: "Missing or empty transaction narration",
+        };
+    }
+
+    if (params.amount === null || params.amount === undefined) {
+        return {
+            recordType: "INVALID",
+            isEligibleExpense: false,
+            reason: "Missing monetary amount",
+        };
+    }
+    const numAmount = params.amount instanceof Prisma.Decimal ? params.amount.toNumber() : Number(params.amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0) {
+        return {
+            recordType: "INVALID",
+            isEligibleExpense: false,
+            reason: "Invalid, zero, or negative monetary amount",
+        };
+    }
+
+    // 2. Balance Summary detection
     const summaryPatterns = [
         /^(opening|closing|current|available|ledger|clear)\s*balance/i,
         /^(total|subtotal|summary|brought forward|carried forward|b\/f|c\/f)$/i,
-        /^(statement|account)\s*(summary|period|overview)/i,
+        /^(statement|account)\s*(summary|period|overview|total)/i,
         /^balance\s*(b\/f|c\/f|as on)/i,
         /^grand\s*total/i,
+        /statement summary/i,
     ];
     if (summaryPatterns.some((p) => p.test(text))) {
         return {
@@ -164,33 +190,18 @@ export function determineFinancialEligibility(params: {
         };
     }
 
-    // 2. Transfer detection
+    // 3. Transfer detection (internal accounts, deposits, sweeps, investments)
     const transferPatterns = [
         /\b(fund\s*transfer|ac\s*trf|account\s*transfer|internal\s*transfer|self\s*transfer|neft\s*trf|imps\s*trf)\b/i,
-        /\btrf\s*to\s*(self|account|savings|current)\b/i,
+        /\b(trf|transfer|outward)\s*to\s*(self|account|savings|current|fixed\s*deposit|fd|rd|own\s*account|ppf)\b/i,
+        /\b(to\s*own\s*account|own\s*account\s*transfer)\b/i,
+        /\b(fd\s*creation|rd\s*a\/c|rd\s*instalment|auto\s*sweep|sweep\s*transfer|sip-.*mutual|ppf\s*account)\b/i,
     ];
     if (transferPatterns.some((p) => p.test(text))) {
         return {
             recordType: "TRANSFER",
             isEligibleExpense: false,
             reason: "Internal account-to-account transfer or rebalancing",
-        };
-    }
-
-    // 3. Validation / Invalid check
-    if (params.amount === null || params.amount === undefined) {
-        return {
-            recordType: "INVALID",
-            isEligibleExpense: false,
-            reason: "Missing monetary amount",
-        };
-    }
-    const numAmount = params.amount instanceof Prisma.Decimal ? params.amount.toNumber() : Number(params.amount);
-    if (!Number.isFinite(numAmount) || numAmount === 0) {
-        return {
-            recordType: "INVALID",
-            isEligibleExpense: false,
-            reason: "Invalid or zero monetary amount",
         };
     }
 
@@ -205,7 +216,7 @@ export function determineFinancialEligibility(params: {
 
     // Income keywords check
     const incomeKeywords = [
-        /\b(salary|payroll|dividend|interest\s*credit|refund\s*credited|cashback\s*credited)\b/i,
+        /\b(salary|payroll|dividend|interest\s*credit|interest\s*paid|refund\s*credited|refund\s*processed|cashback\s*credited|cash\s*deposit|credit\s*by\s*freelance)\b/i,
     ];
     if (params.isCredit || incomeKeywords.some((p) => p.test(text))) {
         return {

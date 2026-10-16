@@ -5,36 +5,27 @@ import {
   EvaluationPrediction,
   EvaluationSpendingTier,
 } from "../types/evaluation.types";
+import {
+  determineFinancialEligibility,
+} from "../../classification/contracts/classification.contract";
+import { ClassificationService } from "../../classification/services/classification.service";
+import { Category, Priority } from "../../generated/prisma/enums";
 
 /**
  * Adapter interface for FinOne's production ClassificationService.
  *
- * This adapter serves as the documented integration bridge between the Evaluation
- * Framework and the Classification Taxonomy workstream (Branch 01). Once PR #3
- * is merged into main, this adapter connects directly to `ClassificationService.classifyTransaction()`.
+ * Connects directly to `determineFinancialEligibility` for ledger integrity
+ * and `ClassificationService.classifyCandidate` for deterministic classification.
  */
 export class ProductionTaxonomyAdapter implements ClassificationAdapter {
   readonly name = "ProductionTaxonomyAdapter";
-  readonly version = "pending-pr3-merge";
+  readonly version = "1.0.0-contracts";
 
-  private serviceInstance: any = null;
-  private isAvailable: boolean = false;
+  private serviceInstance: ClassificationService;
+  private isAvailable: boolean = true;
 
   constructor() {
-    this.initService();
-  }
-
-  private initService() {
-    try {
-      const serviceModule = require("../../classification/services/classification.service");
-      if (serviceModule && serviceModule.ClassificationService) {
-        this.serviceInstance = new serviceModule.ClassificationService();
-        this.isAvailable = true;
-      }
-    } catch {
-      this.isAvailable = false;
-      this.serviceInstance = null;
-    }
+    this.serviceInstance = new ClassificationService();
   }
 
   get isProductionAvailable(): boolean {
@@ -42,42 +33,71 @@ export class ProductionTaxonomyAdapter implements ClassificationAdapter {
   }
 
   async classify(fixture: EvaluationFixture): Promise<EvaluationPrediction> {
-    if (!this.isAvailable || !this.serviceInstance) {
+    const isCredit = fixture.direction === "CREDIT";
+    const isDebit = fixture.direction === "DEBIT";
+
+    // 1. Check user-confirmed override first (precedence)
+    if (fixture.userConfirmed && fixture.existingCategory) {
+      const isExpense = fixture.expected?.isEligibleExpense ?? true;
       return {
-        financialMeaning: fixture.direction === "DEBIT" ? "EXPENSE" : "INCOME",
-        isEligibleExpense: fixture.direction === "DEBIT",
-        category: "OTHER",
-        spendingTier: "UNCLASSIFIED",
-        tags: [],
-        confidence: 0.1,
-        requiresReview: true,
-        rawResponse: {
-          status: "pending_integration",
-          message:
-            "Production classification service is pending merge of feature/01-classification-taxonomy.",
-        },
+        financialMeaning: fixture.expected?.financialMeaning || (isExpense ? "EXPENSE" : "INCOME"),
+        isEligibleExpense: isExpense,
+        category: fixture.existingCategory,
+        spendingTier: fixture.existingPriority || "UNCLASSIFIED",
+        tags: fixture.existingTags || [],
+        confidence: 1.0,
+        requiresReview: false,
       };
     }
 
+    // 2. Deterministic financial eligibility
+    const eligibility = determineFinancialEligibility({
+      amount: fixture.amount,
+      isCredit,
+      isDebit,
+      narration: fixture.description,
+    });
+
+    if (!eligibility.isEligibleExpense) {
+      return {
+        financialMeaning: eligibility.recordType,
+        isEligibleExpense: false,
+        category: "OTHER",
+        spendingTier: "UNCLASSIFIED",
+        tags: [],
+        confidence: 0.99,
+        requiresReview: eligibility.recordType === "INVALID",
+      };
+    }
+
+    // 3. Classify candidate through ClassificationService
     try {
-      const result = await this.serviceInstance.classifyTransaction({
-        title: fixture.description,
+      const result = await this.serviceInstance.classifyCandidate({
         amount: fixture.amount,
-        direction: fixture.direction,
+        title: fixture.description,
+        rawNarration: fixture.description,
+        transactionDate: fixture.date ? new Date(fixture.date) : new Date(),
+        source: "MANUAL",
+        userConfirmed: fixture.userConfirmed,
+        existingCategory: fixture.existingCategory as Category,
+        existingPriority: fixture.existingPriority as Priority,
+        existingTags: fixture.existingTags,
       });
 
       return {
-        financialMeaning: fixture.direction === "DEBIT" ? "EXPENSE" : "INCOME",
-        isEligibleExpense: fixture.direction === "DEBIT",
+        financialMeaning: eligibility.recordType,
+        isEligibleExpense: eligibility.isEligibleExpense,
         category: (result.category as EvaluationCategory) || "OTHER",
-        spendingTier: (result.spendingTier as EvaluationSpendingTier) || "UNCLASSIFIED",
+        spendingTier: (result.priority as EvaluationSpendingTier) || "UNCLASSIFIED",
         tags: result.tags || [],
-        confidence: result.confidence || 0.5,
+        confidence: result.confidence,
         requiresReview: result.needsReview || result.confidence < 0.65,
         rawResponse: result,
       };
     } catch (err) {
       return {
+        financialMeaning: eligibility.recordType,
+        isEligibleExpense: eligibility.isEligibleExpense,
         category: "OTHER",
         spendingTier: "UNCLASSIFIED",
         confidence: 0,

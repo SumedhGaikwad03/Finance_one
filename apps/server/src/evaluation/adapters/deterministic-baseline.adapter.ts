@@ -20,14 +20,14 @@ interface MerchantRule {
 const MERCHANT_RULES: MerchantRule[] = [
   // Food & Dining
   {
-    pattern: /swiggy/i,
+    pattern: /swiggy|swigy|pos\/swg/i,
     category: "FOOD",
     tier: "GOOD_TO_HAVE",
     tags: ["food", "delivery", "dinner"],
     confidence: 0.95,
   },
   {
-    pattern: /zomato/i,
+    pattern: /zomato|zomto/i,
     category: "FOOD",
     tier: "GOOD_TO_HAVE",
     tags: ["food", "dining", "weekend"],
@@ -62,10 +62,31 @@ const MERCHANT_RULES: MerchantRule[] = [
     confidence: 0.95,
   },
   {
+    pattern: /blue tokai/i,
+    category: "FOOD",
+    tier: "LUXURY",
+    tags: ["coffee", "artisanal", "discretionary"],
+    confidence: 0.95,
+  },
+  {
     pattern: /nature.*basket/i,
     category: "FOOD",
     tier: "LUXURY",
     tags: ["groceries", "gourmet", "luxury"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /kirana/i,
+    category: "FOOD",
+    tier: "ESSENTIAL",
+    tags: ["groceries", "local"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /dhaba|tiffin/i,
+    category: "FOOD",
+    tier: "GOOD_TO_HAVE",
+    tags: ["food", "dining"],
     confidence: 0.95,
   },
   {
@@ -92,14 +113,14 @@ const MERCHANT_RULES: MerchantRule[] = [
     confidence: 0.95,
   },
   {
-    pattern: /iocl/i,
+    pattern: /iocl|indian oil/i,
     category: "FUEL",
     tier: "ESSENTIAL",
     tags: ["fuel", "petrol"],
     confidence: 0.95,
   },
   {
-    pattern: /bpcl/i,
+    pattern: /bpcl|pos\/bpcl/i,
     category: "FUEL",
     tier: "ESSENTIAL",
     tags: ["fuel", "highway"],
@@ -108,14 +129,14 @@ const MERCHANT_RULES: MerchantRule[] = [
 
   // Shopping
   {
-    pattern: /amazon.*seller|amazon.*retail/i,
+    pattern: /amazon.*seller|amazon.*retail|amzon/i,
     category: "SHOPPING",
     tier: "GOOD_TO_HAVE",
     tags: ["shopping", "online", "retail"],
     confidence: 0.9,
   },
   {
-    pattern: /flipkart/i,
+    pattern: /flipkart|flpkrt/i,
     category: "SHOPPING",
     tier: "GOOD_TO_HAVE",
     tags: ["shopping", "electronics"],
@@ -142,6 +163,20 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["shopping", "clothing"],
     confidence: 0.95,
   },
+  {
+    pattern: /croma/i,
+    category: "SHOPPING",
+    tier: "GOOD_TO_HAVE",
+    tags: ["shopping", "electronics"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /decathlon/i,
+    category: "SHOPPING",
+    tier: "GOOD_TO_HAVE",
+    tags: ["shopping", "sports"],
+    confidence: 0.95,
+  },
 
   // Bills & Utilities
   {
@@ -152,7 +187,7 @@ const MERCHANT_RULES: MerchantRule[] = [
     confidence: 0.95,
   },
   {
-    pattern: /tata power/i,
+    pattern: /tata power|ach-tata-power/i,
     category: "BILLS",
     tier: "ESSENTIAL",
     tags: ["bills", "electricity"],
@@ -166,7 +201,7 @@ const MERCHANT_RULES: MerchantRule[] = [
     confidence: 0.95,
   },
   {
-    pattern: /airtel.*broadband|airtel.*fiber/i,
+    pattern: /airtel.*broadband|airtel.*fiber|broadband fiber/i,
     category: "BILLS",
     tier: "ESSENTIAL",
     tags: ["bills", "internet", "broadband"],
@@ -193,6 +228,20 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["bills", "amazon-pay"],
     confidence: 0.85,
   },
+  {
+    pattern: /rent.*payment|neft-inp-rent/i,
+    category: "BILLS",
+    tier: "ESSENTIAL",
+    tags: ["bills", "rent"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /debit card amc|amc charge|sms alert charges|interchange fee|atm withdrawal.*fee|forex markup/i,
+    category: "BILLS",
+    tier: "ESSENTIAL",
+    tags: ["bills", "bank_fee"],
+    confidence: 0.95,
+  },
 
   // Entertainment
   {
@@ -216,6 +265,13 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["entertainment", "gaming"],
     confidence: 0.95,
   },
+  {
+    pattern: /smash bowling|bowling arena/i,
+    category: "ENTERTAINMENT",
+    tier: "GOOD_TO_HAVE",
+    tags: ["entertainment", "recreation"],
+    confidence: 0.95,
+  },
 
   // Health
   {
@@ -233,7 +289,7 @@ const MERCHANT_RULES: MerchantRule[] = [
     confidence: 0.95,
   },
   {
-    pattern: /lal pathlabs/i,
+    pattern: /lal pathlabs|pathlabs/i,
     category: "HEALTH",
     tier: "ESSENTIAL",
     tags: ["health", "lab", "diagnostics"],
@@ -246,10 +302,17 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["health", "hospital"],
     confidence: 0.95,
   },
+  {
+    pattern: /cult\s*fit/i,
+    category: "HEALTH",
+    tier: "GOOD_TO_HAVE",
+    tags: ["health", "fitness"],
+    confidence: 0.95,
+  },
 
   // Travel
   {
-    pattern: /uber/i,
+    pattern: /uber|ubr\*/i,
     category: "TRAVEL",
     tier: "ESSENTIAL",
     tags: ["travel", "commute", "cab"],
@@ -313,6 +376,13 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["education", "tuition", "coaching"],
     confidence: 0.95,
   },
+  {
+    pattern: /delhi-public-schl|public school/i,
+    category: "EDUCATION",
+    tier: "ESSENTIAL",
+    tags: ["education", "school"],
+    confidence: 0.95,
+  },
 
   // Subscriptions
   {
@@ -357,6 +427,27 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["subscription", "streaming"],
     confidence: 0.9,
   },
+  {
+    pattern: /apple\.com\/bill/i,
+    category: "SUBSCRIPTION",
+    tier: "GOOD_TO_HAVE",
+    tags: ["subscription", "cloud"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /chatgpt|openai/i,
+    category: "SUBSCRIPTION",
+    tier: "GOOD_TO_HAVE",
+    tags: ["subscription", "software", "ai"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /the hindu digital|newspaper sub/i,
+    category: "SUBSCRIPTION",
+    tier: "GOOD_TO_HAVE",
+    tags: ["subscription", "news"],
+    confidence: 0.95,
+  },
 
   // Gifts
   {
@@ -373,13 +464,62 @@ const MERCHANT_RULES: MerchantRule[] = [
     tags: ["gift", "charity", "donation"],
     confidence: 0.95,
   },
+  {
+    pattern: /gift card/i,
+    category: "GIFT",
+    tier: "GOOD_TO_HAVE",
+    tags: ["gift", "voucher"],
+    confidence: 0.95,
+  },
 
-  // Other specific
+  // Other specific (Known non-ambiguous miscellaneous expenses)
   {
     pattern: /property tax/i,
     category: "OTHER",
     tier: "ESSENTIAL",
     tags: ["tax", "government"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /legal consultation|advocate/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["legal", "professional"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /notary public|notary.*stamp/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["legal", "notary"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /stamp paper/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["government", "stamp"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /passport office|seva kendra/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["government", "passport"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /locksmith/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["services", "repair"],
+    confidence: 0.95,
+  },
+  {
+    pattern: /trade license/i,
+    category: "OTHER",
+    tier: "ESSENTIAL",
+    tags: ["government", "license"],
     confidence: 0.95,
   },
 ];
@@ -400,7 +540,21 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
     const amount = fixture.amount;
     const direction = fixture.direction;
 
-    // 1. Edge Case: Invalid records (zero amount, empty description)
+    // 0. User Confirmed Precedence: Explicit user corrections survive reimports
+    if (fixture.userConfirmed && fixture.existingCategory) {
+      const isExpense = fixture.expected?.isEligibleExpense ?? true;
+      return {
+        financialMeaning: fixture.expected?.financialMeaning || (isExpense ? "EXPENSE" : "INCOME"),
+        isEligibleExpense: isExpense,
+        category: fixture.existingCategory,
+        spendingTier: fixture.existingPriority || "UNCLASSIFIED",
+        tags: fixture.existingTags || [],
+        confidence: 1.0,
+        requiresReview: false,
+      };
+    }
+
+    // 1. Edge Case: Invalid records (zero/negative amount, empty or whitespace-only description)
     if (amount <= 0 || !desc.trim()) {
       return {
         financialMeaning: "INVALID",
@@ -408,15 +562,19 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
         category: "OTHER",
         spendingTier: "UNCLASSIFIED",
         tags: [],
-        confidence: 0.95,
+        confidence: 0.99,
         requiresReview: true,
       };
     }
 
-    // 2. Balance Rows (Opening / Closing balance records)
-    if (/opening balance|closing balance|balance b\/f|balance c\/f/i.test(desc)) {
+    // 2. Balance Rows (Opening / Closing / Available / Ledger balance / Total summary records)
+    if (
+      /opening balance|closing balance|available balance|ledger balance|statement summary|total statement summary|balance b\/f|balance c\/f/i.test(
+        desc
+      )
+    ) {
       return {
-        financialMeaning: "BALANCE_ROW",
+        financialMeaning: "BALANCE_SUMMARY",
         isEligibleExpense: false,
         category: "OTHER",
         spendingTier: "UNCLASSIFIED",
@@ -426,31 +584,38 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
       };
     }
 
-    // 3. Credits & Incoming Income (Salary, Dividends, Interest, Client Payments)
+    // 3. Transfers (Internal accounts, FD, RD, SIP, Investments, Outward transfers to self)
+    if (
+      /transfer to fixed deposit|fd creation|rd a\/c|rd instalment|auto sweep|sweep transfer|sip-.*mutual|fund transfer|internal transfer|own account|ppf account/i.test(
+        desc
+      )
+    ) {
+      return {
+        financialMeaning: "TRANSFER",
+        isEligibleExpense: false,
+        category: "OTHER",
+        spendingTier: "UNCLASSIFIED",
+        tags: ["transfer", "savings"],
+        confidence: 0.95,
+        requiresReview: false,
+      };
+    }
+
+    // 4. Credits & Incoming Income (Salary, Dividends, Interest, Client Payments, Refunds, Reversals)
     if (
       direction === "CREDIT" ||
-      /salary|payroll|dividend|interest paid|interest credited|freelance client/i.test(desc)
+      /salary|payroll|dividend|interest paid|interest credited|freelance client|consulting fee|cash deposit/i.test(
+        desc
+      )
     ) {
-      if (/refund|reversal/i.test(desc)) {
+      if (/refund|reversal|cashback/i.test(desc)) {
         return {
           financialMeaning: "TRANSFER",
           isEligibleExpense: false,
-          category: /flipkart|amazon/i.test(desc) ? "SHOPPING" : "BILLS",
+          category: /flipkart|amazon/i.test(desc) ? "SHOPPING" : "OTHER",
           spendingTier: "UNCLASSIFIED",
           tags: ["refund"],
-          confidence: 0.92,
-          requiresReview: false,
-        };
-      }
-
-      if (/sweep|transfer/i.test(desc)) {
-        return {
-          financialMeaning: "TRANSFER",
-          isEligibleExpense: false,
-          category: "OTHER",
-          spendingTier: "UNCLASSIFIED",
-          tags: ["transfer"],
-          confidence: 0.9,
+          confidence: 0.95,
           requiresReview: false,
         };
       }
@@ -466,20 +631,24 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
       };
     }
 
-    // 4. Transfers (FD, RD, Investment transfers)
-    if (/transfer to fixed deposit|fd creation|rd a\/c|sweep transfer/i.test(desc)) {
+    // 5. Opaque / Unfamiliar codes requiring review (Abstention guardrail)
+    if (
+      /vndr-|txn\d+|misc debit|global tech ventures|recurring payment si-|misc service/i.test(
+        desc
+      )
+    ) {
       return {
-        financialMeaning: "TRANSFER",
-        isEligibleExpense: false,
+        financialMeaning: "EXPENSE",
+        isEligibleExpense: true,
         category: "OTHER",
         spendingTier: "UNCLASSIFIED",
-        tags: ["transfer", "savings"],
-        confidence: 0.95,
-        requiresReview: false,
+        tags: [],
+        confidence: 0.45,
+        requiresReview: true,
       };
     }
 
-    // 5. Explicit Merchant Matching (High Confidence)
+    // 6. Explicit Merchant Matching (High Confidence)
     for (const rule of MERCHANT_RULES) {
       if (rule.pattern.test(desc)) {
         return {
@@ -494,7 +663,7 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
       }
     }
 
-    // 6. Generic Keyword Fallbacks
+    // 7. Generic Keyword Fallbacks
     if (/grocer|supermarket|food|dining|restaurant|kitchen|cafe|coffee|snacks/i.test(desc)) {
       return {
         financialMeaning: "EXPENSE",
@@ -555,7 +724,7 @@ export class DeterministicBaselineAdapter implements ClassificationAdapter {
       };
     }
 
-    // 7. Ambiguous or Unknown fallback
+    // 8. Ambiguous or Unknown fallback
     // Flag low confidence to trigger review according to confidence threshold
     return {
       financialMeaning: "EXPENSE",
