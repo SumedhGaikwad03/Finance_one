@@ -35,4 +35,12 @@ export const ENDPOINTS = {
         CONFIRM: "/transactions/import/confirm",
     },
 
+    RECURRING: {
+        ROOT: "/recurring",
+        DETAIL: (id: string) => `/recurring/${id}`,
+        CONFIRM: (id: string) => `/recurring/${id}/confirm`,
+        DISMISS: (id: string) => `/recurring/${id}/dismiss`,
+        RESET: (id: string) => `/recurring/${id}/reset`,
+    },
+
 } as const; 
