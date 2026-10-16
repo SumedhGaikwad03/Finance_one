@@ -4,6 +4,7 @@ import {
   CoverageEvaluationMetrics,
   DimensionMetrics,
   EVALUATION_CATEGORIES,
+  EVALUATION_FINANCIAL_MEANINGS,
   EVALUATION_SPENDING_TIERS,
   EvaluationCaseComparison,
   EvaluationFixture,
@@ -94,6 +95,12 @@ export function evaluatePredictions(
   }
 
   // 2. Financial & Direction Metrics
+  const normalizeMeaning = (m?: string): string => {
+    if (!m) return "EXPENSE";
+    if (m === "BALANCE_ROW") return "BALANCE_SUMMARY";
+    return m;
+  };
+
   let directionCorrect = 0;
   let meaningCorrect = 0;
   let eligibilityCorrect = 0;
@@ -101,6 +108,16 @@ export function evaluatePredictions(
   let omittedExpenses = 0;
   let nonExpenses = 0;
   let falsePositiveExpenses = 0;
+
+  const recordTypeStats: Record<string, { support: number; correct: number }> = {};
+  const recordTypeConfusion: Record<string, Record<string, number>> = {};
+  for (const m of EVALUATION_FINANCIAL_MEANINGS) {
+    recordTypeStats[m] = { support: 0, correct: 0 };
+    recordTypeConfusion[m] = {};
+    for (const m2 of EVALUATION_FINANCIAL_MEANINGS) {
+      recordTypeConfusion[m][m2] = 0;
+    }
+  }
 
   for (let i = 0; i < total; i++) {
     const f = fixtures[i];
@@ -110,9 +127,23 @@ export function evaluatePredictions(
     directionCorrect++;
 
     // Financial meaning
-    const predMeaning = p.financialMeaning || (f.direction === "DEBIT" ? "EXPENSE" : "INCOME");
-    if (predMeaning === f.expected.financialMeaning) {
+    const expMeaning = normalizeMeaning(f.expected.financialMeaning);
+    const predMeaning = normalizeMeaning(
+      p.financialMeaning || (f.direction === "DEBIT" ? "EXPENSE" : "INCOME")
+    );
+
+    if (recordTypeStats[expMeaning]) {
+      recordTypeStats[expMeaning].support++;
+    }
+    if (recordTypeConfusion[expMeaning] && recordTypeConfusion[expMeaning][predMeaning] !== undefined) {
+      recordTypeConfusion[expMeaning][predMeaning]++;
+    }
+
+    if (predMeaning === expMeaning) {
       meaningCorrect++;
+      if (recordTypeStats[expMeaning]) {
+        recordTypeStats[expMeaning].correct++;
+      }
     }
 
     // Eligibility check
@@ -138,6 +169,16 @@ export function evaluatePredictions(
     }
   }
 
+  const byRecordType: Record<string, { support: number; correct: number; accuracy: number }> = {};
+  for (const m of EVALUATION_FINANCIAL_MEANINGS) {
+    const s = recordTypeStats[m] || { support: 0, correct: 0 };
+    byRecordType[m] = {
+      support: s.support,
+      correct: s.correct,
+      accuracy: s.support > 0 ? s.correct / s.support : 0,
+    };
+  }
+
   const financial: FinancialEligibilityMetrics = {
     totalSamples: total,
     directionAccuracy: total > 0 ? directionCorrect / total : 1.0,
@@ -152,6 +193,8 @@ export function evaluatePredictions(
     totalNonExpenses: nonExpenses,
     falsePositiveExpenseCount: falsePositiveExpenses,
     falsePositiveExpenseRate: nonExpenses > 0 ? falsePositiveExpenses / nonExpenses : 0,
+    byRecordType,
+    confusionMatrix: recordTypeConfusion,
   };
 
   // 3. Category Metrics (Overall and Auto)
@@ -331,6 +374,7 @@ function computeDimensionMetrics<T extends string>(
 
   let correctCount = 0;
   const byClass: Record<string, ClassMetrics> = {};
+  const confusionMatrix: Record<string, Record<string, number>> = {};
 
   for (const c of classes) {
     byClass[c] = {
@@ -342,11 +386,15 @@ function computeDimensionMetrics<T extends string>(
       recall: null,
       f1: null,
     };
+    confusionMatrix[c] = {};
+    for (const c2 of classes) {
+      confusionMatrix[c][c2] = 0;
+    }
   }
 
   for (const p of pairs) {
-    const exp = p.expected;
-    const pred = p.predicted;
+    const exp = p.expected as string;
+    const pred = p.predicted as string;
 
     if (exp === pred) {
       correctCount++;
@@ -354,6 +402,10 @@ function computeDimensionMetrics<T extends string>(
 
     if (byClass[exp]) {
       byClass[exp].support++;
+    }
+
+    if (confusionMatrix[exp] && confusionMatrix[exp][pred] !== undefined) {
+      confusionMatrix[exp][pred]++;
     }
 
     if (pred === exp) {
@@ -406,6 +458,7 @@ function computeDimensionMetrics<T extends string>(
     macroRecall: supportedClasses > 0 ? macroR / supportedClasses : null,
     macroF1: supportedClasses > 0 ? macroF1 / supportedClasses : null,
     byClass,
+    confusionMatrix,
   };
 }
 
@@ -625,7 +678,21 @@ export function generateMarkdownReport(report: FullEvaluationReport): string {
     report.financial.directionAccuracy
   )}** | 100% |\n`;
 
+  if (report.financial.byRecordType) {
+    md += `\n### Financial Record Types Breakdown\n\n`;
+    md += `| Record Type | Ground Truth Support | Correct Predictions | Accuracy |\n`;
+    md += `| :--- | :---: | :---: | :---: |\n`;
+    for (const [rt, stats] of Object.entries(report.financial.byRecordType)) {
+      md += `| \`${rt}\` | ${stats.support} | ${stats.correct} | ${pct(stats.accuracy)} |\n`;
+    }
+  }
+
   md += `\n## 4. Per-Category Performance (Automatic Decisions)\n\n`;
+  md += `**Macro Averages:** Precision: **${pct(
+    report.categoryAutomatic.macroPrecision
+  )}** | Recall: **${pct(report.categoryAutomatic.macroRecall)}** | F1: **${pct(
+    report.categoryAutomatic.macroF1
+  )}**  \n\n`;
   md += `| Category | Support | Precision | Recall | F1 Score |\n`;
   md += `| :--- | :---: | :---: | :---: | :---: |\n`;
   for (const cat of EVALUATION_CATEGORIES) {
@@ -638,6 +705,11 @@ export function generateMarkdownReport(report: FullEvaluationReport): string {
   }
 
   md += `\n## 5. Per-Spending-Tier Performance\n\n`;
+  md += `**Macro Averages:** Precision: **${pct(
+    report.spendingTierAutomatic.macroPrecision
+  )}** | Recall: **${pct(report.spendingTierAutomatic.macroRecall)}** | F1: **${pct(
+    report.spendingTierAutomatic.macroF1
+  )}**  \n\n`;
   md += `| Tier | Support | Precision | Recall | F1 Score |\n`;
   md += `| :--- | :---: | :---: | :---: | :---: |\n`;
   for (const tier of EVALUATION_SPENDING_TIERS) {
@@ -657,6 +729,18 @@ export function generateMarkdownReport(report: FullEvaluationReport): string {
   md += `- **Micro-Averaged Recall:** ${pct(report.tags.microRecall)}\n`;
   md += `- **Micro-Averaged F1 Score:** ${pct(report.tags.microF1)}\n`;
   md += `- **Macro-Averaged F1 Score:** ${pct(report.tags.macroF1)}\n`;
+
+  md += `\n## 7. Review & Abstention Behavior\n\n`;
+  md += `- **Total Review Items (Abstentions):** ${report.coverage.reviewCount} (${pct(
+    report.coverage.reviewRate
+  )} of dataset)\n`;
+  md += `- **Automatic Decision Coverage:** ${report.coverage.autoClassifiedCount} (${pct(
+    report.coverage.coverageRate
+  )} of dataset)\n`;
+  md += `- **Unclassified Tier Allocations:** ${report.coverage.unclassifiedTierCount} (${pct(
+    report.coverage.unclassifiedTierRate
+  )} of automatic decisions)\n\n`;
+  md += `> **Metric Methodology Note:** Items requiring review (abstentions due to low confidence < ${report.confidenceThreshold} or explicitly unclassified status) are counted transparently in the Review Rate. They are not silently treated as correct in automatic decision metrics, ensuring that automatic accuracy reflects only validated high-confidence decisions.\n`;
 
   return md;
 }

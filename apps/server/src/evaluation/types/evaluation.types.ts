@@ -35,11 +35,13 @@ export const EVALUATION_FINANCIAL_MEANINGS = [
   "EXPENSE",
   "INCOME",
   "TRANSFER",
-  "BALANCE_ROW",
+  "BALANCE_SUMMARY",
   "INVALID",
 ] as const;
 
-export type EvaluationFinancialMeaning = (typeof EVALUATION_FINANCIAL_MEANINGS)[number];
+export type EvaluationFinancialMeaning =
+  | (typeof EVALUATION_FINANCIAL_MEANINGS)[number]
+  | "BALANCE_ROW";
 
 export type EvaluationDirection = "DEBIT" | "CREDIT";
 
@@ -54,6 +56,7 @@ export interface EvaluationExpectedLabel {
   tags?: string[];
   isAmbiguous?: boolean;
   ambiguityReason?: string;
+  userConfirmed?: boolean;
 }
 
 /**
@@ -66,6 +69,10 @@ export interface EvaluationFixture {
   direction: EvaluationDirection;
   date?: string;
   expected: EvaluationExpectedLabel;
+  userConfirmed?: boolean;
+  existingCategory?: EvaluationCategory;
+  existingPriority?: EvaluationSpendingTier;
+  existingTags?: string[];
 }
 
 /**
@@ -117,6 +124,7 @@ export interface DimensionMetrics {
   macroRecall: number | null;
   macroF1: number | null;
   byClass: Record<string, ClassMetrics>;
+  confusionMatrix?: Record<string, Record<string, number>>;
 }
 
 /**
@@ -150,6 +158,8 @@ export interface FinancialEligibilityMetrics {
   totalNonExpenses: number;
   falsePositiveExpenseCount: number;
   falsePositiveExpenseRate: number; // False Positives / Total Non-Expenses
+  byRecordType?: Record<string, { support: number; correct: number; accuracy: number }>;
+  confusionMatrix?: Record<string, Record<string, number>>;
 }
 
 /**
