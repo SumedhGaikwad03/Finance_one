@@ -33,4 +33,8 @@ export const ENDPOINTS = {
         CONFIRM: "/transactions/import/confirm",
     },
 
+    INSIGHTS: {
+        MONTHLY: "/insights/monthly",
+    },
+
 } as const; 
