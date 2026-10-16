@@ -157,6 +157,26 @@ export function determineFinancialEligibility(params: {
         };
     }
 
+    // 1. Balance Summary detection (can appear with zero or blank amounts in statement header/footers)
+    const summaryPatterns = [
+        /^(opening|closing|current|available|ledger|clear)\s+(?:[\w-]+\s+)*balance/i,
+        /^(opening|closing|current|available|ledger|clear)\s*balance/i,
+        /^(total|subtotal|summary|brought forward|carried forward|b\/f|c\/f)$/i,
+        /^(statement|account)\s*(summary|period|overview|total)/i,
+        /^balance\s*(b\/f|c\/f|as on)/i,
+        /^grand\s*total/i,
+        /statement summary/i,
+        /\bledger\s*balance\b/i,
+    ];
+    if (summaryPatterns.some((p) => p.test(text))) {
+        return {
+            recordType: "BALANCE_SUMMARY",
+            isEligibleExpense: false,
+            reason: "Statement summary or balance header/footer row",
+        };
+    }
+
+    // 2. Amount Validation Check
     if (params.amount === null || params.amount === undefined) {
         return {
             recordType: "INVALID",
@@ -173,26 +193,10 @@ export function determineFinancialEligibility(params: {
         };
     }
 
-    // 2. Balance Summary detection
-    const summaryPatterns = [
-        /^(opening|closing|current|available|ledger|clear)\s*balance/i,
-        /^(total|subtotal|summary|brought forward|carried forward|b\/f|c\/f)$/i,
-        /^(statement|account)\s*(summary|period|overview|total)/i,
-        /^balance\s*(b\/f|c\/f|as on)/i,
-        /^grand\s*total/i,
-        /statement summary/i,
-    ];
-    if (summaryPatterns.some((p) => p.test(text))) {
-        return {
-            recordType: "BALANCE_SUMMARY",
-            isEligibleExpense: false,
-            reason: "Statement balance or summary header/footer entry",
-        };
-    }
-
     // 3. Transfer detection (internal accounts, deposits, sweeps, investments)
     const transferPatterns = [
         /\b(fund\s*transfer|ac\s*trf|account\s*transfer|internal\s*transfer|self\s*transfer|neft\s*trf|imps\s*trf)\b/i,
+        /\b(trf|transfer|outward)\s+to\s+(?:[\w-]+\s+)*(self|account|savings|current|fixed\s*deposit|fd|rd|own\s*account|ppf)\b/i,
         /\b(trf|transfer|outward)\s*to\s*(self|account|savings|current|fixed\s*deposit|fd|rd|own\s*account|ppf)\b/i,
         /\b(to\s*own\s*account|own\s*account\s*transfer)\b/i,
         /\b(fd\s*creation|rd\s*a\/c|rd\s*instalment|auto\s*sweep|sweep\s*transfer|sip-.*mutual|ppf\s*account)\b/i,
@@ -201,7 +205,7 @@ export function determineFinancialEligibility(params: {
         return {
             recordType: "TRANSFER",
             isEligibleExpense: false,
-            reason: "Internal account-to-account transfer or rebalancing",
+            reason: "Internal account transfer or liquidity rebalancing - excluded from expense ledger",
         };
     }
 
@@ -210,7 +214,7 @@ export function determineFinancialEligibility(params: {
         return {
             recordType: "INCOME",
             isEligibleExpense: false,
-            reason: "Incoming credit / deposit / salary entry - excluded from expense ledger",
+            reason: "Credit / deposit entry - excluded from expense ledger",
         };
     }
 
@@ -222,7 +226,7 @@ export function determineFinancialEligibility(params: {
         return {
             recordType: "INCOME",
             isEligibleExpense: false,
-            reason: "Income, salary, or credit deposit entry",
+            reason: "Credit / deposit entry (income, salary, or refund) - excluded from expense ledger",
         };
     }
 
