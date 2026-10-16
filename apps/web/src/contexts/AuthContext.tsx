@@ -1,20 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import type { User, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "../types/auth.types";
 import * as authService from "../services/auth.service";
-
-interface AuthContextType {
-    user: User | null;
-    token: string | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    login: (data: LoginRequest) => Promise<LoginResponse>;
-    register: (data: RegisterRequest) => Promise<RegisterResponse>;
-    logout: () => void;
-    refreshUser: () => Promise<void>;
-    updateUser: (user: User) => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from "./auth.context";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
@@ -29,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return null;
     });
-    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(() => !!localStorage.getItem("token"));
 
     const logout = useCallback(() => {
         authService.logout();
@@ -66,12 +53,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [logout]);
 
     useEffect(() => {
-        if (token) {
-            refreshUser();
-        } else {
-            setIsLoading(false);
+        if (!token) {
+            return;
         }
-    }, [token, refreshUser]);
+
+        let isMounted = true;
+        authService
+            .getProfile()
+            .then((profile) => {
+                if (isMounted && profile?.user) {
+                    setUser(profile.user);
+                    localStorage.setItem("user", JSON.stringify(profile.user));
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to fetch user profile on init:", error);
+                if (isMounted) {
+                    logout();
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [token, logout]);
 
     const login = async (data: LoginRequest): Promise<LoginResponse> => {
         const response = await authService.login(data);
@@ -110,10 +120,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
+export default AuthProvider;

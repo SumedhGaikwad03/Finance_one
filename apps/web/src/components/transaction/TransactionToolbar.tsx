@@ -1,6 +1,6 @@
 import { Search, X, Filter, ArrowUpDown } from "lucide-react";
 import type { TransactionCategory } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 export type SortOption = "date_desc" | "date_asc" | "amount_desc" | "amount_asc";
 

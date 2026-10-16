@@ -3,7 +3,7 @@ import cors from "cors";
 import healthRouter from "./routes/health.routes";
 import userRouter from "./routes/user.routes";
 import authRouter from "./routes/auth.routes";
-import transactionRouter from "./routes/transation.routes";
+import transactionRouter from "./routes/transaction.routes";
 import budgetRoutes from "./routes/budget.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { errorMiddleware } from "./middleware/error.middleware";

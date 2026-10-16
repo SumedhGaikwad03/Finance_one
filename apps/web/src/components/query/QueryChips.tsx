@@ -1,5 +1,5 @@
 import type { TransactionCategory, TransactionPriority } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "./CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 import type { DatePresetKey } from "../../utils/datePresets";
 import type { AmountPresetKey } from "./AmountSelector";
 

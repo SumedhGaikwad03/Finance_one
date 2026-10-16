@@ -13,7 +13,7 @@ import { QueryProgress } from "./QueryProgress";
 import { QueryStep } from "./QueryStep";
 import { QueryResult } from "./QueryResult";
 import { QueryFollowUp } from "./QueryFollowUp";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 interface QueryBuilderProps {
@@ -30,7 +30,7 @@ const DEFAULT_QUERY: FinanceQuery = {
     visualization: "CHART",
 };
 
-export const QueryBuilder = ({ onClose: _onClose }: QueryBuilderProps) => {
+export const QueryBuilder: React.FC<QueryBuilderProps> = () => {
     const [step, setStep] = useState<QueryBuilderStep>("SELECT_CATEGORY");
     const [query, setQuery] = useState<FinanceQuery>(DEFAULT_QUERY);
     const [isLoading, setIsLoading] = useState(false);

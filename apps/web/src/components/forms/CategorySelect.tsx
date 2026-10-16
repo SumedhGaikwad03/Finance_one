@@ -9,7 +9,7 @@ export interface CategoryOption {
     description: string;
 }
 
-export const CATEGORY_OPTIONS: CategoryOption[] = [
+const CATEGORY_OPTIONS: CategoryOption[] = [
     { value: "FOOD", label: "Food & Dining", icon: "🍔", description: "Groceries, cafes, dine-out" },
     { value: "FUEL", label: "Fuel & Transport", icon: "⛽", description: "Gas, petrol, public transit" },
     { value: "SHOPPING", label: "Shopping", icon: "🛍️", description: "Retail, clothes, gadgets" },

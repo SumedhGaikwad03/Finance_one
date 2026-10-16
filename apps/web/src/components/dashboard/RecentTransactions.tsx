@@ -1,5 +1,5 @@
 import type { Transaction, TransactionCategory } from "../../types/dashboard.types";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 type RecentTransactionsProps = {
     transactions: Transaction[];

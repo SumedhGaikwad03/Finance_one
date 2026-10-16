@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, HeartHandshake } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 
 export const FinalCTASection = () => {
     const { isAuthenticated } = useAuth();

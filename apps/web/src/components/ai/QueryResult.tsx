@@ -14,7 +14,7 @@ import { BarChart3, Table2, Info } from "lucide-react";
 import type { QueryExecutionResult, VisualizationType } from "../../types/financeQuery.types";
 import { formatPercentage } from "../../utils/formatters";
 import { CategoryBadge, PriorityBadge } from "../transaction/TransactionBadge";
-import { CATEGORY_METADATA } from "../query/CategorySelector";
+import { CATEGORY_METADATA } from "../../constants/category.constants";
 
 interface QueryResultProps {
     result: QueryExecutionResult;

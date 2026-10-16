@@ -5,8 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 
+import axios from "axios";
+
 import { registerSchema, type RegisterFormData } from "../../utils/auth.schema";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../hooks/useAuth";
 import AuthBackground from "../../components/auth/AuthBackground";
 import AuthBrand from "../../components/auth/AuthBrand";
 import AuthFeatureCards from "../../components/auth/AuthFeatureCards";
@@ -29,13 +31,18 @@ const RegisterPage = () => {
             await registerUser(data);
             toast.success("Account created successfully! Please log in.");
             navigate("/login");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Registration Error:", error);
-            const serverMessage =
-                error?.response?.data?.message ||
-                (error?.response?.data?.errors && error.response.data.errors[0]?.message) ||
-                error?.message ||
-                "Registration failed. Please verify your details and try again.";
+            let serverMessage = "Registration failed. Please verify your details and try again.";
+            if (axios.isAxiosError<{ message?: string; errors?: Array<{ message?: string }> }>(error)) {
+                serverMessage =
+                    error.response?.data?.message ||
+                    error.response?.data?.errors?.[0]?.message ||
+                    error.message ||
+                    serverMessage;
+            } else if (error instanceof Error) {
+                serverMessage = error.message;
+            }
             toast.error(serverMessage);
         }
     };

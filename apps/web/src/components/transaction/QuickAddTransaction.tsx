@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import axios from "axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as transactionService from "../../services/transaction.service";
@@ -53,8 +54,13 @@ export const QuickAddTransaction: React.FC<QuickAddTransactionProps> = ({
             setQuickText("");
             if (onSuccess) onSuccess();
         },
-        onError: (err: any) => {
-            const msg = err?.response?.data?.message || "Failed to create transaction";
+        onError: (err: unknown) => {
+            let msg = "Failed to create transaction";
+            if (axios.isAxiosError<{ message?: string }>(err)) {
+                msg = err.response?.data?.message || err.message || msg;
+            } else if (err instanceof Error) {
+                msg = err.message;
+            }
             toast.error(msg);
         }
     });
