@@ -7,6 +7,7 @@ import * as budgetService from "../../services/budget.service";
 import * as dashboardService from "../../services/dashboard.service";
 
 import BudgetsHeader from "../../components/budgets/BudgetsHeader";
+import BudgetAlertsBanner from "../../components/budgets/BudgetAlertsBanner";
 import ActiveBudgetCard from "../../components/budgets/ActiveBudgetCard";
 import BudgetCard from "../../components/budgets/budgetCard";
 import BudgetModal from "../../components/budgets/BudgetModal";
@@ -66,6 +67,7 @@ const BudgetsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["budgets"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["budget-alerts"] });
             setIsCreateModalOpen(false);
             toast.success("Budget created successfully.");
         },
@@ -86,6 +88,7 @@ const BudgetsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["budgets"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["budget-alerts"] });
             setEditingBudget(null);
             toast.success("Budget updated successfully.");
         },
@@ -100,6 +103,7 @@ const BudgetsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["budgets"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["budget-alerts"] });
             toast.success("Budget deleted successfully.");
         },
         onError: (error) => {
@@ -113,6 +117,7 @@ const BudgetsPage = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["budgets"] });
             queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+            queryClient.invalidateQueries({ queryKey: ["budget-alerts"] });
             toast.success("Budget locked successfully.");
         },
         onError: (error) => {
@@ -197,6 +202,9 @@ const BudgetsPage = () => {
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
             {/* 1. Header */}
             <BudgetsHeader onAddBudget={() => setIsCreateModalOpen(true)} />
+
+            {/* Budget Alerts & Spending Guardrails */}
+            <BudgetAlertsBanner />
 
             {/* 2. Active Budget Hero Card */}
             <ActiveBudgetCard

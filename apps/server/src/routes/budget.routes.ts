@@ -18,6 +18,9 @@ router.post(
 
 router.get("/active" , authMiddleware,asyncHandler(budgetController.getActiveBudget));
 
+router.get("/alerts", authMiddleware, asyncHandler(budgetController.getBudgetAlerts));
+router.post("/alerts/:id/dismiss", authMiddleware, asyncHandler(budgetController.dismissBudgetAlert));
+
 router.get("/",authMiddleware, asyncHandler(budgetController.getMyBudgets))
 
 router.patch("/:id", authMiddleware,asyncHandler(budgetController.updateBudget)); 

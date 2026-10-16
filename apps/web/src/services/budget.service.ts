@@ -75,6 +75,28 @@ export const lockBudget = async ( id : number ) :Promise<budgetInterface.Budget>
     return response.data; 
 }
 
+export const getBudgetAlerts = async (params?: {
+    thresholds?: number[];
+    includeDismissed?: boolean;
+}): Promise<budgetInterface.BudgetAlertsResponse> => {
+    const queryParams: Record<string, string> = {};
+    if (params?.thresholds && params.thresholds.length > 0) {
+        queryParams.thresholds = params.thresholds.join(",");
+    }
+    if (params?.includeDismissed !== undefined) {
+        queryParams.includeDismissed = String(params.includeDismissed);
+    }
 
+    const response = await api.get<budgetInterface.BudgetAlertsResponse>(
+        ENDPOINTS.BUDGETS.ALERTS,
+        { params: queryParams }
+    );
+    return response.data;
+};
 
-
+export const dismissBudgetAlert = async (id: string): Promise<{ success: boolean; alertId: string }> => {
+    const response = await api.post<{ success: boolean; alertId: string }>(
+        ENDPOINTS.BUDGETS.DISMISS_ALERT(id)
+    );
+    return response.data;
+};
