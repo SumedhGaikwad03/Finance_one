@@ -169,8 +169,8 @@ export const evaluateBudgetAlerts = async (
       });
     }
   } else {
-    // Check descending thresholds (e.g. 90%, 75%) to emit the most urgent state
-    const descendingThresholds = [...thresholds].filter((t) => t < 100).sort((a, b) => b - a);
+    // Check descending thresholds (e.g. 100%, 90%, 75%) to emit the most urgent state
+    const descendingThresholds = [...thresholds].filter((t) => t <= 100).sort((a, b) => b - a);
     for (const threshold of descendingThresholds) {
       if (usagePercentage >= threshold) {
         const alertId = `alert-budget-${budget.id}-threshold-${threshold}-${periodKey}`;

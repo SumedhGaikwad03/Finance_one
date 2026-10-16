@@ -298,6 +298,9 @@ describe("FinOne PR 12: Budget Alerts and Spending Guardrails Test Suite", () =>
       assert.equal(data.isOverBudget, false); // Exactly 100% is not strictly over-budget
       assert.equal(data.alerts.length, 1);
       assert.equal(alertSeverityOrType(data.alerts[0]), "warning");
+      assert.equal(data.alerts[0].metrics.thresholdPercentage, 100, "Must trigger 100% threshold at exact 100% boundary");
+      assert.equal(data.alerts[0].title, "100% Budget Threshold Reached");
+      assert.ok(data.alerts[0].explanation.reason.includes("100%"));
     });
 
     it("handles negative remaining budget (> 100% spend) and triggers CRITICAL over-budget alert", async () => {
