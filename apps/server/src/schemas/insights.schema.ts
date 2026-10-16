@@ -10,6 +10,7 @@ export const monthlyInsightsQuerySchema = z.object({
 });
 
 export type MonthlyInsightsQuery = z.infer<typeof monthlyInsightsQuerySchema>;
+export type MonthlyInsightsQueryInput = z.input<typeof monthlyInsightsQuerySchema>;
 
 export interface CategorySpendSummary {
     category: Category;
@@ -36,6 +37,7 @@ export interface SpendingTierDetail {
 }
 
 export interface DiscretionaryTierDetail extends SpendingTierDetail {
+    totalAmount: number;
     goodToHaveAmount: number;
     goodToHavePercentage: number;
     goodToHaveCount: number;

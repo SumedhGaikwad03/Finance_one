@@ -3,6 +3,8 @@ import prisma from "../lib/prisma";
 import { Category, Priority } from "../generated/prisma/enums";
 import {
     MonthlyInsightsQuery,
+    MonthlyInsightsQueryInput,
+    monthlyInsightsQuerySchema,
     MonthlyInsightsResponse,
     CategorySpendSummary,
     CategoryDeltaSummary,
@@ -83,8 +85,9 @@ export const parseMonthQuery = (
 
 export const getMonthlyInsights = async (
     userId: number,
-    query: MonthlyInsightsQuery
+    rawQuery: Partial<MonthlyInsightsQueryInput> = {}
 ): Promise<MonthlyInsightsResponse> => {
+    const query = monthlyInsightsQuerySchema.parse(rawQuery);
     const {
         year,
         monthIndex,
